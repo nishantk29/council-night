@@ -1,4 +1,4 @@
-// Plays whole Council Night games against a running server with scripted players (no LLM).
+// Plays whole The Gilded Chamber games against a running server with scripted players (no LLM).
 // Usage: BASE=http://127.0.0.1:8862 GAMES=30 SEED=1 node scripts/sim-games.mjs   (Node 22+, global WebSocket)
 // Checks every view for leaks (other roles, hands, the docket, deck order), that the rules hold, and that games finish.
 import { POWERS, startingDeck } from '../public/js/rules.js';

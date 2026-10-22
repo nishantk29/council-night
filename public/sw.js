@@ -1,9 +1,9 @@
-// Council Night service worker (same pattern as Mafia Night): versioned cache for static files,
+// The Gilded Chamber service worker (same pattern as Mafia Night): versioned cache for static files,
 // network-first for pages, and /api/* and /ws/* never cached. `npm run deploy` stamps VERSION.
 const VERSION = 'council-dev';
 const PRECACHE = ['/', '/styles.css', '/manifest.webmanifest',
   ...['app', 'rules', 'ui_icons', 'art', 'cards', 'faq', 'table_ui'].map((m) => `/js/${m}.js`),
-  ...['big-shoulders-display-var', 'alegreya-sans-400', 'alegreya-sans-500', 'alegreya-sans-700', 'alegreya-sans-800', 'alegreya-italic-var', 'limelight-400', 'special-elite-400'].map((f) => `/fonts/${f}.woff2`),
+  ...['big-shoulders-display-var', 'alegreya-sans-400', 'alegreya-sans-500', 'alegreya-sans-700', 'alegreya-sans-800', 'alegreya-italic-var', 'limelight-400', 'poiret-one-400', 'special-elite-400'].map((f) => `/fonts/${f}.woff2`),
   '/icons/favicon.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
 const isLive = (u) => u.pathname.startsWith('/api/') || u.pathname.startsWith('/ws/');
 const storable = (r) => r && r.ok && r.status === 200 && !r.redirected && r.type === 'basic';

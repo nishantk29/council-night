@@ -1,4 +1,4 @@
-// Council Night room: the game reducer and the per-viewer projections. Table things (chat, tools, host
+// The Gilded Chamber room: the game reducer and the per-viewer projections. Table things (chat, tools, host
 // controls, play modes) come from table.js. Secrecy lives in viewForPlayer / viewForScreen: the deck order,
 // the discard pile, hands, peeks and inquiry results never leave the room except to the one player entitled.
 import { ROLES, SIDES, TEAMS, MIN_PLAYERS, MAX_PLAYERS, REFORM_TO_WIN, DECREE_TO_WIN, VETO_AT, PRETENDER_DANGER, TRACKER_MAX,
@@ -20,7 +20,7 @@ const PNAME = { R: 'Reform', D: 'Decree' };
 
 function finish(room, winner, reason, now) {
   const g = room.game; g.winner = winner; g.reason = reason; room.phase = 'over';
-  log(room, 'game', winner === 'reform' ? 'The Reformers win.' : 'The Cabal wins.', null, now);
+  log(room, 'game', winner === 'reform' ? 'The Loyalists win.' : 'The Syndicate wins.', null, now);
 }
 
 // Draw pile bookkeeping. With physical policies the app tracks only the counts (the real tiles are on the table).
@@ -49,7 +49,7 @@ function startGame(room, rng, now) {
     history: [], lastVote: null, lastPolicy: null, ready: {}, winner: null, reason: null,
   };
   room.phase = 'reveal'; room.undo = [];
-  log(room, 'game', `New game: ${n} players, ${TEAMS[n][0]} Reformers, ${TEAMS[n][1]} Cabal and the Pretender.${sd.decree ? ' Rebalanced: one Decree starts on the board.' : ''}`, null, now);
+  log(room, 'game', `New game: ${n} players, ${TEAMS[n][0]} Loyalists, ${TEAMS[n][1]} Syndicate and the Boss.${sd.decree ? ' Rebalanced: one Decree starts on the board.' : ''}`, null, now);
   return ok();
 }
 
@@ -100,7 +100,7 @@ function resolveVote(room, rng, now) {
   if (g.decree >= PRETENDER_DANGER) {
     if (g.roles) {
       if (g.roles[g.nominee] === 'pretender') return finish(room, 'cabal', 'pretender', now);
-      g.confirmedNot.push(g.nominee); log(room, 'game', `${nm(room, g.nominee)} is not the Pretender.`, null, now);
+      g.confirmedNot.push(g.nominee); log(room, 'game', `${nm(room, g.nominee)} is not the Boss.`, null, now);
     } else { g.check = { kind: 'chancellor', id: g.nominee }; room.phase = 'check'; return; }
   }
   startLegislation(room, rng, now);
@@ -159,16 +159,16 @@ function gameReduce(room, actor, msg, rng, now) {
       g.votes = Object.fromEntries(voters(room).map((id) => [id, yes.has(id)]));
       resolveVote(room, rng, now); return ok();
     }
-    case 'check': { // physical roles: the table answers "is the new Chancellor the Pretender?" / "was the executed player?"
+    case 'check': { // physical roles: the table answers "is the new Chancellor the Boss?" / "was the executed player?"
       if (!isHost || room.phase !== 'check') return err('Not now.');
       const c = g.check; g.check = null;
       if (c.kind === 'chancellor') {
         if (msg.yes) return (finish(room, 'cabal', 'pretender', now), ok());
-        g.confirmedNot.push(c.id); log(room, 'game', `${nm(room, c.id)} is not the Pretender.`, null, now);
+        g.confirmedNot.push(c.id); log(room, 'game', `${nm(room, c.id)} is not the Boss.`, null, now);
         startLegislation(room, rng, now); return ok();
       }
       if (msg.yes) return (finish(room, 'reform', 'executed', now), ok());
-      log(room, 'game', `${nm(room, c.id)} was not the Pretender.`, null, now);
+      log(room, 'game', `${nm(room, c.id)} was not the Boss.`, null, now);
       nextSpeaker(room); return ok();
     }
     case 'discard': { // the Speaker discards one of three, passing two to the Chancellor

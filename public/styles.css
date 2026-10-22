@@ -1,4 +1,4 @@
-/* Council Night: same house style and components as Mafia Night and Quest Night, repainted as a 1930s civic poster.
+/* The Gilded Chamber: same house style and components as Mafia Night and Quest Night, repainted as a 1930s civic poster.
    Base tokens, type scale, buttons, fields and the table layer are shared; the Council theme block at the end sets the palette.
    Fonts (self-hosted): Big Shoulders Display, Alegreya Sans, Alegreya italic, Limelight (SIL OFL 1.1); Special Elite (Apache 2.0). */
 /* ==================================================================== fonts */
@@ -513,7 +513,7 @@ html[data-phase="night"] .phase-badge .ui-ico{color:var(--town)}
 .appbar-mark .ico{width:28px;height:28px}
 .rcard-back-mark .ico{width:100%;height:auto;aspect-ratio:1}
 
-/* =========================================================== table layer (shared: Quest Night, Council Night)
+/* =========================================================== table layer (shared: Quest Night, The Gilded Chamber)
    Tab bar, side panels, chat, log, Table Tools, host dashboard, FAQ, table screen. Uses only the design tokens. */
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .layout{display:block}
@@ -638,13 +638,14 @@ html[data-screen="1"] .round{width:min(100%,620px)}
 @media (min-width:1100px){#toast{bottom:24px}}
 .appbar-title{font-size:var(--fs-sm)}
 
-/* ================================================= Council Night theme: parchment, charcoal, slate and vermilion
+/* ================================================= The Gilded Chamber theme: parchment, charcoal, slate and vermilion
    Original palette in the spirit of a 1930s political poster: cream and beige parchment, charcoal type,
-   slate blue for the Reformers, red-orange for the Cabal. Display: Big Shoulders Display (condensed poster
+   slate blue for the Loyalists, red-orange for the Syndicate. Display: Big Shoulders Display (condensed poster
    capitals); wordmark: Limelight (an art-deco face); the log: Special Elite (typewriter).
    Low-light mode (html[data-dim]) keeps the same accents on charcoal for dim rooms.
    Every text colour pair below is at least 4.5:1 in both modes (checked by scripts/contrast.mjs). */
 @font-face{font-family:"Limelight";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/limelight-400.woff2) format("woff2")}
+@font-face{font-family:"Poiret One";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/poiret-one-400.woff2) format("woff2")}
 @font-face{font-family:"Special Elite";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/special-elite-400.woff2) format("woff2")}
 :root{
   --room:#ECE1C8; --room-night:#ECE1C8; --panel:#F6EFDD; --panel-2:#E3D6B8; --rule:#CDBE9C; --rule-strong:#8A7B5E;
@@ -659,6 +660,7 @@ html[data-screen="1"] .round{width:min(100%,620px)}
   --lift-2:0 2px 0 rgba(31,27,22,.12), 0 18px 40px -16px rgba(31,27,22,.55);
   --font-display:"Big Shoulders Display","Arial Narrow",sans-serif-condensed,sans-serif;
   --font-wordmark:"Limelight","Big Shoulders Display",Georgia,serif;
+  --font-deco:"Poiret One","Limelight",Georgia,serif;
   --font-type:"Special Elite","Courier New",monospace;
   color-scheme:light;
 }
@@ -782,3 +784,15 @@ body{background:var(--room)}
 .knight{z-index:2}
 .knight-name{background:var(--room);padding:0 4px;border-radius:4px}
 @media (max-width:600px){.slot{aspect-ratio:1}.board{padding:var(--s2) var(--s3)}.board-note{display:none}.slot-power small{font-size:.62rem}}
+
+/* art-deco touches: Poiret One section headings, stepped corners and a fan rule (all CSS/SVG, original) */
+.path-title,.block-title,.sub{font-family:var(--font-deco);font-weight:400;-webkit-text-stroke:.5px currentColor;text-transform:none;letter-spacing:.06em;font-size:var(--fs-lg)}
+.block-title,.path-title{display:flex;align-items:center;gap:var(--s3)}
+.block-title::after,.path-title::after{content:"";flex:1;height:7px;border-block:1px solid var(--rule-strong);opacity:.8}
+.panel,.stage,.board,.path{position:relative}
+.board::before,.board::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none;border:2px solid var(--team)}
+.board::before{top:5px;left:5px;border-right:0;border-bottom:0}
+.board::after{bottom:5px;right:5px;border-left:0;border-top:0}
+.home .wordmark::after{content:"";display:block;height:18px;margin-top:var(--s3);color:var(--accent);
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 18'%3E%3Cg fill='none' stroke='%23AE3818' stroke-width='2'%3E%3Cpath d='M0 9h92M148 9h92'/%3E%3Cpath d='M120 1v16M102 9 120 1l18 8-18 8z'/%3E%3Cpath d='M110 9h20' stroke-width='1.5'/%3E%3C/g%3E%3C/svg%3E") left center/min(100%,420px) 18px no-repeat}
+html[data-dim="1"] .home .wordmark::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 18'%3E%3Cg fill='none' stroke='%23F08A64' stroke-width='2'%3E%3Cpath d='M0 9h92M148 9h92'/%3E%3Cpath d='M120 1v16M102 9 120 1l18 8-18 8z'/%3E%3Cpath d='M110 9h20' stroke-width='1.5'/%3E%3C/g%3E%3C/svg%3E")}

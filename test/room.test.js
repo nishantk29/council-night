@@ -129,7 +129,7 @@ test('powers by table size fire on the right Decree', () => {
   }
 });
 
-test('inquiry shows the party (the Pretender shows as Cabal) to the Speaker only, never twice', () => {
+test('inquiry shows the party (the Boss shows as Syndicate) to the Speaker only, never twice', () => {
   const t = started(9, { seed: 21 });
   pass(t, 'D'); assert.equal(t.g.power, 'investigate');
   const s = sp(t); const target = roleOf(t, 'pretender')[0] === s ? roleOf(t, 'cabal')[0] : roleOf(t, 'pretender')[0];
@@ -174,7 +174,7 @@ test('win: six Decrees', () => {
   assert.equal(t.g.winner, 'cabal'); assert.equal(t.g.reason, 'decrees');
 });
 
-test('win: the Pretender elected Chancellor after three Decrees (and not before)', () => {
+test('win: the Boss elected Chancellor after three Decrees (and not before)', () => {
   const t = started(8, { seed: 26 });
   const pre = roleOf(t, 'pretender')[0];
   t.g.decree = 2; t.g.lastGov = null;
@@ -184,14 +184,14 @@ test('win: the Pretender elected Chancellor after three Decrees (and not before)
   must(act(t.room, pre, { type: 'enact', i: 0 })); skipPower(t);
   assert.equal(t.g.decree, 3);
   const other = pickChancellor(t, [pre]); elect(t, other);
-  assert.ok(t.g.confirmedNot.includes(other), 'others are confirmed not the Pretender');
+  assert.ok(t.g.confirmedNot.includes(other), 'others are confirmed not the Boss');
   must(act(t.room, sp(t), { type: 'discard', i: 0 })); t.g.hand = ['R', 'R'];
   must(act(t.room, other, { type: 'enact', i: 0 }));
   t.g.lastGov = null; if (sp(t) === pre) elect(t, pickChancellor(t), false);
   elect(t, pre); assert.equal(t.g.winner, 'cabal'); assert.equal(t.g.reason, 'pretender');
 });
 
-test('win: executing the Pretender; executed players cannot vote or hold office', () => {
+test('win: executing the Boss; executed players cannot vote or hold office', () => {
   const t = started(5, { seed: 27 });
   t.g.decree = 3; pass(t, 'D'); assert.equal(t.g.power, 'execute');
   const pre = roleOf(t, 'pretender')[0];
@@ -224,7 +224,7 @@ test('anonymous votes hide who voted which way, even at the end', () => {
   assert.deepEqual(v.ayes, []); assert.equal(v.yes, 1); assert.equal(v.no, 4);
 });
 
-test('fully physical: the host enters votes, policies, chaos tiles and the Pretender checks; no secrets on the host phone', () => {
+test('fully physical: the host enters votes, policies, chaos tiles and the Boss checks; no secrets on the host phone', () => {
   const t = started(5, { seed: 30, mode: { play: 'physical' }, phoneless: 2 });
   assert.equal(t.g.roles, null); assert.ok(!t.g.cardsApp);
   const hv = () => JSON.stringify(viewForPlayer(t.room, t.host));

@@ -1,4 +1,4 @@
-// Playing a game of Council Night with one standard 52-card deck plus its two jokers.
+// Playing a game of The Gilded Chamber with one standard 52-card deck plus its two jokers.
 import { TEAMS, startingDeck } from './rules.js';
 export const MAP = {
   reformRoles: ['7♥', '8♥', '9♥', '10♥', 'J♥', 'Q♥'],

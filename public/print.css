@@ -1,0 +1,41 @@
+@font-face{font-family:"Limelight";font-weight:400;src:url(/fonts/limelight-400.woff2) format("woff2")}
+@font-face{font-family:"Big Shoulders Display";font-weight:100 900;src:url(/fonts/big-shoulders-display-var.woff2) format("woff2")}
+@font-face{font-family:"Alegreya Sans";font-weight:400;src:url(/fonts/alegreya-sans-400.woff2) format("woff2")}
+@font-face{font-family:"Alegreya Sans";font-weight:700;src:url(/fonts/alegreya-sans-700.woff2) format("woff2")}
+@font-face{font-family:"Alegreya";font-style:italic;font-weight:400 900;src:url(/fonts/alegreya-italic-var.woff2) format("woff2")}
+@font-face{font-family:"Special Elite";font-weight:400;src:url(/fonts/special-elite-400.woff2) format("woff2")}
+@page{size:letter;margin:6mm 10mm}
+*{box-sizing:border-box}
+body{margin:0;font:400 11pt/1.4 "Alegreya Sans",sans-serif;color:#1F1B16;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:10px 16px;background:#1F1B16;color:#ECE1C8;font-size:14px}
+.bar a{color:#F0B48F}
+@media print{.noprint{display:none}}
+.sheet{max-width:190mm;margin:0 auto;padding:4mm 0}
+.sheet.cardpage{padding:0}
+h1{font:400 30pt/1.1 Limelight,serif;margin:0 0 2mm;color:#1F1B16}
+h2{font:800 15pt/1.2 "Big Shoulders Display",sans-serif;letter-spacing:.04em;text-transform:uppercase;margin:6mm 0 2mm;color:#1F1B16;border-bottom:1.5pt solid #B23A1A;padding-bottom:1mm}
+h3{font:800 11pt "Big Shoulders Display",sans-serif;letter-spacing:.04em;text-transform:uppercase;margin:3mm 0 1mm}
+p,li{margin:0 0 1.5mm}
+table{width:100%;border-collapse:collapse;font-size:10pt;margin:1mm 0 2mm}
+th,td{border:0.6pt solid #b5a888;padding:1.4mm 2mm;text-align:left;vertical-align:top}
+th{background:#F1E9D6}
+.red{color:#B23A1A;font-weight:700}.blk{color:#111;font-weight:700}
+.script li{font:italic 11pt/1.45 Alegreya,serif}
+.break{break-before:page}
+.cards{display:grid;grid-template-columns:repeat(3,63mm);grid-auto-rows:88mm;gap:0;justify-content:center}
+.c{position:relative;width:63mm;height:88mm;padding:4mm;border:0.3pt dashed #999;break-inside:avoid}
+.ci{position:relative;height:100%;border-radius:2mm;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5mm 3mm 4mm;text-align:center;color:var(--ink);background:var(--bg);border:1.4mm solid var(--edge);outline:0.4mm solid var(--line);outline-offset:-2.2mm}
+.c.reform{--bg:#3E6487;--edge:#22394F;--ink:#F6EFDD;--line:#ECE1C8;--sun:#4F7699}
+.c.cabal{--bg:#B23A1A;--edge:#5E1D0B;--ink:#FFF1E6;--line:#F6D2BF;--sun:#C25232}
+.c.paper{--bg:#ECE1C8;--edge:#1F1B16;--ink:#1F1B16;--line:#1F1B16;--sun:#DCCEAE}
+.c.ink{--bg:#1F1B16;--edge:#000;--ink:#ECE1C8;--line:#ECE1C8;--sun:#2E2922}
+.ci .ico{width:30mm;height:30mm;fill:currentColor;color:var(--ink)}
+.ci .crest{position:absolute;left:4mm;right:4mm;top:10mm;width:auto;height:52mm;color:var(--sun)!important}
+.ci > :not(.crest){position:relative}
+.ci b{font:800 15pt/1.05 "Big Shoulders Display",sans-serif;letter-spacing:.05em;text-transform:uppercase}
+.ci small{font:italic 8pt/1.25 Alegreya,serif;max-width:46mm}
+.ci .side{font:400 7.5pt "Special Elite",monospace;letter-spacing:.18em}
+.back .ci{--bg:#1F1B16;--edge:#000;--ink:#ECE1C8;--line:#C4421F;justify-content:center;gap:4mm}
+.back .ci .ico{color:#C4421F;width:34mm;height:34mm}
+.back .ci b{font:400 13pt Limelight,serif;text-transform:none}
+.note{font-size:9pt;color:#5a5245}

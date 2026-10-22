@@ -1,14 +1,14 @@
-// Council Night: the rules, written once and shared by the Worker, the browser and the tests.
+// The Gilded Chamber: the rules, written once and shared by the Worker, the browser and the tests.
 // Mechanics follow the classic hidden-role policy game exactly; names, theme and wording are original.
 export const MIN_PLAYERS = 5;
 export const MAX_PLAYERS = 10;
 
-// Reformers and the Cabal (not counting the Pretender) by table size.
+// Loyalists and the Syndicate (not counting the Boss) by table size.
 export const TEAMS = { 5: [3, 1], 6: [4, 1], 7: [4, 2], 8: [5, 2], 9: [5, 3], 10: [6, 3] };
 export const REFORM_TO_WIN = 5;
 export const DECREE_TO_WIN = 6;
 export const VETO_AT = 5;            // veto is unlocked once 5 Decrees are on the board
-export const PRETENDER_DANGER = 3;   // from 3 Decrees, electing the Pretender as Chancellor wins for the Cabal
+export const PRETENDER_DANGER = 3;   // from 3 Decrees, electing the Boss as Chancellor wins for the Syndicate
 export const TRACKER_MAX = 3;        // the third failed government in a row: the top policy is enacted
 export const DECK = { R: 6, D: 11 };
 
@@ -25,13 +25,13 @@ export const POWER_TEXT = {
   execute: ['Execution', 'The Speaker removes a player from the game.'],
 };
 
-export const SIDES = { reform: { name: 'the Reformers', short: 'Reformers' }, cabal: { name: 'the Cabal', short: 'Cabal' } };
+export const SIDES = { reform: { name: 'the Loyalists', short: 'Loyalists' }, cabal: { name: 'the Syndicate', short: 'Syndicate' } };
 export const ROLES = {
-  reformer: { id: 'reformer', name: 'Reformer', side: 'reform', blurb: 'Pass five Reforms, or find the Pretender and remove them. Trust carefully.' },
-  cabal: { id: 'cabal', name: 'Cabal member', side: 'cabal', blurb: 'You know the Cabal and the Pretender. Pass six Decrees, or put the Pretender in the Chancellor’s chair.' },
-  pretender: { id: 'pretender', name: 'The Pretender', side: 'cabal', blurb: 'Lead the Cabal from the shadows. Look trustworthy: after three Decrees, being elected Chancellor wins the game.' },
+  reformer: { id: 'reformer', name: 'Loyalist', side: 'reform', blurb: 'Pass five Reforms, or find the Boss and remove them. Trust carefully.' },
+  cabal: { id: 'cabal', name: 'Syndicate member', side: 'cabal', blurb: 'You know the Syndicate and the Boss. Pass six Decrees, or put the Boss in the Chancellor’s chair.' },
+  pretender: { id: 'pretender', name: 'The Boss', side: 'cabal', blurb: 'Lead the Syndicate from the shadows. Look trustworthy: after three Decrees, being elected Chancellor wins the game.' },
 };
-export const partyOf = (role) => (role === 'reformer' ? 'reform' : 'cabal'); // the Pretender's party card says Cabal
+export const partyOf = (role) => (role === 'reformer' ? 'reform' : 'cabal'); // the Boss's party card says Syndicate
 
 export const DEFAULT_SETTINGS = {};
 export const HOUSE_DEFAULTS = { rebalance: false, exile: false };

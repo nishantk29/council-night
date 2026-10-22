@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { TEAMS, POWERS, roleList, startingDeck, knowledgeFor, eligibleChancellors, electionPasses, partyOf } from '../public/js/rules.js';
 import { roleCards } from '../public/js/cards.js';
 
-test('team sizes for every table: 5 to 10, Cabal always a minority with the Pretender', () => {
+test('team sizes for every table: 5 to 10, Syndicate always a minority with the Boss', () => {
   const want = { 5: [3, 2], 6: [4, 2], 7: [4, 3], 8: [5, 3], 9: [5, 4], 10: [6, 4] };
   for (let n = 5; n <= 10; n++) {
     const l = roleList(n).roles; assert.equal(l.length, n);
@@ -28,7 +28,7 @@ test('deck: 6 Reforms and 11 Decrees; the rebalanced variant only when switched 
   assert.equal(startingDeck(8, true).deck.length, 17);
 });
 
-test('who knows whom: Cabal see each other and the Pretender; the Pretender sees the Cabal only at 5-6', () => {
+test('who knows whom: Syndicate see each other and the Boss; the Boss sees the Syndicate only at 5-6', () => {
   for (let n = 5; n <= 10; n++) {
     const ids = Array.from({ length: n }, (_, i) => `p${i}`); const roles = {};
     roleList(n).roles.forEach((r, i) => { roles[ids[i]] = r; });

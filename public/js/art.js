@@ -1,11 +1,11 @@
-// Council Night's own icons, drawn for this app (original artwork; nothing taken from any published game).
+// The Gilded Chamber's own icons, drawn for this app (original artwork; nothing taken from any published game).
 // 64x64 viewBox, single colour (currentColor), flat poster shapes so they print and recolour cleanly.
 const A = {
   // Reform: a raised torch
   torch: '<path d="M32 4c7 7 9 13 6 19-1-4-3-6-6-7 1 4-1 7-4 9-2-5 0-12 4-21z"/><path d="M22 26h20l-3 7H25z"/><path d="M26 35h12l-3 25h-6z"/><path d="M24 26h16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
   // Decree: a shackle chain
   chain: '<g fill="none" stroke="currentColor" stroke-width="6"><rect x="6" y="22" width="22" height="14" rx="7" transform="rotate(-30 17 29)"/><rect x="21" y="25" width="22" height="14" rx="7" transform="rotate(-30 32 32)"/><rect x="36" y="28" width="22" height="14" rx="7" transform="rotate(-30 47 35)"/></g>',
-  // The Pretender: a half mask
+  // The Boss: a half mask
   mask: '<path d="M6 20c8-5 18-6 26-2 8-4 18-3 26 2-1 15-8 25-17 25-4 0-7-3-9-7-2 4-5 7-9 7-9 0-16-10-17-25zm10 8c2 4 7 5 10 2-3-4-7-4-10-2zm32 0c-3-2-7-2-10 2 3 3 8 2 10-2z" fill-rule="evenodd"/><path d="M32 45v13" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="58" r="3"/>',
   // Execution: a dagger
   dagger: '<path d="M32 3l5 9v26h-10V12z"/><path d="M18 38h28v5H18z"/><rect x="28.5" y="43" width="7" height="13" rx="2"/><circle cx="32" cy="59" r="3.5"/>',

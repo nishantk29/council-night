@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newRoom, reduce, viewForPlayer, viewForScreen } from '../public/js/room.js';
+import { newRoom, reduce, viewForPlayer, viewForScreen, broadcastPlan, endedNow } from '../public/js/room.js';
 import { POWERS } from '../public/js/rules.js';
 
 const seeded = (seed) => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
@@ -278,3 +278,60 @@ test('snap election on the player to the left: they serve twice in a row (classi
   elect(t, pickChancellor(t), false);
   assert.equal(sp(t), left, 'the gavel returns to the left of the caller: the same player');
 });
+
+// ---------------------------------------------------------------- game over + animations
+test('game over: every connected client (each phone, the host, the table screen) gets the game-over event, and only phones get "you won/lost"', () => {
+  const t = started(7, { seed: 11 });
+  const sockets = [...t.ids.map((id, i) => ({ ws: `p${i}`, who: 'player', playerId: id })), { ws: 'tv', who: 'screen' }, { ws: 'tv2', who: 'screen' }, { ws: 'lurker', who: null }];
+  t.g.reform = 4;
+  const before = t.room.phase;
+  pass(t, 'R');
+  assert.equal(t.room.phase, 'over'); assert.ok(endedNow(before, t.room));
+  const plan = broadcastPlan(t.room, sockets, new Set(t.ids), { gameOver: endedNow('legislate', t.room) });
+  assert.equal(plan.length, sockets.length - 1, 'every joined socket is in the plan, the one that has not joined is not');
+  const events = plan.map((p) => ({ ws: p.ws, ev: p.msgs.filter((m) => m.type === 'gameover') }));
+  for (const { ws, ev } of events) { assert.equal(ev.length, 1, `${ws} gets exactly one game-over event`); assert.equal(ev[0].winner, 'reform'); assert.equal(ev[0].reason, 'reforms'); assert.equal(ev[0].text, '5 Reforms passed'); assert.equal(ev[0].gameNo, 1); }
+  for (const p of plan) assert.equal(p.msgs[0].type, 'view', 'the view (with the roles) arrives before the event');
+  for (const [i, id] of t.ids.entries()) {
+    const ev = events.find((e) => e.ws === `p${i}`).ev[0];
+    assert.equal(ev.you, ['reformer'].includes(t.g.roles[id]) ? 'won' : 'lost');
+  }
+  for (const e of events.filter((x) => x.ws.startsWith('tv'))) assert.equal(e.ev[0].you, undefined);
+  // the event is only sent when the game just ended, never on ordinary updates, and the roles are public by then
+  assert.ok(broadcastPlan(t.room, sockets, new Set(), {}).every((p) => p.msgs.length === 1));
+  assert.ok(Object.keys(viewForScreen(t.room).game.roles).length === 7);
+});
+
+test('game over: any player can send everyone back to the lobby with the same players; Play again is refused mid-game', () => {
+  const t = started(5, { seed: 12 });
+  const other = t.ids.find((id) => id !== t.host);
+  assert.ok(act(t.room, other, { type: 'again' }).error, 'not while the game runs');
+  t.g.reform = 4; pass(t, 'R');
+  assert.ok(act(t.room, t.host, { type: 'abandon' }).ok);
+  const t2 = started(5, { seed: 12 }); t2.g.reform = 4; pass(t2, 'R');
+  const o2 = t2.ids.find((id) => id !== t2.host);
+  must(act(t2.room, o2, { type: 'again' }));
+  assert.equal(t2.room.phase, 'lobby'); assert.equal(t2.room.players.length, 5);
+  assert.ok(act(t2.room, o2, { type: 'abandon' }).error, 'ending a running game stays host-only');
+});
+
+test('animations: the host switches them off for the whole table; nobody else can', () => {
+  const t = started(5, { seed: 13 });
+  const other = t.ids.find((id) => id !== t.host);
+  assert.equal(viewForScreen(t.room).anim, true);
+  assert.ok(act(t.room, other, { type: 'anim', on: false }).error);
+  must(act(t.room, t.host, { type: 'anim', on: false }));
+  assert.equal(viewForScreen(t.room).anim, false); assert.equal(viewForPlayer(t.room, other).anim, false);
+  must(act(t.room, t.host, { type: 'anim', on: true }));
+  assert.equal(viewForPlayer(t.room, other).anim, true);
+});
+
+test('animation events carry nothing secret: the game-over event and views of other players never include hands or other roles mid-game', () => {
+  const t = started(6, { seed: 14 });
+  const ch = pickChancellor(t); elect(t, ch);
+  const other = t.ids.find((id) => id !== sp(t) && id !== ch);
+  const s = JSON.stringify(viewForPlayer(t.room, other)) + JSON.stringify(viewForScreen(t.room));
+  assert.ok(!/"hand":\[|"deck":\[|"roles":\{/.test(s));
+  assert.equal(gameOverNone(t.room), null);
+});
+function gameOverNone(room) { return broadcastPlan(room, [{ ws: 1, who: 'screen' }], new Set(), { gameOver: true })[0].msgs.find((m) => m.type === 'gameover') || null; }

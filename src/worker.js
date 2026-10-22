@@ -1,6 +1,6 @@
 // Cloudflare Worker: serves the API + WebSocket entry points. Static files come from Workers Static Assets.
 import { DurableObject } from 'cloudflare:workers';
-import { newRoom, reduce, viewForPlayer, viewForScreen } from '../public/js/room.js';
+import { newRoom, reduce, broadcastPlan, endedNow } from '../public/js/room.js';
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // no I/O look-alikes
 const ROOM_TTL_MS = 12 * 60 * 60 * 1000;
@@ -98,13 +98,9 @@ export class Room extends DurableObject {
 
   send(ws, obj) { try { ws.send(JSON.stringify(obj)); } catch { /* socket gone */ } }
 
-  broadcast() {
-    const connected = this.connectedIds();
-    for (const ws of this.ctx.getWebSockets()) {
-      const a = ws.deserializeAttachment();
-      if (!a?.who) continue;
-      this.send(ws, { type: 'view', view: a.who === 'screen' ? viewForScreen(this.room, connected) : viewForPlayer(this.room, a.playerId, connected) });
-    }
+  broadcast({ gameOver = false } = {}) {
+    const sockets = this.ctx.getWebSockets().map((ws) => ({ ws, ...ws.deserializeAttachment() }));
+    for (const { ws, msgs } of broadcastPlan(this.room, sockets, this.connectedIds(), { gameOver })) for (const m of msgs) this.send(ws, m);
   }
 
   async webSocketMessage(ws, raw) {
@@ -139,10 +135,11 @@ export class Room extends DurableObject {
 
     // ---- actions ----
     const actor = { playerId: att.playerId };
+    const before = this.room.phase;
     const res = reduce(this.room, actor, msg);
     if (res.error) { this.send(ws, { type: 'error', error: res.error }); return; }
     await this.save();
-    this.broadcast();
+    this.broadcast({ gameOver: endedNow(before, this.room) });
   }
 
   async webSocketClose(ws) { try { ws.close(); } catch { /* already closed */ } await this.ready; this.broadcast(); }

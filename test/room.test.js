@@ -269,3 +269,12 @@ test('pause blocks the game; skips are logged; host hand-off works', () => {
   assert.equal(t.g.reform + t.g.decree, 1);
   assert.ok(t.room.log.some((l) => /skipped/.test(l.text)));
 });
+
+test('snap election on the player to the left: they serve twice in a row (classic rule)', () => {
+  const t = started(7, { seed: 40 });
+  t.g.decree = 2; pass(t, 'D'); assert.equal(t.g.power, 'special');
+  const caller = sp(t); const left = t.ids[(t.ids.indexOf(caller) + 1) % 7];
+  must(act(t.room, caller, { type: 'power', id: left }));
+  elect(t, pickChancellor(t), false);
+  assert.equal(sp(t), left, 'the gavel returns to the left of the caller: the same player');
+});

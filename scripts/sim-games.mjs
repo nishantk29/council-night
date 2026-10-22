@@ -44,7 +44,7 @@ async function until(fn, what, ms = 5000) {
   while (Date.now() - t < ms) { const v = fn(); if (v) return v; await sleep(8); }
   throw new Error(`timeout waiting for ${what}`);
 }
-const sig = (v) => JSON.stringify([v.phase, v.game?.speaker, v.game?.nominee, v.game?.reform, v.game?.decree, v.game?.tracker, v.game?.leg, v.game?.power, v.game?.voted?.length, v.game?.history?.length]);
+const sig = (v) => JSON.stringify([v.phase, v.game?.speaker, v.game?.nominee, v.game?.reform, v.game?.decree, v.game?.tracker, v.game?.leg, v.game?.power, v.game?.voted?.length, v.game?.history?.length, v.log?.at(-1)?.n]);
 
 const stats = { reform: 0, cabal: 0, reasons: {}, powers: {}, vetoes: 0, chaos: 0, reshuffles: 0, steps: 0 };
 async function game(g) {

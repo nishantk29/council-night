@@ -15,6 +15,6 @@ const light = block(':root'); const dim = { ...light, ...block('html[data-dim="1
 for (const [name, t] of [['light', light], ['low light', dim]]) {
   for (const [f, b] of TEXT) { const r = ratio(t[f], t[b]); const ok = r >= 4.5; if (!ok) bad++; console.log(`${ok ? 'ok  ' : 'FAIL'} ${name.padEnd(9)} ${f.padEnd(11)} on ${b.padEnd(11)} ${r.toFixed(2)}`); }
 }
-for (const [f, b, what] of FIXED) { const r = ratio(f, b); const ok = r >= 4.5; if (!ok) bad++; console.log(`${ok ? 'ok  ' : 'FAIL'} fixed     ${what.padEnd(26)} ${r.toFixed(2)}`); }
+for (const [f, b, what, min = 4.5] of FIXED) { const r = ratio(f, b); const ok = r >= min; if (!ok) bad++; console.log(`${ok ? 'ok  ' : 'FAIL'} fixed     ${what.padEnd(26)} ${r.toFixed(2)}`); }
 console.log(bad ? `${bad} pairs below 4.5:1` : 'All text pairs pass 4.5:1 (WCAG AA).');
 process.exit(bad ? 1 : 0);

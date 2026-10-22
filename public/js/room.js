@@ -17,6 +17,8 @@ const UNDOABLE = new Set(['nominate', 'vote', 'tally', 'discard', 'enact', 'veto
 const GAME = new Set([...UNDOABLE, 'ready', 'skipReveal']);
 const nm = (room, id) => byId(room, id)?.name || '?';
 const PNAME = { R: 'Reform', D: 'Decree' };
+// Why the game ended, in the words the game-over pop-up shows on every screen (chosen here, once, by the server).
+export const WIN_TEXT = { reforms: '5 Reforms passed', decrees: '6 Decrees passed', pretender: 'The Boss was elected Chancellor', executed: 'The Boss was removed' };
 
 function finish(room, winner, reason, now) {
   const g = room.game; g.winner = winner; g.reason = reason; room.phase = 'over';
@@ -48,7 +50,7 @@ function startGame(room, rng, now) {
     hand: [], leg: null, vetoRefused: false, power: null, check: null, investigated: [], seen: {}, peek: {}, confirmedNot: [],
     history: [], lastVote: null, lastPolicy: null, ready: {}, winner: null, reason: null,
   };
-  room.phase = 'reveal'; room.undo = [];
+  room.phase = 'reveal'; room.undo = []; room.gameNo = (room.gameNo || 0) + 1;
   log(room, 'game', `New game: ${n} players, ${TEAMS[n][0]} Loyalists, ${TEAMS[n][1]} Syndicate and the Boss.${sd.decree ? ' Rebalanced: one Decree starts on the board.' : ''}`, null, now);
   return ok();
 }
@@ -266,8 +268,12 @@ function gameReduce(room, actor, msg, rng, now) {
       if (room.phase === 'power') { log(room, 'host', 'The host skipped the power.', null, now); nextSpeaker(room); return ok(); }
       return err('Nothing to skip now.');
     }
-    case 'again': case 'abandon': {
+    case 'anim': { // the host's switch for the pop-out animations, for every screen at the table
       if (!isHost) return err('Only the host can do that.');
+      room.anim = !!msg.on; return ok();
+    }
+    case 'again': case 'abandon': {
+      if (!isHost && !(msg.type === 'again' && room.phase === 'over' && me)) return err('Only the host can do that.');
       if (msg.type === 'again' && room.phase !== 'over') return err('Finish this game first.');
       room.game = null; room.phase = 'lobby'; room.undo = []; room.timer = null; room.talk = null; room.paused = null;
       if (msg.type === 'abandon') log(room, 'host', 'The host ended the game.', null, now);
@@ -323,7 +329,7 @@ function endReveal(room, view) {
 }
 
 export function viewForPlayer(room, playerId, connected = new Set()) {
-  const view = { kind: 'player', ...tableView(room, playerId, connected), game: publicGame(room) };
+  const view = { kind: 'player', ...tableView(room, playerId, connected), game: publicGame(room), anim: room.anim !== false };
   const me = byId(room, playerId); const g = room.game;
   if (g && me && g.order.includes(me.id)) {
     if (g.roles) { view.me.role = roleView(g.roles[me.id]); view.me.sees = knowledgeFor(me.id, g.roles, g.n); }
@@ -343,7 +349,35 @@ export function viewForPlayer(room, playerId, connected = new Set()) {
 }
 
 export function viewForScreen(room, connected = new Set()) {
-  const view = { kind: 'screen', ...tableView(room, null, connected), game: publicGame(room) };
+  const view = { kind: 'screen', ...tableView(room, null, connected), game: publicGame(room), anim: room.anim !== false };
   endReveal(room, view);
   return view;
+}
+
+// ---------------------------------------------------------------- game over
+export const endedNow = (phaseBefore, room) => phaseBefore !== 'over' && room.phase === 'over';
+
+// The game-over event: the server decides the winner and the reason once. `you` is each player's own result,
+// worked out from their own role; the table screen and anyone without a known role get none.
+export function gameOverEvent(room, playerId = null) {
+  const g = room.game; if (!g || room.phase !== 'over') return null;
+  const ev = { type: 'gameover', gameNo: room.gameNo || 0, winner: g.winner, reason: g.reason, text: WIN_TEXT[g.reason] || '' };
+  const role = playerId && g.roles && g.order.includes(playerId) ? ROLES[g.roles[playerId]] : null;
+  if (role) ev.you = role.side === g.winner ? 'won' : 'lost';
+  return ev;
+}
+
+// What to send each open socket after a change: its own view, plus the game-over event when the game just ended.
+// sockets: [{ ws, who: 'player' | 'screen' | null, playerId }]. Sockets that have not joined get nothing.
+export function broadcastPlan(room, sockets, connected, { gameOver = false } = {}) {
+  const plan = [];
+  for (const s of sockets) {
+    if (!s.who) continue;
+    const player = s.who === 'screen' ? null : s.playerId;
+    const msgs = [{ type: 'view', view: player ? viewForPlayer(room, player, connected) : viewForScreen(room, connected) }];
+    const ev = gameOver ? gameOverEvent(room, player) : null;
+    if (ev) msgs.push(ev); // after the view, so the roles it reveals are already on screen
+    plan.push({ ws: s.ws, msgs });
+  }
+  return plan;
 }

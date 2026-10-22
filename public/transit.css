@@ -1,0 +1,76 @@
+/* The Gilded Chamber, flat colour-block look (loaded after styles.css; this game only).
+   Bold saturated blocks (warm orange main, deep red Syndicate, muted blue Loyalists), big rounded cards, pill
+   buttons, chunky type, big glanceable numbers, the main action large at the bottom within thumb reach.
+   Art-deco gold trim stays as an accent. Liquid Glass (fx.css) is kept for overlays and sheets so the flat blocks dominate.
+   Colours come from the tokens in styles.css, which scripts/contrast.mjs checks in both light and low-light mode. */
+:root{--r-panel:24px;--r-control:16px;--pop:cubic-bezier(.34,1.56,.64,1)}
+
+/* type: heavy and legible */
+.phase-title,.block-title,.reveal-h,.board-h{font-weight:900}
+.phase-title{font-size:clamp(2.2rem,1.7rem + 2.6vw,3.6rem)}
+.say{font-weight:600}
+.num{font-family:var(--font-display);font-weight:900;font-size:1.7em;line-height:1;font-variant-numeric:tabular-nums}
+
+/* cards: cream text panels with a thin gold deco line inside */
+.stage,.reveal,.panel{background:var(--panel);border:0;border-radius:28px;padding:var(--s5);
+  box-shadow:inset 0 0 0 3px var(--panel), inset 0 0 0 4.5px var(--gold)}
+.stage{gap:var(--s4)}
+.reveal{padding:var(--s5)}
+.winner{border-radius:28px}
+.block + .block{margin-top:var(--s6)}
+.layout .col-main > * + *{margin-top:var(--s5)}
+.layout .col-main > .boards{margin-top:0}
+
+/* header and tab bar: orange blocks */
+.appbar{min-height:calc(var(--appbar-h) + env(safe-area-inset-top));border-bottom:3px solid var(--candle)}
+.phase-badge{background:var(--panel);border:2px solid var(--candle);font-weight:800}
+.tabbar{background:var(--head);border-top:3px solid var(--candle)}
+.tabbar button{color:var(--candle);border-radius:var(--r-pill);transition:transform 220ms var(--pop)}
+.tabbar button[aria-current="page"]{background:var(--panel);color:var(--candle)}
+.tabbar button:active{transform:scale(.92)}
+
+/* buttons: pills, springy */
+.btn{min-height:52px;padding:0 26px;border-radius:var(--r-pill);background:var(--btn);color:var(--on-btn);border:2.5px solid var(--candle);
+  font-weight:900;box-shadow:0 3px 0 var(--candle);transition:transform 220ms var(--pop),background-color var(--t-press)}
+.btn:active{transform:translateY(3px) scale(.96)}
+.btn.ghost{background:transparent;color:var(--candle);border-color:var(--candle);box-shadow:none}
+.btn.ghost:active{transform:scale(.96)}
+.btn.danger{background:var(--cabal-fill);color:var(--on-fill);border-color:var(--candle)}
+.btn.ghost.danger{background:transparent;color:var(--mafia);border-color:var(--mafia)}
+.btn.disabled,.btn[aria-disabled="true"]{box-shadow:none}
+.btn.big{min-height:64px;font-size:clamp(1.15rem,1.05rem + .5vw,1.4rem)}
+.btn.sm{min-height:44px}
+.icon-btn,.tile-btn,.knight.can-pick{transition:transform 220ms var(--pop)}
+.icon-btn:active{transform:scale(.88)}
+.seg{border:2px solid var(--candle);background:var(--panel)}
+.tool-btn{border-radius:var(--r-panel);border:2.5px solid var(--candle);font-weight:900;transition:transform 220ms var(--pop)}
+.tool-btn:active{transform:scale(.95)}
+
+/* the main action: a big pill at the bottom of the screen, in the thumb zone */
+.sticky-act{padding:6px;border-radius:var(--r-pill)}
+.sticky-act .btn{box-shadow:0 3px 0 var(--candle)}
+
+/* Aye / Nay and policy choices are solid colour blocks */
+.choice{min-height:128px;border-radius:28px;border:3px solid var(--candle);box-shadow:0 4px 0 var(--candle);font-weight:900;font-size:clamp(1.3rem,1.1rem + 1vw,1.7rem);
+  transition:transform 220ms var(--pop)}
+.choice.yes{background:var(--reform-fill);color:var(--on-fill);border-color:var(--candle)}
+.choice.no{background:var(--cabal-fill);color:var(--on-fill);border:3px solid var(--candle)}
+.choice.reform{background:var(--reform-fill);color:var(--on-fill);border-color:var(--candle)}
+.choice.decree{background:var(--cabal-fill);color:var(--on-fill);border:3px solid var(--candle);box-shadow:0 4px 0 var(--candle)}
+.choice:active:not([aria-disabled="true"]){transform:translateY(4px) scale(.97)}
+.choice .ico{width:64px;height:64px}
+.tile{border-radius:18px}
+
+/* the board: an orange block holding a blue Loyalist block and a deep red Syndicate block, with big numbers */
+.boards{gap:var(--s3)}
+.board{border-radius:22px;padding:var(--s4)}
+.board-h{font-size:clamp(1.4rem,1.2rem + 1vw,1.9rem)}
+.board-h b{font-family:var(--font-display);font-size:2.6rem;line-height:.9;font-weight:900}
+.slot{border-radius:12px}
+.board-foot{align-items:center;font-weight:700}
+.board-foot .num{font-size:2rem}
+.rejects{gap:8px;font-weight:800}
+.rejects i{width:22px;height:22px;border-width:3px}
+
+/* round table seats */
+.knight-disc{border-width:3px;font-weight:900}

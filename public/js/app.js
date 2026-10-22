@@ -5,6 +5,7 @@ import { ui } from './ui_icons.js';
 import { art, ROLE_ART, POWER_ART } from './art.js';
 import { ROLES, TEAMS, POWERS, POWER_TEXT, roleList, MIN_PLAYERS, MAX_PLAYERS, REFORM_TO_WIN, DECREE_TO_WIN, VETO_AT, PRETENDER_DANGER, TRACKER_MAX, startingDeck } from './rules.js';
 import { makeTable, faqPage, wireFaqSearch } from './table_ui.js';
+import { makeFx } from './fx.js';
 import { roleCards, MAP } from './cards.js';
 import { FAQ } from './faq.js';
 
@@ -43,9 +44,11 @@ function render() {
   S.ui.fresh = {}; S.ui.flip = false;
   window.scrollTo(0, y);
   for (const el of $app.querySelectorAll('[data-scroll]')) el.scrollTop = el.scrollHeight;
+  fx.after();
 }
 document.addEventListener('focusout', () => { if (pending) setTimeout(render, 50); });
 const T = makeTable({ S, send, esc, ui, toast, render });
+const fx = makeFx({ S, send, esc });
 
 function screen() {
   if (S.fatal) return `<main class="wrap"><div class="empty">${ui('warning')}<h1 class="phase-title">${esc(S.fatal)}</h1><a class="btn" href="#/">Go to the home page</a></div></main>`;
@@ -234,19 +237,19 @@ function cardGuideBlock(n, house, m) {
 // ---------------------------------------------------------------- the board
 function board(v) {
   const g = v.game;
-  const rs = Array.from({ length: REFORM_TO_WIN }, (_, i) => `<div class="slot ${i < g.reform ? 'is-reform' : ''} ${S.ui.fresh.policy && i === g.reform - 1 && g.lastPolicy?.policy === 'R' ? 'is-pop' : ''}" aria-label="Reform ${i + 1}${i < g.reform ? ', passed' : ''}">${i < g.reform ? art('torch') : i === REFORM_TO_WIN - 1 ? `<small>Win</small>` : ''}</div>`).join('');
+  const rs = Array.from({ length: REFORM_TO_WIN }, (_, i) => `<div class="slot ${i < g.reform ? 'is-reform' : ''}" aria-label="Reform ${i + 1}${i < g.reform ? ', passed' : ''}">${i < g.reform ? art('torch') : i === REFORM_TO_WIN - 1 ? `<small>Win</small>` : ''}</div>`).join('');
   const ds = Array.from({ length: DECREE_TO_WIN }, (_, i) => {
     const p = g.powers[i]; const on = i < g.decree;
     const mark = on ? art('chain') : i === DECREE_TO_WIN - 1 ? '<small>Win</small>' : p ? `<span class="slot-power" title="${esc(POWER_TEXT[p][0])}">${art(POWER_ART[p])}<small>${esc(POWER_TEXT[p][0])}</small></span>` : '';
-    return `<div class="slot ${on ? 'is-decree' : ''} ${i === PRETENDER_DANGER - 1 && !on ? 'is-danger' : ''} ${S.ui.fresh.policy && i === g.decree - 1 && g.lastPolicy?.policy === 'D' ? 'is-pop' : ''}" aria-label="Decree ${i + 1}${on ? ', passed' : p ? `, ${POWER_TEXT[p][0]}` : ''}">${mark}</div>`;
+    return `<div class="slot ${on ? 'is-decree' : ''} ${i === PRETENDER_DANGER - 1 && !on ? 'is-danger' : ''}" aria-label="Decree ${i + 1}${on ? ', passed' : p ? `, ${POWER_TEXT[p][0]}` : ''}">${mark}</div>`;
   }).join('');
   const pips = Array.from({ length: TRACKER_MAX }, (_, i) => `<i class="${i < g.tracker ? 'on' : ''} ${i === TRACKER_MAX - 1 ? 'last' : ''}"></i>`).join('');
   return `<section class="boards" aria-label="The board">
-    <div class="board a-reform"><h2 class="board-h">${art('torch')} Reforms <b>${g.reform}/${REFORM_TO_WIN}</b></h2><div class="slots five">${rs}</div></div>
-    <div class="board a-cabal"><h2 class="board-h">${art('chain')} Decrees <b>${g.decree}/${DECREE_TO_WIN}</b></h2><div class="slots six">${ds}</div>
+    <div class="board a-reform"><h2 class="board-h">${art('torch')} Reforms <b data-roll="reform">${g.reform}/${REFORM_TO_WIN}</b></h2><div class="slots five">${rs}</div></div>
+    <div class="board a-cabal"><h2 class="board-h">${art('chain')} Decrees <b data-roll="decree">${g.decree}/${DECREE_TO_WIN}</b></h2><div class="slots six">${ds}</div>
       <p class="board-note">${g.decree >= PRETENDER_DANGER ? 'Three Decrees: electing the Boss as Chancellor wins for the Syndicate.' : 'From the third Decree, the Boss must not be elected Chancellor.'}${g.vetoOn ? ' Veto is unlocked.' : ''}</p></div>
-    <div class="board-foot"><span class="rejects" title="Unrest">${art('unrest')} Unrest ${pips}</span>
-      <span>Draw pile <b>${g.pile}</b> · Discards <b>${g.discards}</b></span></div>
+    <div class="board-foot"><span class="rejects" title="Unrest">${art('unrest')} Unrest <b class="num" data-roll="tracker">${g.tracker}/${TRACKER_MAX}</b> ${pips}</span>
+      <span>Draw pile <b class="num" data-roll="pile">${g.pile}</b> · Discards <b class="num" data-roll="discards">${g.discards}</b></span></div>
     ${g.reshuffleNow && !g.cardsApp ? `<p class="note is-warn">${ui('shuffle')} Fewer than three policies left: shuffle the discards into the draw pile.</p>` : ''}
   </section>`;
 }
@@ -491,7 +494,9 @@ function hostPane(v) {
   const g = v.game;
   const script = g ? `${scriptHtml(phaseScript(v))}<details class="faq-q"><summary>Opening script (eyes closed)</summary>${scriptHtml(openingScript(g.n, !g.appRoles))}</details>`
     : `<p class="muted">Once you start, the lines to read aloud for each phase appear here.</p>`;
-  return T.hostPane(v, hostControls(v), script);
+  const animOn = v.anim !== false;
+  const animToggle = `<label class="toggle ${animOn ? 'is-on' : ''}"><input type="checkbox" data-a="anim" ${animOn ? 'checked' : ''}><span><b>Animations</b><span class="muted">Pop-out effects on every phone and the table screen. Anyone whose device asks for reduced motion never sees them.</span></span></label>`;
+  return T.hostPane(v, hostControls(v) + animToggle, script);
 }
 
 // ---------------------------------------------------------------- shared table screen (TV / laptop)
@@ -518,6 +523,7 @@ function wsTransport(code, asScreen) {
     ws.onmessage = (ev) => {
       let m; try { m = JSON.parse(ev.data); } catch { return; }
       if (m.type === 'view') onView(m.view);
+      else if (m.type === 'gameover') fx.gameOver(m);
       else if (m.type === 'error') toast(m.error);
       else if (m.type === 'joined') store.set(`${KEY}.player.${code}`, JSON.stringify({ playerId: m.playerId, token: m.token }));
       else if (m.type === 'fatal') { if (m.clear) { store.del(`${KEY}.player.${code}`); S.view = null; toast(m.error); render(); } else { closed = true; S.fatal = m.error; render(); } }
@@ -540,11 +546,13 @@ function onView(v) {
   if (v.phase !== p?.phase) { S.ui.showCard = false; S.ui.tally = {}; }
   if (p?.phase !== v.phase && navigator.vibrate && ['vote', 'legislate', 'power', 'over'].includes(v.phase)) try { navigator.vibrate(30); } catch { /* ignore */ }
   T.onView(p, v);
+  fx.onView(p, v);
   S.view = v; render();
 }
 
 // ---------------------------------------------------------------- routing
 async function route() {
+  fx.reset();
   S.transport?.close(); S.transport = null; S.view = null; S.fatal = null; S.conn = true; S.ui.showCard = false;
   const [kind, arg] = location.hash.replace(/^#\/?/, '').split('/');
   if ((kind === 'play' || kind === 'join' || kind === 'screen') && /^[A-Za-z]{6}$/.test(arg || '')) {
@@ -581,10 +589,11 @@ $app.addEventListener('change', (e) => {
   else if (el.dataset.a === 'houseSet') send({ type: 'house', house: { [k]: el.checked } });
   else if (el.dataset.a === 'houseSel') { send({ type: 'house', house: { [k]: el.value } }); el.blur(); }
   else if (el.dataset.a === 'modeSet') send({ type: 'mode', mode: { play: el.value } });
+  else if (el.dataset.a === 'anim') send({ type: 'anim', on: el.checked });
 });
 $app.addEventListener('click', (e) => {
   const el = e.target.closest('[data-a]');
-  if (!el || ['set', 'houseSet', 'houseSel', 'modeSet'].includes(el.dataset.a)) return;
+  if (!el || ['set', 'houseSet', 'houseSel', 'modeSet', 'anim'].includes(el.dataset.a)) return;
   if (el.getAttribute('aria-disabled') === 'true') return;
   if (T.handle(el.dataset.a, el)) return;
   act(el.dataset.a, el);

@@ -160,8 +160,8 @@ export function makeFx({ S, send, esc }) {
   }
 
   function showOver(ev) {
-    const v = S.view; if (!v || S.ui.overShown === ev.gameNo) return;
-    S.ui.overShown = ev.gameNo; closeOver(true); clearOverlays();
+    const v = S.view; if (!v || S.ui.overShown === `${S.code}:${ev.over}`) return;
+    S.ui.overShown = `${S.code}:${ev.over}`; closeOver(true); clearOverlays();
     const motion = on(); const side = ev.winner === 'reform' ? 'reform' : 'cabal';
     const el = document.createElement('div');
     el.id = 'fx-over'; el.className = `fx-over a-${side} ${motion ? '' : 'is-static'}`;

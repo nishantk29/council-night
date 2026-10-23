@@ -21,7 +21,7 @@ const PNAME = { R: 'Reform', D: 'Decree' };
 export const WIN_TEXT = { reforms: '5 Reforms passed', decrees: '6 Decrees passed', pretender: 'The Boss was elected Chancellor', executed: 'The Boss was removed' };
 
 function finish(room, winner, reason, now) {
-  const g = room.game; g.winner = winner; g.reason = reason; room.phase = 'over';
+  const g = room.game; g.winner = winner; g.reason = reason; room.phase = 'over'; room.overN = (room.overN || 0) + 1;
   log(room, 'game', winner === 'reform' ? 'The Loyalists win.' : 'The Syndicate wins.', null, now);
 }
 
@@ -275,6 +275,8 @@ function gameReduce(room, actor, msg, rng, now) {
     case 'again': case 'abandon': {
       if (!isHost && !(msg.type === 'again' && room.phase === 'over' && me)) return err('Only the host can do that.');
       if (msg.type === 'again' && room.phase !== 'over') return err('Finish this game first.');
+      room.players = room.players.filter((p) => !p.open); // seats nobody took over
+      for (const p of room.players) p.watch = p.host ? !!room.house.sitOut : false; // late watchers sit in the next deal
       room.game = null; room.phase = 'lobby'; room.undo = []; room.timer = null; room.talk = null; room.paused = null;
       if (msg.type === 'abandon') log(room, 'host', 'The host ended the game.', null, now);
       return ok();
@@ -361,11 +363,14 @@ export const endedNow = (phaseBefore, room) => phaseBefore !== 'over' && room.ph
 // worked out from their own role; the table screen and anyone without a known role get none.
 export function gameOverEvent(room, playerId = null) {
   const g = room.game; if (!g || room.phase !== 'over') return null;
-  const ev = { type: 'gameover', gameNo: room.gameNo || 0, winner: g.winner, reason: g.reason, text: WIN_TEXT[g.reason] || '' };
+  const ev = { type: 'gameover', gameNo: room.gameNo || 0, over: room.overN || 0, winner: g.winner, reason: g.reason, text: WIN_TEXT[g.reason] || '' };
   const role = playerId && g.roles && g.order.includes(playerId) ? ROLES[g.roles[playerId]] : null;
   if (role) ev.you = role.side === g.winner ? 'won' : 'lost';
   return ev;
 }
+
+// Sockets to drop because their seat was removed or taken over (the new holder has a new token).
+export const socketsToDrop = (sockets, playerId, exceptWs = null) => sockets.filter((s) => s.playerId === playerId && s.ws !== exceptWs).map((s) => s.ws);
 
 // What to send each open socket after a change: its own view, plus the game-over event when the game just ended.
 // sockets: [{ ws, who: 'player' | 'screen' | null, playerId }]. Sockets that have not joined get nothing.

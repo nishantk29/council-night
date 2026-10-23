@@ -1,6 +1,6 @@
 // Cloudflare Worker: serves the API + WebSocket entry points. Static files come from Workers Static Assets.
 import { DurableObject } from 'cloudflare:workers';
-import { newRoom, reduce, broadcastPlan, endedNow } from '../public/js/room.js';
+import { newRoom, reduce, broadcastPlan, endedNow, socketsToDrop } from '../public/js/room.js';
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // no I/O look-alikes
 const ROOM_TTL_MS = 12 * 60 * 60 * 1000;
@@ -98,6 +98,16 @@ export class Room extends DurableObject {
 
   send(ws, obj) { try { ws.send(JSON.stringify(obj)); } catch { /* socket gone */ } }
 
+  // Cut off sockets still bound to a seat that was removed or handed to someone else.
+  drop(playerId, exceptWs = null) {
+    const sockets = this.ctx.getWebSockets().map((ws) => ({ ws, ...ws.deserializeAttachment() }));
+    for (const ws of socketsToDrop(sockets, playerId, exceptWs)) {
+      ws.serializeAttachment({ who: null });
+      this.send(ws, { type: 'fatal', error: 'Your seat was taken over or removed by the host.', clear: true });
+      try { ws.close(1008, 'seat gone'); } catch { /* already closed */ }
+    }
+  }
+
   broadcast({ gameOver = false } = {}) {
     const sockets = this.ctx.getWebSockets().map((ws) => ({ ws, ...ws.deserializeAttachment() }));
     for (const { ws, msgs } of broadcastPlan(this.room, sockets, this.connectedIds(), { gameOver })) for (const m of msgs) this.send(ws, m);
@@ -120,6 +130,7 @@ export class Room extends DurableObject {
         const res = reduce(this.room, { anon: true }, { type: 'join', name: msg.join, hostKey: msg.hostKey });
         if (res.error) { this.send(ws, { type: 'error', error: res.error }); return; }
         await this.save();
+        this.drop(res.data.playerId, ws);
         ws.serializeAttachment({ who: 'player', playerId: res.data.playerId });
         this.send(ws, { type: 'joined', ...res.data });
       } else if (msg.screen) { // the shared table screen: public view only
@@ -139,6 +150,7 @@ export class Room extends DurableObject {
     const res = reduce(this.room, actor, msg);
     if (res.error) { this.send(ws, { type: 'error', error: res.error }); return; }
     await this.save();
+    if (msg.type === 'kick') this.drop(msg.id);
     this.broadcast({ gameOver: endedNow(before, this.room) });
   }
 

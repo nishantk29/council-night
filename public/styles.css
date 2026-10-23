@@ -772,3 +772,8 @@ html[data-dim="1"]{
 .board::before{top:7px;left:7px;border-right:0;border-bottom:0}
 .board::after{bottom:7px;right:7px;border-left:0;border-top:0}
 @media (max-width:600px){.slot{aspect-ratio:1}.board{padding:var(--s3)}.board-note{display:none}.slot-power small{font-size:.62rem}}
+
+.confirm-sheet{width:min(92vw,360px);margin:auto;padding:var(--s5);background:var(--panel);color:var(--candle);border:1px solid var(--rule-strong);border-radius:var(--r-panel)}
+.confirm-sheet::backdrop{background:rgba(0,0,0,.6)}
+.confirm-sheet p{margin:0 0 var(--s4);font-size:var(--fs-md)}
+.confirm-sheet .btn-row{justify-content:flex-end}

@@ -4,7 +4,7 @@
 import { ui } from './ui_icons.js';
 import { art, ROLE_ART, POWER_ART } from './art.js';
 import { ROLES, TEAMS, POWERS, POWER_TEXT, roleList, MIN_PLAYERS, MAX_PLAYERS, REFORM_TO_WIN, DECREE_TO_WIN, VETO_AT, PRETENDER_DANGER, TRACKER_MAX, startingDeck } from './rules.js';
-import { makeTable, faqPage, wireFaqSearch } from './table_ui.js';
+import { makeTable, askConfirm, faqPage, wireFaqSearch } from './table_ui.js';
 import { makeFx } from './fx.js';
 import { makeTilt } from './tilt.js';
 import { FAQ } from './faq.js';
@@ -616,16 +616,16 @@ async function act(a, el) {
     case 'flip': S.ui.showCard = !S.ui.showCard; S.ui.flip = true; render(); return;
     case 'dim': store.set(`${KEY}.dim`, $html.dataset.dim === '1' ? '0' : '1'); applyDim(); render(); return;
     case 'start': if (el.classList.contains('disabled')) { toast('Not ready to start yet.'); return; } send({ type: 'start' }); return;
-    case 'nominate': if (confirm(`Nominate ${nameOf(S.view, d.id)} as Chancellor?`)) send({ type: 'nominate', id: d.id }); return;
+    case 'nominate': if (await askConfirm(`Nominate ${nameOf(S.view, d.id)} as Chancellor?`)) send({ type: 'nominate', id: d.id }); return;
     case 'vote': send({ type: 'vote', aye: d.v === '1' }); return;
-    case 'discard': if (confirm('Discard this policy?')) send({ type: 'discard', i: +d.v }); return;
-    case 'enact': if (confirm('Enact this policy?')) send({ type: 'enact', i: +d.v }); return;
+    case 'discard': if (await askConfirm('Discard this policy?')) send({ type: 'discard', i: +d.v }); return;
+    case 'enact': if (await askConfirm('Enact this policy?')) send({ type: 'enact', i: +d.v }); return;
     case 'veto': send({ type: 'veto' }); return;
     case 'vetoReply': send({ type: 'vetoReply', accept: d.v === '1' }); return;
-    case 'hostEnact': if (confirm(`A ${d.v === 'R' ? 'Reform' : 'Decree'} was enacted?`)) send({ type: 'hostEnact', policy: d.v }); return;
-    case 'hostVeto': if (confirm('Both policies are discarded and Unrest moves one step. Confirm the veto?')) send({ type: 'hostVeto' }); return;
+    case 'hostEnact': if (await askConfirm(`A ${d.v === 'R' ? 'Reform' : 'Decree'} was enacted?`)) send({ type: 'hostEnact', policy: d.v }); return;
+    case 'hostVeto': if (await askConfirm('Both policies are discarded and Unrest moves one step. Confirm the veto?')) send({ type: 'hostVeto' }); return;
     case 'check': send({ type: 'check', yes: d.v === '1' }); return;
-    case 'power': { const pw = S.view.game.power; const verb = { investigate: 'Look into', special: 'Make the next Speaker:', execute: S.view.house.exile ? 'Exile' : 'Execute' }[pw]; if (confirm(`${verb} ${nameOf(S.view, d.id)}?`)) send({ type: 'power', id: d.id }); return; }
+    case 'power': { const pw = S.view.game.power; const verb = { investigate: 'Look into', special: 'Make the next Speaker:', execute: S.view.house.exile ? 'Exile' : 'Execute' }[pw]; if (await askConfirm(`${verb} ${nameOf(S.view, d.id)}?`)) send({ type: 'power', id: d.id }); return; }
     case 'peekDone': send({ type: 'peekDone' }); return;
     case 'piece': send({ type: 'mode', mode: { play: 'hybrid', [d.k]: d.v } }); return;
     case 'tallyToggle': S.ui.tally[d.id] = !S.ui.tally[d.id]; render(); return;

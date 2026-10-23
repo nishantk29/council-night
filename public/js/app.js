@@ -66,22 +66,23 @@ function screen() {
   return banner + appbar(v) + layout(v);
 }
 
-const cardBack = () => `<span class="rcard-back"><span class="rcard-back-mark">${art('sun')}</span></span>`;
-const dimBtn = () => `<button type="button" class="icon-btn dim-btn" data-a="dim" aria-pressed="${$html.dataset.dim === '1'}" aria-label="Low-light mode" title="Low-light mode">${ui($html.dataset.dim === '1' ? 'sun' : 'moon')}</button>`;
+const dimBtn = (label = '') => `<button type="button" class="icon-btn dim-btn${label ? ' has-label' : ''}" data-a="dim" aria-pressed="${$html.dataset.dim === '1'}" aria-label="Low-light mode" title="Low-light mode"><i class="dim-glyph" aria-hidden="true"></i>${label}</button>`;
 
 function home() {
   const mine = Object.keys(localStorage).filter((k) => k.startsWith(`${KEY}.player.`)).map((k) => k.slice(KEY.length + 8));
-  return `<main class="wrap home"><div class="home-dim">${dimBtn()}</div>
-    <header class="home-head"><h1 class="wordmark">The Gilded Chamber</h1><p class="tagline">Loyalty or ruin. Trust no one.</p></header>
-    <section class="home-hero"><div class="card-fan" aria-hidden="true">${cardBack().repeat(3)}</div>
-      <p class="lede">The Loyalists hold the majority, but the Syndicate sits among them, and one of them is the Boss. Elect governments, pass policies, and unmask the Boss before they take power. 5 to 10 players, each on their own phone.</p>
+  return `<main class="wrap home">
+    <header class="home-head"><div class="home-top"><p class="home-meta">5 to 10 players, one phone each</p>${dimBtn('Low light')}</div>
+      <h1 class="wordmark">The Gilded Chamber</h1></header>
+    <section class="home-hero"><p class="lede">The Loyalists hold the majority, but the Syndicate sits among them, and one of them is the Boss.</p>
+      <p class="lede-sub">Elect governments, pass policies, and unmask the Boss before they take power.</p>
+      <div class="pile" role="img" aria-label="The policy pile holds 6 Reforms and 11 Decrees"><span class="pile-r"><b>6</b>Reforms</span><span class="pile-d"><b>11</b>Decrees</span></div>
     </section>
     <div class="home-paths">
-      <section class="path"><h2 class="path-title">Host a game</h2>
+      <section class="path"><h2 class="path-title">Host</h2>
         <p class="muted">You can play too, or sit out as the moderator. Everyone else joins with a 6‑letter code.</p>
         <label class="field"><span>Your name</span><input data-i="hostName" maxlength="20" autocomplete="nickname" enterkeyhint="go" value="${esc(S.ui.draft.hostName || store.get(`${KEY}.name`) || '')}"></label>
         ${mine.map((c) => `<p class="resume-row"><a class="resume" href="#/play/${esc(c)}">Back to chamber <b class="code">${esc(c)}</b></a></p>`).join('')}</section>
-      <section class="path c-blue"><h2 class="path-title">Join a game</h2>
+      <section class="path c-blue"><h2 class="path-title">Join</h2>
         <div class="join-row"><label class="field"><span>Room code</span><input class="code-input" data-i="joinCode" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="go" placeholder="ABCDEF" value="${esc(S.ui.draft.joinCode || '')}"></label>
         <button type="button" class="btn ghost" data-a="goJoin">Join</button></div></section>
       <p class="home-faq"><a class="path-link" href="#/rules">How to play</a><a class="path-link" href="#/faq">FAQ</a></p>

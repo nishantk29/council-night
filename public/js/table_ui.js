@@ -114,7 +114,7 @@ export function makeTable(ctx) {
       <p class="muted">“Replace” opens a seat mid-game: the next person who joins takes it over with the same secret card. “Make host” hands you off.</p>
       <h3 class="sub">Table screen</h3><p class="muted">Open this on a TV or laptop everyone can see. It never shows anything secret.</p>
       <p><a class="btn ghost" href="#/screen/${esc(v.code)}" target="_blank" rel="noopener">${ui('expand')} Open the table screen</a></p>
-      <p class="muted"><a href="#/faq">FAQ</a> · <a href="/print.html" target="_blank" rel="noopener">Printable card guide and cards</a></p>
+      <p class="muted"><a href="#/faq">FAQ</a></p>
     </section>`;
   }
 
@@ -189,7 +189,7 @@ export function makeTable(ctx) {
 export function faqPage(groups, esc, ui, title = 'Questions and answers') {
   return `<main class="wrap game faq"><p><a class="link" href="#/">${ui('back')} Home</a> · <a class="link" href="#/rules">How to play</a></p>
     <section class="stage"><h1 class="phase-title">${esc(title)}</h1>
-    <label class="field"><span>Search</span><input type="search" data-faq="search" placeholder="Try “tie”, “veto”, “cards”, “timer”" autocomplete="off"></label>
+    <label class="field"><span>Search</span><input type="search" data-faq="search" placeholder="Try “tie”, “veto”, “roles”, “timer”" autocomplete="off"></label>
     <p class="muted" data-faq="none" hidden>Nothing matches. Try a different word.</p></section>
     ${groups.map(([g, qs]) => `<section class="stage faq-group"><h2 class="block-title">${esc(g)}</h2>${qs.map(([q, a]) => `<details class="faq-q"><summary>${esc(q)}</summary><div class="faq-a">${a}</div></details>`).join('')}</section>`).join('')}
   </main>`;

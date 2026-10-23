@@ -1,6 +1,6 @@
 # The Gilded Chamber
 
-A hidden-role policy game for 5 to 10 players: on phones, with a regular deck of cards, or any mix. Sister app to
+A hidden-role policy game for 5 to 10 players: on phones. Sister app to
 [Mafia Night](https://mafia-app.hatethespurs.workers.dev) and [Quest Night](https://quest-night.hatethespurs.workers.dev):
 same stack, same components, its own game, names, wording and art.
 
@@ -25,14 +25,14 @@ Live: https://council-night.hatethespurs.workers.dev
   Boss as Chancellor once 3 Decrees are down (any other Chancellor elected then is confirmed “not the Boss”).
 
 ## Extras (all off or optional by default)
-- Play modes: phones only; hybrid (roles / votes / policy tiles each “physical” or “in the app”); all physical with
+- Play modes: phones only; hybrid (roles / votes / policy tiles each “at the table” or “in the app”); all at the table with
   the host’s phone as board, tracker and moderator. The host only ever enters public facts.
 - House rules: rebalanced 6/7/9, exile instead of execution, anonymous votes, no-claims mode, moderator sits out,
   phase timer, vote reveal delay, first Speaker.
 - Host dashboard: pause/resume, undo, skip, nudge, replace a player (same seat and role), hand off host, mute or
   remove chat, phase script to read aloud. Table Tools: coin, dice, timers, talk turns, picker, tally, counters.
 - Public table chat with a claims log (no team chat), a game log, a TV “table screen” with no secrets, a desktop
-  three-column layout, a low-light mode, an FAQ, and printable guides: `public/print/*.pdf` or `/print.html`.
+  three-column layout, a low-light mode and an FAQ.
 
 ## Code
 - `public/js/rules.js` pure rules; `public/js/room.js` the reducer plus `viewForPlayer`/`viewForScreen` (all secrecy);
@@ -58,3 +58,9 @@ Live: https://council-night.hatethespurs.workers.dev
 ## Credits
 Original game in the hidden-role policy family; names, wording and art are its own. Fonts: Limelight, Poiret One, Big Shoulders
 Display, Alegreya and Alegreya Sans (SIL OFL 1.1), Special Elite (Apache 2.0). Interface icons: Phosphor (MIT).
+
+## Look
+Transit-app style (see `public/transit.css`): a dark page, every section a bold full-colour rounded card (orange panels,
+blue Loyalists, deep red Syndicate), heavy Rubik titles, big numbers, and the main action as a full-width pill fixed at the
+bottom. `public/js/tilt.js` adds the 3D tilt and lift (pointer and device tilt, rAF only, idle-free). Liquid Glass is only
+for pop-outs and overlays (`fx.css`). Reduced motion and low-end phones get flat cards.

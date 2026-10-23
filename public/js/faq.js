@@ -1,4 +1,4 @@
-// The Gilded Chamber FAQ: rules disputes, house rules, play modes and cards, host tools, joining, privacy.
+// The Gilded Chamber FAQ: rules disputes, house rules, play modes, host tools, joining, privacy.
 // [group, [[question, answer-html], ...]]
 export const FAQ = [
   ['Rules disputes and edge cases', [
@@ -6,7 +6,7 @@ export const FAQ = [
     ['Who is term-limited, exactly?', 'The last <b>elected</b> Chancellor can’t be nominated. The last elected Speaker can’t be nominated either, unless only five players are left in the game. Failed nominations don’t count. The Speaker who nominates is never limited from being Speaker.'],
     ['What happens on the third failed government?', 'The top policy is turned over and enacted at once. Any power on it is ignored, term limits are forgotten (anyone can be nominated next), and Unrest goes back to zero. The Speaker role moves on as normal.'],
     ['Does Unrest reset when a policy passes?', 'Yes. Unrest goes back to zero whenever any policy is enacted, by a government or by the Unrest itself.'],
-    ['When are the discards shuffled back?', 'Right after a policy is enacted, if fewer than three policies are left in the draw pile, every discard is shuffled back in. The app does it for you; with physical tiles a reminder shows on the board.'],
+    ['When are the discards shuffled back?', 'Right after a policy is enacted, if fewer than three policies are left in the draw pile, every discard is shuffled back in. The app does it for you; when policies are handled at the table, a reminder shows on the board.'],
     ['How does the veto work?', 'Only once five Decrees are on the board. After the Speaker passes two policies, the Chancellor may propose a veto. If the Speaker agrees, both are discarded, nothing is enacted, and Unrest moves one step. If the Speaker refuses, the Chancellor must enact one. A veto can be proposed once per session.'],
     ['After a snap election, who is next?', 'The chosen player serves one turn as Speaker. Then the gavel returns to the player to the left of the Speaker who called the snap election, as if it never happened. You can choose a term-limited player for Speaker.'],
     ['Can I Inquire into the same player twice?', 'No. Nobody can be looked into twice in one game. An Inquiry shows the party, not the role: the Boss’s party is Syndicate.'],
@@ -17,15 +17,13 @@ export const FAQ = [
   ]],
   ['House rules', [
     ['Which house rules are there?', 'All are off unless the host turns them on: <b>Rebalanced tables</b> (community variant for 6, 7 and 9 players), <b>Exile instead of execution</b>, <b>anonymous votes</b>, <b>no-claims mode</b>, <b>moderator sits out</b>, a <b>phase timer</b>, a <b>vote reveal delay</b>, and who is the <b>first Speaker</b>.'],
-    ['What does “Rebalanced tables” change?', 'At 6 players the game starts with one Decree on the board (it gives no power). At 7 players one Decree is left out of the deck; at 9 players two are. Other sizes are unchanged.'],
+    ['What does “Rebalanced tables” change?', 'At 6 players the game starts with one Decree on the board (it gives no power). At 7 players one Decree is left out of the policy pile; at 9 players two are. Other sizes are unchanged.'],
     ['Does the phase timer do anything at zero?', 'No. It beeps, vibrates and turns red. The host decides what to do: nudge, skip, or let them finish.'],
     ['Anonymous votes?', 'Only the count of Ayes and Nays is shown, never who voted which way, during the game or after.'],
   ]],
-  ['Play modes and the deck of cards', [
-    ['What are the three play modes?', '<b>Phones only</b>: roles, votes and policies all in the app (online play works too). <b>Hybrid</b>: choose for each piece (roles, votes, policy tiles) whether it is physical or in the app. <b>All physical</b>: a deck of cards on the table; the host’s phone is the board, the tracker and the moderator.'],
-    ['How do I play with a regular deck?', 'Print the <a href="/print.html" target="_blank" rel="noopener">card guide</a>. Roles: hearts 7 to Q are Loyalists, clubs J/Q/K are the Syndicate, the K♠ is the Boss. Policies: A♥–6♥ are Reforms, A♠–J♠ are Decrees. Party cards (for an Inquiry): diamonds A–6 for Loyalist, clubs A–4 for Syndicate. The red joker is the Speaker’s placard, the black joker the Chancellor’s. Vote with thumbs, on three.'],
-    ['Does the host see secrets in physical or hybrid mode?', 'No. The host only enters what the whole table sees: who was nominated, who voted Aye, which policy was turned face up, and the answer to “are you the Boss?”. Seats without phones are allowed only when every piece is physical.'],
-    ['Can I print my own cards?', 'Yes: the <a href="/print.html#cards" target="_blank" rel="noopener">Gilded Chamber cards</a> sheet has role cards, party cards, policy tiles, Aye/Nay cards and the two placards, nine to a page, poker size.'],
+  ['Play modes', [
+    ['What are the three play modes?', '<b>Phones only</b>: roles, votes and policies all in the app (online play works too). <b>Hybrid</b>: choose for each piece (roles, votes, policy tiles) whether the table handles it out loud or the app does. <b>All at the table</b>: the table handles everything and the host’s phone is the board, the tracker and the moderator.'],
+    ['Does the host see secrets in hybrid or all-at-the-table mode?', 'No. The host only enters what the whole table sees: who was nominated, who voted Aye, which policy was turned face up, and the answer to “are you the Boss?”. Seats without phones are allowed only when every piece is handled at the table.'],
   ]],
   ['Host tools and Table Tools', [
     ['What can the host do?', 'From the Host tab (or the right-hand panel on a laptop): pause and resume, undo the last step, skip an idle player, nudge someone, mute or remove chat messages, replace a player who left (the newcomer takes the same seat and role), hand off the host role, run timers and talk turns, and read the moderator script aloud.'],

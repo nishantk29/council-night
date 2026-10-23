@@ -6,17 +6,15 @@
    tilt, rAF only, nothing runs while idle). There are no blur layers here: Liquid Glass lives in fx.css and is used only
    for pop-outs and overlays. Reduced motion and low-end phones (html[data-fxlite]) get flat cards.
    Colours come from the tokens in styles.css, which scripts/contrast.mjs checks in both normal and low-light mode. */
-:root{--pop:cubic-bezier(.34,1.56,.64,1);--card-shadow:0 22px 34px -16px rgba(0,0,0,.75);
+:root{--pop:cubic-bezier(.34,1.56,.64,1);--card-shadow:none;
   --sun:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 220'%3E%3Cg fill='%23000' opacity='.1'%3E%3Cpath d='M320 0L120-40 190-60zM320 0L-20 40V100zM320 0L-20 150V210zM320 0L60 260 150 280zM320 0L250 260 340 260z'/%3E%3C/g%3E%3Cpath d='M268 22l10 14-10 14-10-14z' fill='%23000' opacity='.16'/%3E%3C/svg%3E");
   --diamond:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l8 10-8 10L4 12z' fill='%23E2B04A'/%3E%3C/svg%3E")}
 
 /* ---------------------------------------------------------------- page and type */
 html{background:var(--room)}
-body{background:radial-gradient(120% 60% at 50% -10%,#1d1d24 0,var(--room) 70%) no-repeat,var(--room);overflow-x:clip}
-html[data-dim="1"] body{background:radial-gradient(120% 60% at 50% -10%,#101014 0,var(--room) 70%) no-repeat,var(--room)}
+body{background:var(--room);overflow-x:clip}
 h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 .wordmark{font-family:var(--font-display);font-weight:900;font-size:clamp(2.75rem,13vw,4rem);letter-spacing:-.03em;line-height:1;color:var(--candle)}
-.tagline{display:inline-block;margin-top:10px;padding:6px 14px;border-radius:99px;background:var(--panel-2);color:var(--smoke);font-weight:700;font-size:var(--fs-sm)}
 .phase-title{font-weight:900;font-size:clamp(2rem,1.5rem + 3vw,3.2rem);letter-spacing:-.03em;line-height:1.02}
 .say{font-style:normal;font-weight:600;font-size:var(--fs-md);line-height:1.45;color:var(--candle)}
 .narration{font-style:normal;font-size:var(--fs-md);font-weight:600}
@@ -25,7 +23,6 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 .block-title,.path-title,.sub{font-family:var(--font-display);font-weight:900;font-size:clamp(1.4rem,5.4vw,1.8rem);letter-spacing:-.02em;line-height:1.05;text-transform:none;-webkit-text-stroke:0}
 .sub{font-size:var(--fs-lg);margin-top:var(--s4)}
 .block-title,.path-title{display:flex;align-items:center;gap:12px}
-.block-title::before,.path-title::before{content:"";flex:none;width:40px;height:40px;border-radius:13px;background:#2A0606 var(--diamond) center/22px no-repeat;box-shadow:0 4px 0 rgba(0,0,0,.28)}
 
 /* ---------------------------------------------------------------- cards: bold orange blocks, stacked */
 :is(.stage,.reveal,.panel,.pane-sec,.join-code,.path,.home-hero,.stat){position:relative;border:0;border-radius:var(--r-card);padding:var(--s5);
@@ -47,11 +44,14 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 /* blue Join card on the home page */
 .path.c-blue{--candle:var(--on-fill);--smoke:var(--on-fill);--faint:var(--on-fill);--panel:#244B78;--panel-2:#244B78;--rule:#9CC3F0;--rule-strong:#FFF8EC;--btn:#FFE9C7;--on-btn:#2A0606;--brass:#FFF8EC;--focus:#FFF8EC;
   background:var(--reform-fill);color:var(--on-fill)}
-.path.c-blue::before{background:#FFF8EC var(--diamond) center/22px no-repeat}
 
 /* big glanceable numbers: Unrest, draw pile, discards */
-.stat{display:grid;align-content:space-between;justify-items:start;gap:var(--s2);min-height:128px;padding:var(--s3) var(--s3) var(--s4);border-radius:24px}
-.stat .lbl{display:flex;align-items:center;gap:6px;font-weight:800;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase}
+.stat{display:grid;align-content:space-between;justify-items:start;gap:var(--s2);min-height:128px;padding:var(--s3) var(--s3) var(--s4);border-radius:7px}
+/* role, not one recipe: the action card keeps the rays and the big radius; the rest sit flat and tighter */
+:is(.panel,.pane-sec,.join-code,.path,.stat){background-image:none}
+:is(.pane-sec,.panel){border-radius:18px;padding:var(--s4)}
+.join-code{border-radius:10px}
+.stat .lbl{display:flex;align-items:center;gap:6px;font-weight:800;font-size:.9rem}
 .stat .num{font-size:clamp(3rem,15vw,4.6rem);line-height:.85;letter-spacing:-.04em}
 .rejects{gap:6px}
 .rejects i{width:18px;height:18px;border-width:3px}
@@ -60,7 +60,7 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 .appbar{min-height:calc(var(--appbar-h) + env(safe-area-inset-top));background:var(--head);-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom:1px solid var(--rule)}
 .appbar-mark{color:var(--brass)}
 .appbar-title{font-weight:800}
-.phase-badge{background:var(--orange);color:var(--ink);border:0;font-weight:800;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.phase-badge{background:var(--orange);color:var(--ink);border:0;font-weight:800}
 .phase-badge .ui-ico,html[data-phase="night"] .phase-badge .ui-ico{color:var(--ink)}
 .dim-btn{color:var(--candle)}
 .tabbar{background:var(--head);-webkit-backdrop-filter:none;backdrop-filter:none;border-top:1px solid var(--rule);gap:4px}
@@ -70,9 +70,9 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 
 /* ---------------------------------------------------------------- buttons: pills, springy */
 .btn{min-height:56px;padding:0 26px;border:0;border-radius:var(--r-pill);background:var(--btn);color:var(--on-btn);font-weight:900;font-size:1.1rem;
-  box-shadow:0 5px 0 rgba(0,0,0,.28);transition:transform .35s var(--pop),background-color var(--t-press)}
-.btn:active{transform:translateY(4px) scale(.98);box-shadow:0 1px 0 rgba(0,0,0,.28)}
-.btn.ghost{background:transparent;color:var(--candle);border:3px solid var(--candle);box-shadow:none}
+  transition:transform .35s var(--pop),background-color var(--t-press)}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;color:var(--candle);border:2px solid var(--candle);font-weight:800}
 .btn.ghost:active{transform:scale(.96)}
 .btn.danger{background:var(--cabal-fill);color:var(--on-fill)}
 .btn.ghost.danger{background:transparent;color:var(--mafia);border:3px solid var(--mafia)}
@@ -92,10 +92,12 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 .sticky-act{position:fixed;left:0;right:0;margin-inline:auto;width:min(calc(100% - 2 * var(--gutter)),36rem);bottom:calc(var(--s3) + env(safe-area-inset-bottom));z-index:25;
   padding:0;border:0;border-radius:var(--r-pill);background:none;box-shadow:none}
 @media (max-width:1099px){.layout:not(.is-screen) .sticky-act{bottom:calc(var(--tabbar-h) + var(--s3) + env(safe-area-inset-bottom))}}
-.sticky-act .btn{width:100%;min-height:68px;background:var(--go);color:var(--on-go);font-size:1.4rem;box-shadow:0 8px 0 rgba(0,0,0,.4)}
-.sticky-act .btn:active{box-shadow:0 3px 0 rgba(0,0,0,.4)}
+.sticky-act .btn{width:100%;min-height:68px;background:var(--go);color:var(--on-go);font-size:1.4rem;box-shadow:none}
+/* a solid dock band with a hard top edge: content scrolls under it, never half-covered by the pill alone */
+.sticky-act::before{content:"";position:absolute;z-index:-1;left:50%;width:100vw;margin-left:-50vw;top:calc(-1 * var(--s4));bottom:calc(-1 * var(--s3));background:var(--room);border-top:3px solid var(--orange)}
+.wrap.home .sticky-act::before{bottom:calc(-1 * (var(--s3) + env(safe-area-inset-bottom)))}
 .sticky-act .btn.disabled{background:var(--panel-2);color:var(--smoke);box-shadow:none}
-.wrap:has(.sticky-act){padding-bottom:calc(120px + env(safe-area-inset-bottom))}
+.wrap:has(.sticky-act){padding-bottom:calc(136px + env(safe-area-inset-bottom))}
 .layout:has(.sticky-act) .col-main{padding-bottom:calc(var(--tabbar-h) + 128px + env(safe-area-inset-bottom))}
 @media (min-width:1100px){.layout:has(.sticky-act) .col-main{padding-bottom:128px}}
 #toast{background:var(--go);color:var(--on-go);font-weight:800}
@@ -104,12 +106,11 @@ body:has(.sticky-act) #toast{bottom:calc(var(--tabbar-h) + 104px + env(safe-area
 
 /* Aye / Nay and policy choices: solid colour blocks */
 .choice{min-height:128px;border:0;border-radius:var(--r-card);font-weight:900;font-size:clamp(1.4rem,1.1rem + 1.2vw,1.8rem);letter-spacing:-.02em;
-  box-shadow:0 7px 0 rgba(0,0,0,.3),inset 0 0 0 2px rgba(255,248,236,.5);transition:transform .35s var(--pop)}
+  box-shadow:inset 0 0 0 2px rgba(255,248,236,.5);transition:transform .35s var(--pop)}
 .choice.yes,.choice.reform{background:var(--reform-fill);color:var(--on-fill)}
-.choice.no,.choice.decree{background:var(--cabal-fill);color:var(--on-fill);box-shadow:0 7px 0 rgba(0,0,0,.3),inset 0 0 0 3px var(--cabal-fill),inset 0 0 0 5px rgba(255,248,236,.6)}
-.choice:active:not([aria-disabled="true"]){transform:translateY(5px) scale(.97);box-shadow:0 2px 0 rgba(0,0,0,.3),inset 0 0 0 2px rgba(255,248,236,.5)}
+.choice.no,.choice.decree{background:var(--cabal-fill);color:var(--on-fill);box-shadow:inset 0 0 0 3px var(--cabal-fill),inset 0 0 0 5px rgba(255,248,236,.6)}
+.choice:active:not([aria-disabled="true"]){transform:scale(.97)}
 .choice .ico,.choice .ico.art{width:56px;height:56px}
-@media (hover:hover){.choice:hover:not([aria-disabled="true"]){box-shadow:0 7px 0 rgba(0,0,0,.3),inset 0 0 0 2px rgba(255,248,236,.5)}}
 
 /* ---------------------------------------------------------------- lists, chips and small parts inside cards */
 .pill,.chip{border:0;background:var(--panel-2)}
@@ -131,17 +132,36 @@ body:has(.sticky-act) #toast{bottom:calc(var(--tabbar-h) + 104px + env(safe-area
 .round-felt{background:radial-gradient(circle at 50% 40%,var(--baize-lit),var(--baize) 60%,var(--baize-deep))}
 
 /* ---------------------------------------------------------------- the games home */
-.wrap.home{max-width:34rem;display:grid;gap:18px;padding-top:max(28px,env(safe-area-inset-top))}
-.home-head{padding:8px 8px 4px}
-.home-hero{display:grid;justify-items:start;text-align:left;gap:var(--s3)}
-.home-hero .card-fan{justify-content:flex-start;height:clamp(110px,30vw,170px);margin:0}
-.home-hero .lede{color:var(--ink-2);font-weight:600;font-size:var(--fs-md);max-width:34ch}
-.home-paths{max-width:none;gap:18px}
-.path + .path{border-top:0;padding-top:var(--s5);margin-top:0}
+.wrap.home{max-width:34rem;display:grid;gap:var(--s5);padding-top:max(var(--s5),env(safe-area-inset-top))}
+.wrap.home .wordmark{text-align:left}
+.home-head{display:grid;gap:var(--s3);padding:0 var(--s1)}
+.home-top{display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
+.home-meta{color:var(--smoke);font-weight:700;font-size:var(--fs-sm)}
+/* the dimmer: a half-filled disc drawn here, with its word beside it */
+.dim-glyph{display:block;width:20px;height:20px;flex:none}
+.dim-btn .dim-glyph .lamp,.dim-btn[aria-pressed="true"] .dim-glyph .moon{display:none}
+.dim-btn[aria-pressed="true"] .dim-glyph .lamp{display:inline}
+.dim-btn.has-label{width:auto;padding:0 var(--s3);gap:var(--s2);display:inline-flex;align-items:center;font-weight:800;font-size:var(--fs-sm);border-radius:var(--r-pill);background:var(--panel-2)}
+.home-hero{display:grid;justify-items:start;text-align:left;gap:var(--s3);border-radius:20px;background-image:none}
+.home-hero .lede{color:var(--ink);font-weight:800;font-size:clamp(1.3rem,5.6vw,1.6rem);line-height:1.2;letter-spacing:-.015em;max-width:none}
+.home-hero .lede-sub{color:var(--ink-2);font-weight:500;font-size:var(--fs-md);max-width:34ch}
+/* the policy pile as a flat bar: 6 Reforms to 11 Decrees, drawn to scale */
+.pile{display:flex;width:100%;gap:4px;margin-top:var(--s2)}
+.pile > span{display:grid;align-content:center;gap:2px;min-width:0;padding:var(--s3);border-radius:8px;color:var(--on-fill);font-weight:800;font-size:.85rem;line-height:1}
+.pile b{font-size:2rem;font-weight:900;letter-spacing:-.04em}
+.pile-r{flex:6 1 0;background:var(--reform-fill)}
+.pile-d{flex:11 1 0;background:var(--cabal-fill)}
+.home-paths{max-width:none;gap:var(--s4);display:grid}
+.path{border-radius:20px;padding:var(--s4) var(--s4) var(--s5)}
+.path + .path{border-top:0;margin-top:0}
+.path-title{margin-bottom:var(--s2)}
 .path > .muted{margin-bottom:var(--s3)}
-.home-faq{display:flex;flex-wrap:wrap;gap:var(--s2);justify-content:center}
-.path-link{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;border-radius:99px;background:var(--panel-2);color:var(--candle);text-decoration:none;font-weight:800}
-.credits{color:var(--smoke)}
+.join-row{align-items:flex-end}
+.join-row .field input,.join-row .btn{min-height:52px}
+.join-row .btn{min-width:88px;border-radius:16px}
+.home-faq{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s5);justify-content:flex-start;padding:0 var(--s1)}
+.path-link{display:inline-flex;align-items:center;min-height:48px;padding:0;color:var(--candle);font-weight:800;text-decoration:underline;text-decoration-color:var(--orange);text-decoration-thickness:3px;text-underline-offset:6px}
+.credits{color:var(--smoke);text-align:left;justify-self:start;padding:0 var(--s1)}
 .credits a{color:var(--smoke)}
 .resume{color:var(--candle)}
 .wrap.join{padding-top:var(--s6)}
@@ -159,7 +179,6 @@ html[data-fxlite] :is(.btn,.choice,.tool-btn,.tabbar button,.icon-btn){transitio
   .btn:active,.choice:active,.tool-btn:active{transform:none}
 }
 .board-foot{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s2)}
-.stat .lbl{font-size:.7rem;letter-spacing:.05em}
 .stat .num{font-size:clamp(2.4rem,12vw,4rem)}
 .room-code{font-size:clamp(3rem,15vw,6rem);letter-spacing:.04em}
 .board,.boards{min-width:0}

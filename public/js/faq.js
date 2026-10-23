@@ -25,6 +25,9 @@ export const FAQ = [
     ['What are the three play modes?', '<b>Phones only</b>: roles, votes and policies all in the app (online play works too). <b>Hybrid</b>: choose for each piece (roles, votes, policy tiles) whether the table handles it out loud or the app does. <b>All at the table</b>: the table handles everything and the host’s phone is the board, the tracker and the moderator.'],
     ['Does the host see secrets in hybrid or all-at-the-table mode?', 'No. The host only enters what the whole table sees: who was nominated, who voted Aye, which policy was turned face up, and the answer to “are you the Boss?”. Seats without phones are allowed only when every piece is handled at the table.'],
   ]],
+  ['Playing Offline', [
+    ['Can I play without internet?', '<ol><li>Open The Gilded Chamber once while you’re online, or install it: on iPhone tap Share, then Add to Home Screen; on Android tap Install app.</li><li>After that it opens without internet.</li><li>For play without internet, use Host-only mode on one phone. Phones mode needs internet for now.</li></ol><p>On iPhone, the Home Screen app and Safari keep separate copies, so open the one you’ll use while you’re online.</p><span hidden>offline wifi wi-fi install</span>'],
+  ]],
   ['Host tools and Table Tools', [
     ['What can the host do?', 'From the Host tab (or the right-hand panel on a laptop): pause and resume, undo the last step, skip an idle player, nudge someone, mute or remove chat messages, replace a player who left (the newcomer takes the same seat and role), hand off the host role, run timers and talk turns, and read the moderator script aloud.'],
     ['What happens when the host skips?', 'A skipped vote counts as Nay. A skipped nomination passes the gavel on. A skipped Speaker or Chancellor in session has a policy chosen at random by the server; nobody sees which. A skipped power is lost. Every skip is in the log.'],

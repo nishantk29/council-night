@@ -2,7 +2,7 @@
 // Rules this file keeps: one rAF loop that runs only while a card is moving (nothing runs while idle: sensor events are
 // dead-banded, pointer events only store coordinates); a card gets an inline transform and will-change only while it is
 // away from rest, and both are removed once it settles (so no card is left as a containing block for the fixed bottom
-// button); nothing is added on reduced-motion or low-end phones (they get flat cards), or when the host turned
+// button); nothing is added on reduced motion (flat cards; no core-count check), or when the host turned
 // animations off. The page re-renders on every update, so cards that left the DOM are simply dropped.
 const SEL = '.stage,.reveal,.board,.stat,.winner,.join-code,.path,.home-hero';
 const SKIP = 'input,textarea,select,[contenteditable]';
@@ -11,8 +11,7 @@ const PERSPECTIVE = 900;
 
 export function makeTilt({ enabled = () => true } = {}) {
   const reduced = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
-  const lite = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 4);
-  if (lite || reduced.matches) return { flat: true };
+  if (reduced.matches) return { flat: true };
 
   // [rx, ry, z, scale]: value, velocity, target; stiffness and damping per channel
   const K = [220, 220, 260, 260]; const C = [14, 14, 13, 11];

@@ -735,4 +735,4 @@ async function act(a, el) {
 }
 
 route();
-if ('serviceWorker' in navigator && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+// The service worker is registered by the pwa block in index.html (updateViaCache 'none', one reload on update).

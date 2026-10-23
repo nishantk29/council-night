@@ -7,9 +7,10 @@ import { art, ROLE_ART } from './art.js';
 import { TRACKER_MAX } from './rules.js';
 
 const reduced = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
-// Low-end phones get flat 2D pops and fewer particles.
-const LITE = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 4);
-const PARTS = LITE ? 8 : 18;
+// No core-count check (iPhones report 4 cores): only reduced motion and the host's switch cut effects. The one device
+// downgrade left is blur: phones reporting <=2 GB (navigator.deviceMemory, Android Chrome only) get solid panels.
+const NO_BLUR = (navigator.deviceMemory || 99) <= 2;
+const PARTS = 18;
 const TEAM_COLORS = {
   reform: ['#5B8FD0', '#9CC3F0', '#2F5A8A', '#E2B04A'],
   cabal: ['#E8590C', '#FF7A33', '#C2310F', '#E2B04A'],
@@ -24,7 +25,8 @@ export function makeFx({ S, send, esc }) {
   const $fx = Object.assign(document.createElement('div'), { id: 'fx' });
   $fx.setAttribute('aria-hidden', 'true');
   document.body.append($fx);
-  if (LITE || reduced.matches) $html.dataset.fxlite = '1'; // flat cards and solid panels; the pop-up shows statically
+  if (reduced.matches) $html.dataset.fxlite = '1'; // reduced motion: flat cards and solid panels; the pop-up shows statically
+  if (NO_BLUR) $html.dataset.noblur = '1';
 
   const on = (v = S.view) => v?.anim !== false && !reduced.matches;
   const nameOf = (v, id) => v.players.find((p) => p.id === id)?.name || '?';
@@ -181,7 +183,7 @@ export function makeFx({ S, send, esc }) {
     document.addEventListener('keydown', onKey);
     if (motion) {
       burst(el.querySelector('.fx-parts'), 'conf', side, { delay: 250 });
-      if (!LITE) tiltOff = enableTilt(el.querySelector('.fx-card'));
+      tiltOff = enableTilt(el.querySelector('.fx-card'));
       if (navigator.vibrate) try { navigator.vibrate(ev.you === 'won' ? [40, 40, 60] : 30); } catch { /* ignore */ }
     }
   }

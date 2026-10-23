@@ -32,6 +32,7 @@ const PRECACHE = [
   '/icons/icon-maskable-512.png',
   '/js/app.js',
   '/js/art.js',
+  '/js/card_art.js',
   '/js/cards.js',
   '/js/faq.js',
   '/js/fx.js',

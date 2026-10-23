@@ -1,3 +1,4 @@
+@font-face{font-family:"Rubik";src:url(/fonts/rubik-var.woff2) format("woff2");font-weight:500 900}
 @font-face{font-family:"Limelight";font-weight:400;src:url(/fonts/limelight-400.woff2) format("woff2")}
 @font-face{font-family:"Poiret One";font-weight:400;src:url(/fonts/poiret-one-400.woff2) format("woff2")}
 @font-face{font-family:"Big Shoulders Display";font-weight:100 900;src:url(/fonts/big-shoulders-display-var.woff2) format("woff2")}
@@ -40,3 +41,11 @@ th{background:#F1E9D6}
 .back .ci .ico{color:#C4421F;width:34mm;height:34mm}
 .back .ci b{font:400 13pt Limelight,serif;text-transform:none}
 .note{font-size:9pt;color:#5a5245}
+/* designed card gallery (card_art.js) */
+.dgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:4mm}
+.dg{margin:0;display:grid;gap:6px;justify-items:center;text-align:center}
+.dg svg{width:100%;max-width:190px;height:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+.dg figcaption{font-size:11pt}
+.dsheet{display:none}
+.dprint{padding:0;border:0.3pt dashed #999;overflow:hidden}.dprint svg{display:block;width:100%;height:100%}
+@media print{.dsheet{display:block}.dgal{grid-template-columns:repeat(4,1fr)}}

@@ -4,7 +4,7 @@
    and the main action as a full-width pill fixed at the bottom.
    Motion rules: only transform and opacity ever move. The card tilt and lift is driven by js/tilt.js (pointer and device
    tilt, rAF only, nothing runs while idle). There are no blur layers here: Liquid Glass lives in fx.css and is used only
-   for pop-outs and overlays. Reduced motion and low-end phones (html[data-fxlite]) get flat cards.
+   for pop-outs and overlays. Reduced motion (html[data-fxlite]) gets flat cards.
    Colours come from the tokens in styles.css, which scripts/contrast.mjs checks in both normal and low-light mode. */
 :root{--pop:cubic-bezier(.34,1.56,.64,1);--card-shadow:none;
   --sun:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 220'%3E%3Cg fill='%23000' opacity='.1'%3E%3Cpath d='M320 0L120-40 190-60zM320 0L-20 40V100zM320 0L-20 150V210zM320 0L60 260 150 280zM320 0L250 260 340 260z'/%3E%3C/g%3E%3Cpath d='M268 22l10 14-10 14-10-14z' fill='%23000' opacity='.16'/%3E%3C/svg%3E");

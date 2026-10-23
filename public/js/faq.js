@@ -16,14 +16,15 @@ export const FAQ = [
     ['Can I lie?', 'Yes, about anything, including what you discarded, what you saw with a power, and what you claim in the chat. The only thing you can’t lie about is whether you are the Boss when the game asks.'],
   ]],
   ['House rules', [
-    ['Which house rules are there?', 'All are off unless the host turns them on: <b>Rebalanced tables</b> (community variant for 6, 7 and 9 players), <b>Exile instead of execution</b>, <b>anonymous votes</b>, <b>no-claims mode</b>, <b>moderator sits out</b>, a <b>phase timer</b>, a <b>vote reveal delay</b>, and who is the <b>first Speaker</b>.'],
-    ['What does “Rebalanced tables” change?', 'At 6 players the game starts with one Decree on the board (it gives no power). At 7 players one Decree is left out of the policy pile; at 9 players two are. Other sizes are unchanged.'],
+    ['Which house rules are there?', 'All are off unless the host turns them on: <b>Rebalanced Tables</b> (community variant for 6, 7 and 9 players), <b>Exile Instead of Execution</b>, <b>Anonymous Votes</b>, <b>No-Claims Mode</b>, <b>Host Sits Out</b>, a <b>Phase Timer</b>, a <b>Vote Reveal Delay</b>, and who is the <b>first Speaker</b>.'],
+    ['What does “Rebalanced Tables” change?', 'At 6 players the game starts with one Decree on the board (it gives no power). At 7 players one Decree is left out of the policy pile; at 9 players two are. Other sizes are unchanged.'],
     ['Does the phase timer do anything at zero?', 'No. It beeps, vibrates and turns red. The host decides what to do: nudge, skip, or let them finish.'],
     ['Anonymous votes?', 'Only the count of Ayes and Nays is shown, never who voted which way, during the game or after.'],
   ]],
-  ['Play modes', [
-    ['What are the three play modes?', '<b>Phones only</b>: roles, votes and policies all in the app (online play works too). <b>Hybrid</b>: choose for each piece (roles, votes, policy tiles) whether the table handles it out loud or the app does. <b>All at the table</b>: the table handles everything and the host’s phone is the board, the tracker and the moderator.'],
-    ['Does the host see secrets in hybrid or all-at-the-table mode?', 'No. The host only enters what the whole table sees: who was nominated, who voted Aye, which policy was turned face up, and the answer to “are you the Boss?”. Seats without phones are allowed only when every piece is handled at the table.'],
+  ['Phones Mode', [
+    ['What are the three play modes?', '<b>Phones mode</b>: roles, votes and policies all in the app (online play works too). <b>Hybrid</b>: choose for each piece (roles, votes, policy tiles) whether the table handles it out loud or the app does. <b>Host-only mode</b>: the table handles everything and the host’s phone is the board, the tracker and the moderator.'],
+    ['How do I look at my role without others seeing?', 'Press and hold your card to look, then let go to hide it again. A quick tap shows it for 5 seconds. Your role, your policies and any Inquiry result stay blurred until you reveal them, and every role looks the same while hidden.'],
+    ['Does the Host see secrets in Hybrid or Host-only mode?', 'No. The host only enters what the whole table sees: who was nominated, who voted Aye, which policy was turned face up, and the answer to “are you the Boss?”. Seats without phones are allowed only when every piece is handled at the table.'],
   ]],
   ['Playing Offline', [
     ['Can I play without internet?', '<ol><li>Open The Gilded Chamber once while you’re online, or install it: on iPhone tap Share, then Add to Home Screen; on Android tap Install app.</li><li>After that it opens without internet.</li><li>Playing a game needs internet for now, because every mode connects through the room. Offline, you can still open the app and read the rules and FAQ.</li></ol><p>On iPhone, the Home Screen app and Safari keep separate copies, so open the one you’ll use while you’re online.</p><span hidden>offline wifi wi-fi install</span>'],
@@ -42,6 +43,6 @@ export const FAQ = [
   ['Chat and privacy', [
     ['Is there a team chat for the Syndicate?', 'No. The only chat is the public table chat, so everyone plays on the same footing. Post a <b>claim</b> (“I got two Decrees”) to put it in the claims log.'],
     ['What does the server keep?', 'Only the room: names, seats, the game state and the log, for 12 hours, then it is deleted. No accounts, no tracking, no ads.'],
-    ['Who can see my role?', 'Only you, on your own phone, until the game ends. The moderator (if the host sits out with roles in the app) sees the deal on their phone. The table screen and the other players never do.'],
+    ['Who can see my role?', 'Only you, on your own phone, until the game ends. The Host (if they sit out with roles in the app) sees the deal on their phone. The table screen and the other players never do.'],
   ]],
 ];

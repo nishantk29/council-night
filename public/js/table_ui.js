@@ -125,7 +125,7 @@ export function makeTable(ctx) {
         <button class="btn ghost ${v.canUndo ? '' : 'disabled'}" data-a="undo">${ui('reset')} Undo last step</button>
         <button class="btn ghost" data-a="abandon">End game</button></div>` : ''}
       ${gameControls || ''}
-      ${script ? `<h3 class="sub">Storyteller script</h3><div class="script">${script}</div>` : ''}
+      ${script ? `<h3 class="sub">Host Script</h3><div class="script">${script}</div>` : ''}
       <h3 class="sub">Players</h3><ul class="dash-list">${players || '<li class="muted">Nobody else yet.</li>'}</ul>
       <p class="muted">“Replace” opens a seat mid-game: the next person who joins takes it over with the same secret card. “Make host” hands you off.</p>
       <h3 class="sub">Table screen</h3><p class="muted">Open this on a TV or laptop everyone can see. It never shows anything secret.</p>

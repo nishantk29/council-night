@@ -3,7 +3,7 @@
 // - Navigations: network-first, falling back to the cached app shell.
 // - /api/* and /ws/* never touch the cache.
 // VERSION is a content hash of every precached file, so it changes whenever a file does.
-const VERSION = 'council-1792774284';
+const VERSION = 'council-1792780001';
 const PREFIX = 'council-';
 const CACHE = PREFIX + VERSION;
 
@@ -24,6 +24,7 @@ const PRECACHE = [
   '/fonts/rubik-var.woff2',
   '/fonts/special-elite-400.woff2',
   '/fx.css',
+  '/motion.css',
   '/icons/apple-touch-icon.png',
   '/icons/favicon-32.png',
   '/icons/favicon.svg',
@@ -36,7 +37,9 @@ const PRECACHE = [
   '/js/cards.js',
   '/js/faq.js',
   '/js/fx.js',
+  '/js/phone.js',
   '/js/print.js',
+  '/js/qr.js',
   '/js/room.js',
   '/js/rules.js',
   '/js/table.js',

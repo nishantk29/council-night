@@ -66,7 +66,7 @@ function screen() {
   return banner + appbar(v) + layout(v);
 }
 
-const dimBtn = (label = '') => `<button type="button" class="icon-btn dim-btn${label ? ' has-label' : ''}" data-a="dim" aria-pressed="${$html.dataset.dim === '1'}" aria-label="Low-light mode" title="Low-light mode"><i class="dim-glyph" aria-hidden="true"></i>${label}</button>`;
+const dimBtn = (label = '') => `<button type="button" class="icon-btn dim-btn${label ? ' has-label' : ''}" data-a="dim" aria-pressed="${$html.dataset.dim === '1'}" aria-label="Low-light mode" title="Low-light mode"><svg class="dim-glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path class="moon" d="M20 15.5A9 9 0 0 1 8.5 4a9 9 0 1 0 11.5 11.5z"/><g class="lamp"><circle cx="12" cy="12" r="5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" fill="none"/></g></svg>${label}</button>`;
 
 function home() {
   const mine = Object.keys(localStorage).filter((k) => k.startsWith(`${KEY}.player.`)).map((k) => k.slice(KEY.length + 8));

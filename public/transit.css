@@ -23,7 +23,6 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 .block-title,.path-title,.sub{font-family:var(--font-display);font-weight:900;font-size:clamp(1.4rem,5.4vw,1.8rem);letter-spacing:-.02em;line-height:1.05;text-transform:none;-webkit-text-stroke:0}
 .sub{font-size:var(--fs-lg);margin-top:var(--s4)}
 .block-title,.path-title{display:flex;align-items:center;gap:12px}
-.block-title::before,.path-title::before{content:"";flex:none;width:14px;height:14px;background:currentColor;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 
 /* ---------------------------------------------------------------- cards: bold orange blocks, stacked */
 :is(.stage,.reveal,.panel,.pane-sec,.join-code,.path,.home-hero,.stat){position:relative;border:0;border-radius:var(--r-card);padding:var(--s5);
@@ -47,7 +46,7 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
   background:var(--reform-fill);color:var(--on-fill)}
 
 /* big glanceable numbers: Unrest, draw pile, discards */
-.stat{display:grid;align-content:space-between;justify-items:start;gap:var(--s2);min-height:128px;padding:var(--s3) var(--s3) var(--s4);border-radius:14px}
+.stat{display:grid;align-content:space-between;justify-items:start;gap:var(--s2);min-height:128px;padding:var(--s3) var(--s3) var(--s4);border-radius:7px}
 /* role, not one recipe: the action card keeps the rays and the big radius; the rest sit flat and tighter */
 :is(.panel,.pane-sec,.join-code,.path,.stat){background-image:none}
 :is(.pane-sec,.panel){border-radius:18px;padding:var(--s4)}
@@ -93,9 +92,9 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 .sticky-act{position:fixed;left:0;right:0;margin-inline:auto;width:min(calc(100% - 2 * var(--gutter)),36rem);bottom:calc(var(--s3) + env(safe-area-inset-bottom));z-index:25;
   padding:0;border:0;border-radius:var(--r-pill);background:none;box-shadow:none}
 @media (max-width:1099px){.layout:not(.is-screen) .sticky-act{bottom:calc(var(--tabbar-h) + var(--s3) + env(safe-area-inset-bottom))}}
-.sticky-act .btn{width:100%;min-height:68px;background:var(--go);color:var(--on-go);font-size:1.4rem}
-/* a solid dock behind the pill so nothing reads through it */
-.sticky-act::before{content:"";position:absolute;z-index:-1;left:50%;width:100vw;margin-left:-50vw;top:calc(-1 * var(--s3));bottom:calc(-1 * var(--s3));background:var(--room)}
+.sticky-act .btn{width:100%;min-height:68px;background:var(--go);color:var(--on-go);font-size:1.4rem;box-shadow:none}
+/* a solid dock band with a hard top edge: content scrolls under it, never half-covered by the pill alone */
+.sticky-act::before{content:"";position:absolute;z-index:-1;left:50%;width:100vw;margin-left:-50vw;top:calc(-1 * var(--s4));bottom:calc(-1 * var(--s3));background:var(--room);border-top:3px solid var(--orange)}
 .wrap.home .sticky-act::before{bottom:calc(-1 * (var(--s3) + env(safe-area-inset-bottom)))}
 .sticky-act .btn.disabled{background:var(--panel-2);color:var(--smoke);box-shadow:none}
 .wrap:has(.sticky-act){padding-bottom:calc(136px + env(safe-area-inset-bottom))}
@@ -139,10 +138,11 @@ body:has(.sticky-act) #toast{bottom:calc(var(--tabbar-h) + 104px + env(safe-area
 .home-top{display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
 .home-meta{color:var(--smoke);font-weight:700;font-size:var(--fs-sm)}
 /* the dimmer: a half-filled disc drawn here, with its word beside it */
-.dim-glyph{display:block;width:18px;height:18px;border-radius:50%;border:2px solid currentColor;background:linear-gradient(90deg,currentColor 50%,transparent 50%);flex:none}
-.dim-btn[aria-pressed="true"] .dim-glyph{background:linear-gradient(270deg,currentColor 50%,transparent 50%)}
+.dim-glyph{display:block;width:20px;height:20px;flex:none}
+.dim-btn .dim-glyph .lamp,.dim-btn[aria-pressed="true"] .dim-glyph .moon{display:none}
+.dim-btn[aria-pressed="true"] .dim-glyph .lamp{display:inline}
 .dim-btn.has-label{width:auto;padding:0 var(--s3);gap:var(--s2);display:inline-flex;align-items:center;font-weight:800;font-size:var(--fs-sm);border-radius:var(--r-pill);background:var(--panel-2)}
-.home-hero{display:grid;justify-items:start;text-align:left;gap:var(--s3)}
+.home-hero{display:grid;justify-items:start;text-align:left;gap:var(--s3);border-radius:20px;background-image:none}
 .home-hero .lede{color:var(--ink);font-weight:800;font-size:clamp(1.3rem,5.6vw,1.6rem);line-height:1.2;letter-spacing:-.015em;max-width:none}
 .home-hero .lede-sub{color:var(--ink-2);font-weight:500;font-size:var(--fs-md);max-width:34ch}
 /* the policy pile as a flat bar: 6 Reforms to 11 Decrees, drawn to scale */
@@ -152,7 +152,7 @@ body:has(.sticky-act) #toast{bottom:calc(var(--tabbar-h) + 104px + env(safe-area
 .pile-r{flex:6 1 0;background:var(--reform-fill)}
 .pile-d{flex:11 1 0;background:var(--cabal-fill)}
 .home-paths{max-width:none;gap:var(--s4);display:grid}
-.path{border-radius:18px;padding:var(--s4) var(--s4) var(--s5)}
+.path{border-radius:20px;padding:var(--s4) var(--s4) var(--s5)}
 .path + .path{border-top:0;margin-top:0}
 .path-title{margin-bottom:var(--s2)}
 .path > .muted{margin-bottom:var(--s3)}

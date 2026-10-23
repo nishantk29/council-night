@@ -82,3 +82,7 @@ test('the service worker precaches every print file, and VERSION is the content 
   for (const r of files) h.update(r + '\0').update(readFileSync(new URL(`../public${r}`, import.meta.url)));
   assert.equal(sw.match(/const VERSION = '([^']+)'/)[1], `council-${h.digest('hex').slice(0, 10)}`);
 });
+
+test('guide pages use the current mode names, never the old ones', () => {
+  for (const f of ['js/print.js', 'print.html']) assert.doesNotMatch(read(f), /phones only|all at the table|all physical/i, `${f} uses an old mode name`);
+});

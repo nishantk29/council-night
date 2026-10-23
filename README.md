@@ -25,7 +25,7 @@ Live: https://council-night.hatethespurs.workers.dev
   Boss as Chancellor once 3 Decrees are down (any other Chancellor elected then is confirmed “not the Boss”).
 
 ## Extras (all off or optional by default)
-- Play modes: phones only; hybrid (roles / votes / policy tiles each “at the table” or “in the app”); all at the table with
+- Play modes: Phones mode; Hybrid (roles / votes / policy tiles each “at the table” or “in the app”); Host-only mode, with
   the host’s phone as board, tracker and moderator. The host only ever enters public facts.
 - House rules: rebalanced 6/7/9, exile instead of execution, anonymous votes, no-claims mode, moderator sits out,
   phase timer, vote reveal delay, first Speaker.

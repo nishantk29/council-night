@@ -28,6 +28,7 @@ function finish(room, winner, reason, now) {
 // Draw pile bookkeeping. With physical policies the app tracks only the counts (the real tiles are on the table).
 function ensureDeck(room, rng, now) {
   const g = room.game;
+  g.peek = {}; // every call precedes a draw, which makes any earlier peek stale
   if (g.cardsApp) { if (g.deck.length < 3) { g.deck = shuffle([...g.deck, ...g.discard], rng); g.discard = []; g.reshuffles++; log(room, 'game', 'Fewer than three policies left: the discards were shuffled back into the pile.', null, now); } }
   else if (g.pile < 3) { g.pile += g.discards; g.discards = 0; g.reshuffles++; g.reshuffleNow = true; log(room, 'game', 'Fewer than three policies left: shuffle the discard pile back into the draw pile.', null, now); }
 }

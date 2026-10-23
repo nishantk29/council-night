@@ -161,6 +161,16 @@ test('peek shows the top three to the Speaker only, without changing the pile', 
   must(act(t.room, sp(t), { type: 'peekDone' })); assert.deepEqual(t.g.deck.slice(0, 3), top);
 });
 
+test('a peek is cleared once the next policies are drawn', () => {
+  const t = started(5, { seed: 23, cardsApp: true });
+  t.g.decree = 2; pass(t, 'D'); assert.equal(t.g.power, 'peek');
+  const s = sp(t); must(act(t.room, s, { type: 'peekDone' }));
+  assert.ok(viewForPlayer(t.room, s).me.peeked, 'kept after peekDone');
+  elect(t, pickChancellor(t), true);
+  assert.equal(t.room.phase, 'legislate');
+  assert.ok(!viewForPlayer(t.room, s).me.peeked, 'cleared by the next draw');
+});
+
 test('win: five Reforms', () => {
   const t = started(6, { seed: 24 });
   for (let k = 0; k < 5; k++) pass(t, 'R');

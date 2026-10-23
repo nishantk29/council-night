@@ -29,6 +29,7 @@ const A = {
   sun: '<circle cx="32" cy="32" r="9"/>' + Array.from({ length: 16 }, (_, i) => { const a = (i * Math.PI) / 8; const x1 = 32 + 13 * Math.cos(a); const y1 = 32 + 13 * Math.sin(a); const x2 = 32 + (i % 2 ? 22 : 29) * Math.cos(a); const y2 = 32 + (i % 2 ? 22 : 29) * Math.sin(a); return `<path d="M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}" stroke="currentColor" stroke-width="${i % 2 ? 2 : 3.5}" stroke-linecap="square"/>`; }).join(''),
 };
 export const art = (name, cls = '') => (A[name] ? `<svg class="ico art ${cls}" viewBox="0 0 64 64" fill="currentColor" aria-hidden="true" focusable="false">${A[name]}</svg>` : '');
+export const artInner = (name) => A[name] || '';
 export const ART_NAMES = Object.keys(A);
 export const ROLE_ART = { reformer: 'torch', cabal: 'chain', pretender: 'mask' };
 export const POWER_ART = { investigate: 'lens', special: 'ballot', peek: 'eye', execute: 'dagger' };

@@ -3,6 +3,7 @@
 // Table things (chat, log, tools, host dashboard frame) come from table_ui.js.
 import { ui } from './ui_icons.js';
 import { art, ROLE_ART, POWER_ART } from './art.js';
+import { cardArt, ROLE_CARD, PARTY_CARD, POLICY_CARD } from './card_art.js';
 import { ROLES, TEAMS, POWERS, POWER_TEXT, roleList, MIN_PLAYERS, MAX_PLAYERS, REFORM_TO_WIN, DECREE_TO_WIN, VETO_AT, PRETENDER_DANGER, TRACKER_MAX, startingDeck } from './rules.js';
 import { makeTable, askConfirm, faqPage, wireFaqSearch } from './table_ui.js';
 import { makeFx } from './fx.js';
@@ -40,6 +41,7 @@ function render() {
   const y = window.scrollY;
   $html.dataset.phase = S.view?.phase || S.mode;
   $html.dataset.screen = S.mode === 'screen' ? '1' : '';
+  $html.classList.toggle('fx-off', S.view?.anim === false); // the host's Animations switch: card flips are skipped too
   $app.innerHTML = screen();
   S.ui.fresh = {}; S.ui.flip = false;
   window.scrollTo(0, y);
@@ -300,7 +302,12 @@ function roundTable(v) {
   return `<section class="round" aria-label="The table"><div class="round-felt">${art('table')}<p>${felt}</p></div>${seatEls}</section>`;
 }
 
-const tile = (p, extra = '') => `<span class="tile ${p === 'R' ? 'is-reform' : 'is-decree'} ${extra}">${art(p === 'R' ? 'torch' : 'chain')}<b>${p === 'R' ? 'Reform' : 'Decree'}</b></span>`;
+// Designed policy card (app mode). `extra` 'flip' gives the short 3D turn-over (off for reduced motion / the fx-off switch).
+const tile = (p, extra = '') => `<span class="dc ${extra}">${cardArt(POLICY_CARD[p])}</span>`;
+// Flip only when the cards on screen changed (the page re-renders on every update; an unchanged hand must not re-turn).
+const flipOnce = (key) => { const f = S.ui.flipKey !== key; S.ui.flipKey = key; return f ? 'flip' : ''; };
+const mini = (kind, extra = '') => `<span class="mini ${extra}">${cardArt(kind)}</span>`;
+const placards = (sp, ch) => `<div class="placards"><figure>${mini('speaker')}<figcaption>${sp}</figcaption></figure><figure>${mini('chancellor')}<figcaption>${ch}</figcaption></figure></div>`;
 function stage(v) {
   const g = v.game; const me = v.me; const host = me.host;
   const say = (t) => `<p class="say">${t}</p>`;
@@ -325,7 +332,7 @@ function stage(v) {
       ${g.decree >= PRETENDER_DANGER ? `<p class="note is-out">${art('mask')} Three Decrees are down: if the Boss is elected Chancellor, the Syndicate wins.</p>` : ''}</section>`;
   }
   if (v.phase === 'vote') {
-    const head = `<h1 class="phase-title">Elect this government?</h1>${say(`Speaker <b>${S2}</b>, Chancellor <b>${C2}</b>.`)}${unrestWarn}`;
+    const head = `<h1 class="phase-title">Elect this government?</h1>${say(`Speaker <b>${S2}</b>, Chancellor <b>${C2}</b>.`)}${placards(S2, C2)}${unrestWarn}`;
     const nVoters = g.alive.length + g.exiled.length;
     if (v.mode.votes === 'physical') {
       if (!host) return `<section class="stage">${head}<p class="note">${ui('hand')} Vote at the table. On three, everyone shows Aye or Nay.</p></section>`;
@@ -337,7 +344,7 @@ function stage(v) {
     const voted = 'vote' in me;
     return `<section class="stage">${head}
       ${voted ? `<p class="note">${ui('check')} You voted ${me.vote ? 'Aye' : 'Nay'}. Votes are shown when everyone is in.</p>`
-    : `<div class="choice-pair"><button class="choice yes" data-a="vote" data-v="1">${art('aye')}Aye</button><button class="choice no" data-a="vote" data-v="0">${art('nay')}Nay</button></div>`}</section>`;
+    : `<div class="choice-pair"><button class="choice ballot yes" data-a="vote" data-v="1" aria-label="Vote Aye">${cardArt('aye')}</button><button class="choice ballot no" data-a="vote" data-v="0" aria-label="Vote Nay">${cardArt('nay')}</button></div>`}</section>`;
   }
   if (v.phase === 'check') {
     const c = g.check;
@@ -350,26 +357,26 @@ function stage(v) {
       const head = `<h1 class="phase-title">The session</h1>${say(`${S2} draws the top three policies, discards one face down and passes two to ${C2}, who enacts one. No talking!`)}`;
       if (!host) return `<section class="stage">${head}</section>`;
       return `<section class="stage">${head}<p class="note">Which policy did ${C2} turn face up?</p>
-        <div class="choice-pair"><button class="choice reform" data-a="hostEnact" data-v="R">${art('torch')}Reform</button><button class="choice decree" data-a="hostEnact" data-v="D">${art('chain')}Decree</button></div>
+        <div class="choice-pair"><button class="choice ballot reform" data-a="hostEnact" data-v="R" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree" data-a="hostEnact" data-v="D" aria-label="Decree">${cardArt('decree')}</button></div>
         ${g.vetoOn ? '<button class="btn ghost" data-a="hostVeto">The Speaker agreed to a veto</button>' : ''}</section>`;
     }
-    const hand = me.hand || [];
+    const hand = me.hand || []; const hf = flipOnce(`h${g.leg}${hand.join('')}`);
     if (g.leg === 'speaker' && g.speaker === me.id) return `<section class="stage"><h1 class="phase-title">Discard one</h1>${say(`Tap the policy to <b>discard</b>. The other two go to ${C2}. Nobody else sees these.`)}
-      <div class="tiles">${hand.map((p, i) => `<button type="button" class="tile-btn" data-a="discard" data-v="${i}" aria-label="Discard this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`).join('')}</div></section>`;
+      <div class="tiles">${hand.map((p, i) => `<button type="button" class="tile-btn" data-a="discard" data-v="${i}" aria-label="Discard this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p, hf)}</button>`).join('')}</div></section>`;
     if (g.leg === 'chancellor' && g.nominee === me.id) return `<section class="stage"><h1 class="phase-title">Enact one</h1>${say('Tap the policy to <b>enact</b>. The other is discarded face down.')}
-      <div class="tiles">${hand.map((p, i) => `<button type="button" class="tile-btn" data-a="enact" data-v="${i}" aria-label="Enact this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`).join('')}</div>
+      <div class="tiles">${hand.map((p, i) => `<button type="button" class="tile-btn" data-a="enact" data-v="${i}" aria-label="Enact this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p, hf)}</button>`).join('')}</div>
       ${g.vetoOn && !g.vetoRefused ? '<button class="btn ghost" data-a="veto">Propose a veto (discard both)</button>' : g.vetoRefused ? '<p class="muted">The Speaker refused the veto. You must enact one.</p>' : ''}</section>`;
     if (g.leg === 'veto' && g.speaker === me.id) return `<section class="stage"><h1 class="phase-title">Veto?</h1>${say(`${C2} wants to veto this agenda. If you agree, both policies are discarded and Unrest moves one step.`)}
       <div class="choice-pair"><button class="choice yes" data-a="vetoReply" data-v="1">${art('aye')}Agree</button><button class="choice no" data-a="vetoReply" data-v="0">${art('nay')}Refuse</button></div></section>`;
     return `<section class="stage"><h1 class="phase-title">In session</h1>${say(g.leg === 'speaker' ? `${S2} is choosing a policy to discard.` : g.leg === 'veto' ? `${C2} proposed a veto. ${S2} decides.` : `${C2} is choosing a policy to enact.`)}</section>`;
   }
   if (v.phase === 'chaos') return `<section class="stage"><h1 class="phase-title">Unrest</h1>${say('Three failed governments. Turn over the top policy of the draw pile and place it on the board. It gives no power.')}
-    ${host ? `<div class="choice-pair"><button class="choice reform" data-a="hostEnact" data-v="R">${art('torch')}Reform</button><button class="choice decree" data-a="hostEnact" data-v="D">${art('chain')}Decree</button></div>` : ''}</section>`;
+    ${host ? `<div class="choice-pair"><button class="choice ballot reform" data-a="hostEnact" data-v="R" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree" data-a="hostEnact" data-v="D" aria-label="Decree">${cardArt('decree')}</button></div>` : ''}</section>`;
   if (v.phase === 'power') {
     const pw = g.power; const [t, d] = POWER_TEXT[pw];
     const mine = g.speaker === me.id; const forS = !mine && host && isPhys(v, g.speaker);
     if (pw === 'peek') {
-      if (mine && me.docket) return `<section class="stage"><h1 class="phase-title">${art('eye')} The docket</h1>${say('The top three policies, in order. Only you see this. Tell the table whatever you like.')}<div class="tiles">${me.docket.map((p) => tile(p)).join('')}</div></section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
+      if (mine && me.docket) return `<section class="stage"><h1 class="phase-title">${art('eye')} The docket</h1>${say('The top three policies, in order. Only you see this. Tell the table whatever you like.')}<div class="tiles">${me.docket.map((p) => tile(p, flipOnce(`d${me.docket.join('')}`))).join('')}</div></section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
       if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art('eye')} The docket</h1>${say(`${mine ? 'Look' : `${S2}, look`} at the top three policies of the draw pile without changing their order, then put them back.`)}</section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
       return `<section class="stage"><h1 class="phase-title">${art('eye')} The docket</h1>${say(`${S2} looks at the top three policies.`)}</section>`;
     }
@@ -414,17 +421,15 @@ function lastReveals(v) {
 
 function cardView(v) {
   const r = v.me.role; const shown = S.ui.showCard;
-  const sees = (v.me.sees || []).map((k) => `<li class="is-cabal">${art(k.tag === 'pretender' ? 'mask' : 'chain')}<span><b>${esc(nameOf(v, k.id))}</b> ${k.tag === 'pretender' ? 'is the Boss' : 'is in the Syndicate'}</span></li>`).join('');
-  const inq = (v.me.inquiries || []).map((k) => `<li class="${k.party === 'cabal' ? 'is-cabal' : 'is-reform'}">${art('lens')}<span>Inquiry: <b>${esc(nameOf(v, k.id))}</b> is ${k.party === 'cabal' ? 'Syndicate' : 'a Loyalist'}</span></li>`).join('');
+  const sees = (v.me.sees || []).map((k) => `<li class="is-cabal">${mini(k.tag === 'pretender' ? 'bossRole' : 'syndicateRole')}<span><b>${esc(nameOf(v, k.id))}</b> ${k.tag === 'pretender' ? 'is the Boss' : 'is in the Syndicate'}</span></li>`).join('');
+  const inq = (v.me.inquiries || []).map((k) => `<li class="${k.party === 'cabal' ? 'is-cabal' : 'is-reform'}">${mini(PARTY_CARD[k.party === 'cabal' ? 'cabal' : 'reform'])}<span>Inquiry: <b>${esc(nameOf(v, k.id))}</b> is ${k.party === 'cabal' ? 'Syndicate' : 'a Loyalist'}</span></li>`).join('');
   const peek = v.me.peeked ? `<li>${art('eye')}<span>You saw the docket: ${v.me.peeked.map((p) => (p === 'R' ? 'Reform' : 'Decree')).join(', ')}</span></li>` : '';
   const hint = { pretender: v.game.n <= 6 ? '' : 'You don’t know who the Syndicate are. They know you.', reformer: 'You know nothing. Watch the votes and the policies.' }[r.id] || '';
-  const party = r.side === 'reform' ? 'Loyalist' : 'Syndicate';
   const card = `<button type="button" class="rcard-tap" data-a="flip" aria-label="${shown ? 'Hide your role' : 'Show your role'}">
     <div class="rcard a-${r.side} ${S.ui.flip ? (shown ? 'is-flipping' : 'is-unflipping') : ''}" data-face="${shown ? 'front' : 'back'}"><div class="rcard-inner">
-      <div class="rcard-face rcard-front"><div class="cardart a-${r.side}">${art('sun', 'crest')}${art(ROLE_ART[r.id], 'big')}</div>
-        <div class="rcard-body"><h2 class="rcard-name">${esc(r.name)}</h2><span class="side-tag a-${r.side}">Party: ${party}</span><p class="rcard-blurb">${esc(r.blurb)}</p></div></div>
-      <div class="rcard-face rcard-back"><span class="rcard-back-mark">${art('sun')}</span></div></div></div></button>`;
-  return `<div class="hand">${card}${shown && (sees || hint || inq || peek) ? `<ul class="sees">${sees}${inq}${peek}</ul>${hint ? `<p class="muted">${hint}</p>` : ''}` : ''}${shown ? '' : '<p class="muted">Tap to turn over</p>'}</div>`;
+      <div class="rcard-face rcard-front dface">${cardArt(ROLE_CARD[r.id])}</div>
+      <div class="rcard-face rcard-back dface">${cardArt('back')}</div></div></div></button>`;
+  return `<div class="hand">${card}${shown ? `<p class="rcard-blurb center">${esc(r.blurb)}</p>` : ''}${shown && (sees || hint || inq || peek) ? `<ul class="sees">${sees}${inq}${peek}</ul>${hint ? `<p class="muted">${hint}</p>` : ''}` : ''}${shown ? '' : '<p class="muted">Tap to turn over</p>'}</div>`;
 }
 
 function myCardBlock(v) {

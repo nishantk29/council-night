@@ -3,6 +3,7 @@
 import { TEAMS, POWERS, POWER_TEXT } from './rules.js';
 import { roleCards, MAP } from './cards.js';
 import { art } from './art.js';
+import { cardArt, CARD_KINDS } from './card_art.js';
 
 const part = new URLSearchParams(location.search).get('part');
 const red = (c) => `<span class="${/[♥♦]/.test(c) || /Red/.test(c) ? 'red' : 'blk'}">${c}</span>`;
@@ -68,5 +69,16 @@ function cardsSheet() {
   pages.unshift(`<section class="sheet ${part !== 'cards' ? 'break' : ''}" id="cards"><h2>Printable cards</h2><p>Print the next pages on card stock and cut on the dashed lines (63 × 88 mm, poker size). Print the last page (backs) as many times as you need and glue or print double-sided. ${out.length} cards: 10 role cards, 10 party cards, 17 policies, 20 votes, the two placards and a reference card. All art is original to The Gilded Chamber.</p></section>`);
   return pages.join('');
 }
-document.getElementById('out').innerHTML = (part === 'cards' ? '' : guide()) + (part === 'guide' ? '' : cardsSheet());
-document.title = part === 'cards' ? 'The Gilded Chamber: printable cards' : part === 'guide' ? 'The Gilded Chamber: card guide' : document.title;
+// The designed set for App / Phones mode: a gallery (screen) and print sheets with the full deck's copies (print).
+const DESIGNED = [['reform', 'Reform policy', 6], ['decree', 'Decree policy', 11], ['loyalistRole', 'Loyalist role', 6], ['syndicateRole', 'Syndicate role', 3], ['bossRole', 'The Boss role', 1],
+  ['loyalistParty', 'Loyalist party card', 6], ['syndicateParty', 'Syndicate party card', 4], ['aye', 'Aye ballot', 10], ['nay', 'Nay ballot', 10], ['speaker', 'Speaker placard', 1], ['chancellor', 'Chancellor placard', 1], ['back', 'Card back', 0]];
+function designed() {
+  const gal = DESIGNED.map(([k, name, n]) => `<figure class="dg">${cardArt(k)}<figcaption><b>${name}</b>${n ? ` · ${n} per deck` : ' · print one per card, on the reverse'}</figcaption></figure>`).join('');
+  const cards = DESIGNED.filter((d) => d[2]).flatMap(([k, , n]) => Array.from({ length: n }, () => `<div class="c dprint">${cardArt(k)}</div>`));
+  const pages = [];
+  for (let i = 0; i < cards.length; i += 9) pages.push(`<section class="sheet cardpage break dsheet"><div class="cards">${cards.slice(i, i + 9).join('')}</div></section>`);
+  const back = `<section class="sheet cardpage break dsheet"><div class="cards">${Array.from({ length: 9 }, () => `<div class="c dprint">${cardArt('back')}</div>`).join('')}</div></section>`;
+  return `<section class="sheet" id="designed"><h2>Designed cards (App / Phones mode)</h2><p>The cards the app shows when nobody has a physical deck, as a custom deck to print. Print the sheets on card stock (63 × 88 mm), cut on the dashed lines, and print the last page on the back of every sheet. ${CARD_KINDS.length - 1} faces and one back; physical-deck play still uses the playing-card key above.</p><div class="dgal">${gal}</div></section>${pages.join('')}${back}`;
+}
+document.getElementById('out').innerHTML = part === 'designed' ? designed() : (part === 'cards' ? '' : guide()) + (part === 'guide' ? '' : cardsSheet());
+document.title = part === 'designed' ? 'The Gilded Chamber: designed cards' : part === 'cards' ? 'The Gilded Chamber: printable cards' : part === 'guide' ? 'The Gilded Chamber: card guide' : document.title;

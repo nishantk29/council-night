@@ -1,13 +1,8 @@
 /* The Gilded Chamber: same house style and components as Mafia Night and Quest Night, repainted as a 1930s civic poster.
    Base tokens, type scale, buttons, fields and the table layer are shared; the Council theme block at the end sets the palette.
-   Fonts (self-hosted): Big Shoulders Display, Alegreya Sans, Alegreya italic, Limelight (SIL OFL 1.1); Special Elite (Apache 2.0). */
+   Font (self-hosted, same file as the games home page): Rubik (SIL OFL 1.1). */
 /* ==================================================================== fonts */
-@font-face{font-family:"Big Shoulders Display";font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/big-shoulders-display-var.woff2) format("woff2")}
-@font-face{font-family:"Alegreya Sans";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/alegreya-sans-400.woff2) format("woff2")}
-@font-face{font-family:"Alegreya Sans";font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/alegreya-sans-500.woff2) format("woff2")}
-@font-face{font-family:"Alegreya Sans";font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/alegreya-sans-700.woff2) format("woff2")}
-@font-face{font-family:"Alegreya Sans";font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/alegreya-sans-800.woff2) format("woff2")}
-@font-face{font-family:"Alegreya";font-style:italic;font-weight:400 900;font-display:swap;src:url(/fonts/alegreya-italic-var.woff2) format("woff2")}
+@font-face{font-family:"Rubik";src:url("/fonts/rubik-var.woff2") format("woff2");font-weight:500 900;font-style:normal;font-display:swap}
 
 /* =================================================================== tokens */
 :root{
@@ -39,9 +34,9 @@
   --d-blue:#5AA9FF; --d-purple:#B48CFF; --d-pink:#FF85C8; --d-white:#F4F1EA;
 
   /* type */
-  --font-display:"Big Shoulders Display","Arial Narrow",sans-serif-condensed,sans-serif;
-  --font-ui:"Alegreya Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --font-voice:"Alegreya",Georgia,serif;
+  --font-display:"Rubik",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-ui:"Rubik",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-voice:"Rubik",system-ui,-apple-system,"Segoe UI",sans-serif;
   --fs-xs:.875rem;
   --fs-sm:clamp(.9375rem, .9rem + .15vw, 1rem);
   --fs-md:clamp(1.0625rem, 1rem + .25vw, 1.125rem);
@@ -638,72 +633,60 @@ html[data-screen="1"] .round{width:min(100%,620px)}
 @media (min-width:1100px){#toast{bottom:24px}}
 .appbar-title{font-size:var(--fs-sm)}
 
-/* ================================================= The Gilded Chamber theme: warm orange, black type, muted blue and deep red
-   Original palette in the spirit of a 1930s political poster: warm orange for backgrounds, headers, the board and buttons,
-   black type, cream only as an accent (card faces, text panels, gold-line trim), muted blue for the Loyalists and a
-   darker, deeper red for the Syndicate so it stands out on the orange. Display: Big Shoulders Display (condensed poster
-   capitals); wordmark: Limelight (an art-deco face); the log: Special Elite (typewriter).
-   Low-light mode (html[data-dim]) keeps the same accents on charcoal for dim rooms.
-   Every text colour pair below is at least 4.5:1 in both modes (checked by scripts/contrast.mjs). */
-@font-face{font-family:"Limelight";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/limelight-400.woff2) format("woff2")}
-@font-face{font-family:"Poiret One";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/poiret-one-400.woff2) format("woff2")}
-@font-face{font-family:"Special Elite";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/special-elite-400.woff2) format("woff2")}
+/* ================================================= The Gilded Chamber theme: dark base, bold orange cards, blue and deep red
+   Transit-app language: a dark page; every section is a full-colour rounded card in the game's palette (warm orange
+   for panels, muted blue for Loyalists, deep red for the Syndicate); cream and gold are accents only (card faces,
+   the main button, trim). The root tokens are for text sitting directly on the dark page. Inside a card the scope rule
+   below swaps them for dark ink on orange, so every component keeps using the same token names.
+   Display and UI: Rubik (same file as the games home page). Low-light mode (html[data-dim]) keeps the layout on a
+   darker page with deeper orange cards. Every text pair is at least 4.5:1 in both modes (checked by scripts/contrast.mjs). */
 :root{
-  --room:#F59E3B; --room-night:#F59E3B; --head:#EE8A22; --board:#E8741A; --panel:#FFF4DC; --panel-2:#F9E3B4; --rule:#C8741A; --rule-strong:#6B3A0C;
-  --candle:#1A1410; --smoke:#3A2410; --faint:#4A2C10;
-  --brass:#1A1410; --brass-hi:#3A2410; --brass-lo:#000; --on-brass:#FFF4DC; --focus:#1A1410;
-  --btn:#E8590C; --on-btn:#1A1410;
-  --gold:#E2B04A; --gold-ink:#6B4A00;
-  --accent:#5A1A08; --warn:#5A3500;
+  --room:#0B0B0D; --room-night:#08080A; --head:#0B0B0D; --panel:#1C1C22; --panel-2:#26262E; --rule:#34343E; --rule-strong:#8C8CA0;
+  --candle:#F6F2EA; --smoke:#CFCBDA; --faint:#A8A4B8;
+  --brass:#FFB36B; --brass-hi:#FFC58C; --brass-lo:#F07A22; --on-brass:#2A0606; --focus:#FFE08A;
+  --btn:#F07A22; --on-btn:#2A0606;
+  --gold:#E2B04A; --gold-ink:#F0C86A;
+  --accent:#FFB36B; --warn:#FFD98A;
   --card:#FFF4DC; --card-ink:#1A1410; --lacquer:#1A1410;
-  --baize:#3A1F0E; --baize-lit:#4A2813; --baize-deep:#261208; --rail:#1A1410; --felt-muted:#F3DDB8;
-  --town:#1D4167; --mafia:#7F1611; --town-dim:#D6DFE7; --mafia-dim:#F2D6C9;
-  --reform-fill:#2F5A8A; --cabal-fill:#8A1913; --on-fill:#FFF8EC;
-  --glass:#FFF4DC; --on-glass:#1A1410; --glass-a:.86;
-  --lift-1:0 1px 0 rgba(26,20,16,.15), 0 6px 14px -8px rgba(26,20,16,.45);
-  --lift-2:0 2px 0 rgba(26,20,16,.12), 0 18px 40px -16px rgba(26,20,16,.55);
-  --font-display:"Big Shoulders Display","Arial Narrow",sans-serif-condensed,sans-serif;
-  --font-wordmark:"Limelight","Big Shoulders Display",Georgia,serif;
-  --font-deco:"Poiret One","Limelight",Georgia,serif;
-  --font-type:"Special Elite","Courier New",monospace;
-  color-scheme:light;
-}
-html[data-dim="1"]{
-  --room:#5A2606; --room-night:#451C04; --head:#6E300A; --board:#7A3508; --panel:#2E1707; --panel-2:#3D200B; --rule:#7A4416; --rule-strong:#C48A52;
-  --candle:#FFF1DC; --smoke:#F0D4AE; --faint:#E2BC8C;
-  --brass:#FFF1DC; --brass-hi:#FFFFFF; --brass-lo:#F0D4AE; --on-brass:#2E1707; --focus:#FFE08A;
-  --btn:#B8400A; --on-btn:#FFF1DC;
-  --gold-ink:#F0C86A;
-  --accent:#FFC48A; --warn:#FFD98A;
-  --card:#FFF1DC; --lacquer:#140A03;
-  --baize:#2A1409; --baize-lit:#38190C; --baize-deep:#1A0B04; --rail:#140A03;
+  --baize:#3A1F0E; --baize-lit:#4A2813; --baize-deep:#261208; --rail:#F07A22; --felt-muted:#F3DDB8;
   --town:#A9C8F0; --mafia:#FF9C8C; --town-dim:#1E2F44; --mafia-dim:#4A1A12;
-  --reform-fill:#2F5A8A; --cabal-fill:#A32117;
-  --glass:#2E1707; --on-glass:#FFF1DC;
+  --reform-fill:#2F5A8A; --cabal-fill:#8A1913; --on-fill:#FFF8EC;
+  --glass:#2E1707; --on-glass:#FFF1DC; --glass-a:.86;
+  /* the orange card and the ink that sits on it */
+  --orange:#F07A22; --orange-2:#D9650F; --ink:#2A0606; --ink-2:#3F0E08; --ink-3:#55200E;
+  --card-in:#F9A04F; --card-in-2:#FFB877; --card-rule:#B85A12; --card-rule-strong:#5A1F08;
+  --card-town:#0F2A47; --card-mafia:#5A0A07; --card-warn:#4A1F00; --card-accent:#4A0A08; --card-gold-ink:#3A2400;
+  --card-btn:#2A0606; --on-card-btn:#FFE9C7; --go:#FFE9C7; --on-go:#2A0606;
   --lift-1:0 1px 0 rgba(0,0,0,.6), 0 6px 14px -8px rgba(0,0,0,.9);
   --lift-2:0 2px 0 rgba(0,0,0,.5), 0 18px 40px -16px rgba(0,0,0,.95);
+  --r-card:28px;
+  --font-wordmark:"Rubik",system-ui,sans-serif; --font-deco:"Rubik",system-ui,sans-serif; --font-type:"Rubik",system-ui,sans-serif;
   color-scheme:dark;
 }
+html[data-dim="1"]{
+  --room:#050506; --room-night:#030304; --head:#050506; --panel:#141418; --panel-2:#1C1C22; --rule:#2A2A32; --rule-strong:#7C7C90;
+  --candle:#EDE8DE; --smoke:#C4BFD0; --faint:#A09CB0;
+  --btn:#B8400A; --on-btn:#FFF1DC;
+  --orange:#933909; --orange-2:#7E3007; --ink:#FFF4E4; --ink-2:#FBE3C8; --ink-3:#F7D6B2;
+  --card-in:#7C2E07; --card-in-2:#682505; --card-rule:#C9733A; --card-rule-strong:#F5C089;
+  --card-town:#BBD4F5; --card-mafia:#FFC2B6; --card-warn:#FFE3A8; --card-accent:#FFD2A8; --card-gold-ink:#F7D88A;
+  --card-btn:#FFE9C7; --on-card-btn:#2A0606; --go:#FFD9A8; --on-go:#2A0606;
+  --reform-fill:#2F5A8A; --cabal-fill:#A32117;
+}
+/* inside a card: dark ink on orange (light ink on deep orange in low light) */
+:is(.stage,.reveal,.panel,.pane-sec,.join-code,.path,.home-hero,.stat){
+  --candle:var(--ink); --smoke:var(--ink-2); --faint:var(--ink-3); --panel:var(--card-in); --panel-2:var(--card-in-2);
+  --rule:var(--card-rule); --rule-strong:var(--card-rule-strong); --town:var(--card-town); --mafia:var(--card-mafia);
+  --warn:var(--card-warn); --accent:var(--card-accent); --gold-ink:var(--card-gold-ink);
+  --brass:var(--ink); --brass-hi:var(--ink-2); --on-brass:var(--orange); --focus:var(--ink); --btn:var(--card-btn); --on-btn:var(--on-card-btn);
+  color:var(--ink)}
 .a-reform{--team:var(--town);--team-dim:var(--town-dim);--fill:var(--reform-fill)}
 .a-cabal{--team:var(--mafia);--team-dim:var(--mafia-dim);--fill:var(--cabal-fill)}
 .t-reform{color:var(--town)} .t-cabal{color:var(--mafia)}
-body{background:var(--room)}
-.wordmark{font-family:var(--font-wordmark);font-weight:400;font-size:clamp(2.8rem,1.6rem + 5.4vw,6rem);letter-spacing:.005em;line-height:1}
-.home .wordmark span{font-family:var(--font-display);font-weight:800;color:var(--accent);letter-spacing:.26em;text-transform:uppercase}
-.phase-title{font-weight:800;font-size:clamp(2rem,1.6rem + 2vw,3.2rem);letter-spacing:.01em;text-transform:uppercase}
-.block-title,.path-title,.reveal-h{font-weight:800;letter-spacing:.04em;text-transform:uppercase}
-.room-code{font-size:clamp(3rem,15vw,6rem);letter-spacing:.08em}
-.code{font-family:var(--font-display);letter-spacing:.08em}
-.msgs.log .txt,.history li,.board-foot{font-family:var(--font-type)}
-.msgs.log .txt{font-size:.95em}
+.code{letter-spacing:.08em}
 .note.is-warn,.note.warn,.note.is-warn > .ui-ico{color:var(--warn)}
-.appbar{background:var(--head);border-bottom:2px solid var(--candle)}
-.appbar-mark{color:var(--candle)}
-.home-dim{display:flex;justify-content:flex-end}
-.dim-btn{width:44px;height:44px;display:inline-grid;place-items:center;border-radius:var(--r-control);color:var(--candle)}
-.dim-btn .ui-ico{width:22px;height:22px}
 .knight.is-me .knight-name{color:var(--town);text-decoration:underline;text-underline-offset:3px}
-/* poster card backs: charcoal with a vermilion sunburst */
+/* card backs: charcoal with a vermilion sunburst */
 .rcard-back{background:repeating-conic-gradient(from 0deg at 50% 46%, rgba(226,176,74,.2) 0 7.5deg, transparent 7.5deg 15deg), radial-gradient(circle at 50% 46%, #3A2410, #140A03)}
 .rcard-back-mark,.rcard-back > .ui-ico{color:var(--gold)}
 .rcard-face.rcard-back{box-shadow:inset 0 0 0 10px #140A03, inset 0 0 0 12px rgba(226,176,74,.85), var(--lift-2)}
@@ -717,18 +700,17 @@ body{background:var(--room)}
 .rcard-front .cardart{position:relative}
 .side-tag.a-cabal::before{border:3px double var(--team)}
 .card-fan .rcard-back{box-shadow:var(--lift-2)}
-/* the board */
+/* the board: a blue Loyalist card and a deep red Syndicate card with big numbers */
 .boards{display:grid;gap:var(--s3)}
-.board{display:grid;gap:var(--s2);padding:var(--s3);border-radius:var(--r-panel);background:var(--fill);color:var(--on-fill);border:2px solid var(--on-fill)}
-.board.a-cabal{border-style:double;border-width:5px}
-.boards{padding:var(--s3);border-radius:28px;background:var(--board)}
-.board-h{display:flex;align-items:center;gap:var(--s2);font-family:var(--font-display);font-weight:800;font-size:var(--fs-lg);text-transform:uppercase;letter-spacing:.05em;color:var(--on-fill)}
-.board-h .ico{width:26px;height:26px}
+.board{display:grid;gap:var(--s2);padding:var(--s4);border-radius:var(--r-card);background:var(--fill);color:var(--on-fill);box-shadow:inset 0 0 0 2px rgba(255,248,236,.55)}
+.board.a-cabal{box-shadow:inset 0 0 0 2px rgba(255,248,236,.55), inset 0 0 0 6px var(--fill), inset 0 0 0 8px rgba(255,248,236,.55)}
+.board-h{display:flex;align-items:center;gap:var(--s2);font-family:var(--font-display);font-weight:900;font-size:var(--fs-lg);letter-spacing:-.01em;color:var(--on-fill)}
+.board-h .ico{width:28px;height:28px}
 .board-h b{margin-left:auto;font-variant-numeric:tabular-nums}
 .slots{display:grid;gap:clamp(4px,1.5vw,10px)}
 .slots.five{grid-template-columns:repeat(5,1fr)} .slots.six{grid-template-columns:repeat(6,1fr)}
-.slot{position:relative;aspect-ratio:3/4;border-radius:6px;display:grid;place-items:center;text-align:center;border:2px dashed rgba(255,248,236,.75);color:var(--on-fill);background:rgba(255,248,236,.1)}
-.slot small{font-family:var(--font-display);font-weight:800;font-size:clamp(.7rem,2.6vw,.9rem);text-transform:uppercase;letter-spacing:.04em;line-height:1.05}
+.slot{position:relative;aspect-ratio:3/4;border-radius:10px;display:grid;place-items:center;text-align:center;border:2px dashed rgba(255,248,236,.75);color:var(--on-fill);background:rgba(255,248,236,.1)}
+.slot small{font-family:var(--font-display);font-weight:800;font-size:clamp(.7rem,2.6vw,.9rem);line-height:1.05}
 .slot .ico{width:62%;height:auto;aspect-ratio:1}
 .slot-power{display:grid;justify-items:center;gap:2px;color:var(--on-fill)}
 .slot-power .ico{width:46%;margin-inline:auto}
@@ -737,17 +719,16 @@ body{background:var(--room)}
 .slot.is-danger{border-color:var(--gold);border-style:solid}
 .slot.is-pop{animation:seal-pop 700ms var(--ease-out) both}
 .board-note{font-size:var(--fs-xs);color:var(--on-fill)}
-.board-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:var(--s3);font-size:var(--fs-sm);color:var(--candle)}
-.board-foot b{color:var(--candle)}
-.board-foot .rejects i{border-color:var(--candle)}
-.board-foot .ico{width:20px;height:20px;color:var(--cabal-fill)}
-.rejects i.on{background:var(--cabal-fill);border-color:var(--candle)}
+.board-foot{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s3)}
+.board-foot .ico{width:22px;height:22px}
+.rejects i{border-color:var(--ink)}
+.rejects i.on{background:var(--ink);border-color:var(--ink)}
 /* the round table */
-.round-felt{box-shadow:inset 0 0 0 10px var(--rail), inset 0 0 0 12px rgba(236,225,200,.55), var(--lift-2)}
+.round-felt{box-shadow:inset 0 0 0 10px var(--rail), inset 0 0 0 12px rgba(42,6,6,.55), var(--lift-2)}
 .round-felt p{color:var(--felt-muted)}
 .round-felt p b{color:#FFF8EC}
 .round-felt .ico{color:rgba(239,230,210,.16)}
-.knight-disc{font-family:var(--font-display);background:var(--panel-2);border-color:var(--rule-strong);color:var(--candle)}
+.knight-disc{font-family:var(--font-display);font-weight:900;background:var(--panel-2);border-color:var(--rule-strong);color:var(--candle)}
 .knight.on-team .knight-disc{background:var(--reform-fill);color:var(--on-fill);border-color:var(--candle);box-shadow:0 0 0 3px var(--room), 0 0 0 5px var(--candle)}
 .knight.is-out .knight-disc{background:var(--room);color:var(--faint);border-style:dashed}
 .knight.is-out .knight-disc .ico{width:60%;height:60%}
@@ -761,24 +742,18 @@ body{background:var(--room)}
 .knight-name .term{display:block;font-weight:500;color:var(--smoke);font-size:.8em}
 /* policies */
 .tiles{display:flex;flex-wrap:wrap;gap:var(--s3);justify-content:center}
-.tile{display:grid;justify-items:center;align-content:center;gap:var(--s2);width:clamp(92px,26vw,128px);aspect-ratio:3/4;border-radius:8px;background:var(--fill);color:var(--on-fill);
-  font-family:var(--font-display);font-weight:800;text-transform:uppercase;letter-spacing:.05em;font-size:var(--fs-md);box-shadow:inset 0 0 0 3px var(--fill), inset 0 0 0 5px var(--on-fill), var(--lift-1)}
+.tile{display:grid;justify-items:center;align-content:center;gap:var(--s2);width:clamp(92px,26vw,128px);aspect-ratio:3/4;border-radius:12px;background:var(--fill);color:var(--on-fill);
+  font-family:var(--font-display);font-weight:900;font-size:var(--fs-md);box-shadow:inset 0 0 0 3px var(--fill), inset 0 0 0 5px var(--on-fill), var(--lift-1)}
 .tile.is-reform{--fill:var(--reform-fill)} .tile.is-decree{--fill:var(--cabal-fill)}
 .tile.is-decree{box-shadow:inset 0 0 0 3px var(--fill), inset 0 0 0 5px var(--on-fill), inset 0 0 0 7px var(--fill), inset 0 0 0 8px var(--on-fill), var(--lift-1)}
 .tile .ico{width:52%;height:auto;aspect-ratio:1}
 .tile.flip{animation:card-flip 500ms var(--ease-out) both}
-.tile-btn{all:unset;cursor:pointer;border-radius:10px}
+.tile-btn{all:unset;cursor:pointer;border-radius:12px}
 .tile-btn:focus-visible{outline:3px solid var(--focus);outline-offset:4px}
 .tile-btn:active .tile{transform:translateY(2px)}
 @media (hover:hover){.tile-btn:hover .tile{transform:translateY(-3px)}}
-.choice{background:var(--panel)}
-.choice.yes{border-color:var(--town);color:var(--town)}
-.choice.no{border-color:var(--mafia);color:var(--mafia)}
-.choice.reform{background:var(--reform-fill);border-color:var(--candle);color:var(--on-fill)}
-.choice.decree{background:var(--cabal-fill);border:4px double var(--on-fill);color:var(--on-fill);box-shadow:0 0 0 2px var(--candle)}
-.choice .ico.art{width:56px;height:56px}
-.reveal{background:var(--panel)}
-.winner{background:radial-gradient(circle at 50% 30%, var(--panel), var(--room) 85%)}
+.choice.reform{background:var(--reform-fill);color:var(--on-fill)}
+.choice.decree{background:var(--cabal-fill);color:var(--on-fill)}
 .sees li.is-cabal{border:3px double var(--mafia)} .sees li.is-cabal .ico{color:var(--mafia)}
 .sees li.is-reform{border-color:var(--town)} .sees li.is-reform .ico{color:var(--town)}
 .sees li .ico{color:var(--candle)}
@@ -788,20 +763,12 @@ body{background:var(--room)}
 .pc{background:#FFF4DC;color:#1A1410;box-shadow:inset 0 0 0 1px #6B3A0C}
 .pc.is-red{color:#A8361A}
 .toggle input{accent-color:var(--candle)}
-.seg button[aria-pressed="true"],.seg button[aria-selected="true"]{background:var(--candle);color:var(--room)}
+.seg button[aria-pressed="true"],.seg button[aria-selected="true"]{background:var(--candle);color:var(--card-in)}
 .round-felt{inset:21%;padding:9%}
 .knight{z-index:2}
 .knight-name{background:var(--room);padding:0 4px;border-radius:4px}
-@media (max-width:600px){.slot{aspect-ratio:1}.board{padding:var(--s2) var(--s3)}.board-note{display:none}.slot-power small{font-size:.62rem}}
-
-/* art-deco touches: Poiret One section headings, stepped corners and a fan rule (all CSS/SVG, original) */
-.path-title,.block-title,.sub{font-family:var(--font-deco);font-weight:400;-webkit-text-stroke:.5px currentColor;text-transform:none;letter-spacing:.06em;font-size:var(--fs-lg)}
-.block-title,.path-title{display:flex;align-items:center;gap:var(--s3)}
-.block-title::after,.path-title::after{content:"";flex:1;height:7px;border-block:1px solid var(--rule-strong);opacity:.8}
-.panel,.stage,.board,.path{position:relative}
 .board::before,.board::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none;border:2px solid var(--gold)}
-.board::before{top:5px;left:5px;border-right:0;border-bottom:0}
-.board::after{bottom:5px;right:5px;border-left:0;border-top:0}
-.home .wordmark::after{content:"";display:block;height:18px;margin-top:var(--s3);color:var(--accent);
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 18'%3E%3Cg fill='none' stroke='%238A1913' stroke-width='2'%3E%3Cpath d='M0 9h92M148 9h92'/%3E%3Cpath d='M120 1v16M102 9 120 1l18 8-18 8z'/%3E%3Cpath d='M110 9h20' stroke-width='1.5'/%3E%3C/g%3E%3C/svg%3E") left center/min(100%,420px) 18px no-repeat}
-html[data-dim="1"] .home .wordmark::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 18'%3E%3Cg fill='none' stroke='%23FFC48A' stroke-width='2'%3E%3Cpath d='M0 9h92M148 9h92'/%3E%3Cpath d='M120 1v16M102 9 120 1l18 8-18 8z'/%3E%3Cpath d='M110 9h20' stroke-width='1.5'/%3E%3C/g%3E%3C/svg%3E")}
+.board{position:relative}
+.board::before{top:7px;left:7px;border-right:0;border-bottom:0}
+.board::after{bottom:7px;right:7px;border-left:0;border-top:0}
+@media (max-width:600px){.slot{aspect-ratio:1}.board{padding:var(--s3)}.board-note{display:none}.slot-power small{font-size:.62rem}}

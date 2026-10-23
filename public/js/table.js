@@ -78,7 +78,7 @@ export function modeProblem(room) {
   const m = room.mode;
   const noPhone = seated(room).filter((p) => p.phoneless);
   const need = PIECES.filter((k) => m[k] === 'app');
-  if (noPhone.length && need.length) return `${noPhone.map((p) => p.name).join(', ')} ${noPhone.length > 1 ? 'have' : 'has'} no phone. Set ${need.join(', ')} to “physical”, or remove the seat.`;
+  if (noPhone.length && need.length) return `${noPhone.map((p) => p.name).join(', ')} ${noPhone.length > 1 ? 'have' : 'has'} no phone. Set ${need.join(', ')} to “at the table”, or remove the seat.`;
   return null;
 }
 

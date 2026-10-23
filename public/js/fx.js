@@ -24,7 +24,7 @@ export function makeFx({ S, send, esc }) {
   const $fx = Object.assign(document.createElement('div'), { id: 'fx' });
   $fx.setAttribute('aria-hidden', 'true');
   document.body.append($fx);
-  if (LITE) $html.dataset.fxlite = '1';
+  if (LITE || reduced.matches) $html.dataset.fxlite = '1'; // flat cards and solid panels; the pop-up shows statically
 
   const on = (v = S.view) => v?.anim !== false && !reduced.matches;
   const nameOf = (v, id) => v.players.find((p) => p.id === id)?.name || '?';
@@ -52,7 +52,7 @@ export function makeFx({ S, send, esc }) {
       L.t = setTimeout(applyLive, end - now + 30);
     }
   }
-  const shake = (cls = 'fx-shake') => addLive(() => $app.querySelectorAll('.col-main'), cls, { dur: 400 });
+  const shake = (cls = 'fx-shake') => addLive(() => $app.querySelectorAll('.col-main > :not(.sticky-act)'), cls, { dur: 400 });
 
   // ------------------------------------------------------------ particles (own tiny helper, no libraries)
   function burst(host, kind, team, { n = PARTS, x = 50, y = 50, delay = 0 } = {}) {
@@ -154,7 +154,7 @@ export function makeFx({ S, send, esc }) {
   const mascot = (side) => `<svg class="fx-mascot" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="44" r="28" fill="var(--${side === 'reform' ? 'reform' : 'cabal'}-fill)" stroke="var(--gold)" stroke-width="3"/><path d="M22 20l7-10 6 8 5-11 5 11 6-8 7 10z" fill="var(--gold)"/><circle cx="31" cy="42" r="4" fill="#FFF8EC"/><circle cx="49" cy="42" r="4" fill="#FFF8EC"/><circle cx="32" cy="43" r="2" fill="#1A1410"/><circle cx="50" cy="43" r="2" fill="#1A1410"/><path d="M29 54q11 11 22 0" fill="none" stroke="#FFF8EC" stroke-width="3.5" stroke-linecap="round"/><circle cx="24" cy="52" r="3.5" fill="#FFF8EC" opacity=".35"/><circle cx="56" cy="52" r="3.5" fill="#FFF8EC" opacity=".35"/></svg>`;
 
   function rolesHtml(v) {
-    const roles = v.game?.roles; if (!roles) return '<p class="fx-turn">Everyone, turn your cards over.</p>';
+    const roles = v.game?.roles; if (!roles) return '<p class="fx-turn">Everyone, reveal your roles.</p>';
     return `<ul class="fx-roles">${v.players.filter((p) => roles[p.id]).map((p, i) => { const r = roles[p.id];
       return `<li class="a-${r.side}" style="--i:${i}">${art(ROLE_ART[r.id])}<span><b>${esc(p.name)}</b><small>${ROLE_LABEL[r.id] || esc(r.name)}</small></span></li>`; }).join('')}</ul>`;
   }

@@ -7,11 +7,12 @@ const block = (sel) => { const i = theme.indexOf(sel + '{'); const j = theme.ind
 const lum = (h) => { const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
 const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
 const mix = (a, b, k) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(a.slice(i, i + 2), 16) * k + parseInt(b.slice(i, i + 2), 16) * (1 - k)).toString(16).padStart(2, '0')).join('');
-const TEXT = [['candle', 'room'], ['candle', 'panel'], ['candle', 'panel-2'], ['smoke', 'room'], ['smoke', 'panel'], ['smoke', 'panel-2'], ['faint', 'room'],
-  ['town', 'room'], ['town', 'panel'], ['mafia', 'room'], ['mafia', 'panel'], ['on-brass', 'brass'], ['accent', 'room'], ['warn', 'room'], ['warn', 'panel'],
-  ['felt-muted', 'baize'], ['on-fill', 'reform-fill'], ['on-fill', 'cabal-fill'], ['room', 'candle'],
-  ['candle', 'head'], ['smoke', 'head'], ['candle', 'board'], ['on-btn', 'btn'], ['card-ink', 'card'], ['gold-ink', 'panel'], ['gold-ink', 'panel-2'], ['on-brass', 'mafia']];
-const FIXED = [['#E8DCC0', '#1A1410', 'card blurb on card front'], ['#FFF4DC', '#2E4C69', 'card name on Reform art'], ['#FFF1E6', '#6E100C', 'card name on Syndicate art'], ['#A8361A', '#FFF4DC', 'red card index'], ['#FFF8EC', '#3A1F0E', 'felt names']];
+// Page text sits on the dark page; card text (dark ink on orange, or light ink on deep orange in low light) uses the ink tokens.
+const TEXT = [['candle', 'room'], ['smoke', 'room'], ['faint', 'room'], ['candle', 'panel'], ['smoke', 'panel'], ['candle', 'panel-2'], ['smoke', 'panel-2'], ['town', 'room'], ['mafia', 'room'], ['warn', 'room'], ['accent', 'room'], ['brass', 'room'],
+  ['on-brass', 'brass'], ['on-btn', 'btn'], ['on-go', 'go'], ['ink', 'orange'], ['ink-2', 'orange'], ['ink-3', 'orange'], ['ink', 'card-in'], ['ink-2', 'card-in'], ['ink-3', 'card-in'], ['ink', 'card-in-2'], ['ink-2', 'card-in-2'], ['ink-3', 'card-in-2'],
+  ['card-town', 'orange'], ['card-mafia', 'orange'], ['card-warn', 'orange'], ['card-accent', 'orange'], ['card-gold-ink', 'orange'], ['card-town', 'card-in-2'], ['card-mafia', 'card-in-2'], ['on-card-btn', 'card-btn'], ['card-ink', 'card'], ['ink', 'orange-2'],
+  ['felt-muted', 'baize'], ['on-fill', 'reform-fill'], ['on-fill', 'cabal-fill'], ['candle', 'head'], ['smoke', 'head'], ['gold-ink', 'room'], ['ink', 'orange'], ['on-brass', 'mafia']];
+const FIXED = [['#E8DCC0', '#1A1410', 'card blurb on card front'], ['#FFF4DC', '#2E4C69', 'card name on Reform art'], ['#FFF1E6', '#6E100C', 'card name on Syndicate art'], ['#A8361A', '#FFF4DC', 'red card index'], ['#FFF8EC', '#3A1F0E', 'felt names'], ['#FFF8EC', '#244B78', 'Join card inputs'], ['#FFE9C7', '#2A0606', 'the bottom pill'], ['#2A0606', '#FFE9C7', 'the bottom pill (dark on cream)']];
 let bad = 0;
 const light = block(':root'); const dim = { ...light, ...block('html[data-dim="1"]') };
 for (const [name, t] of [['light', light], ['low light', dim]]) {

@@ -6,7 +6,7 @@ import { art, ROLE_ART, POWER_ART } from './art.js';
 import { ROLES, TEAMS, POWERS, POWER_TEXT, roleList, MIN_PLAYERS, MAX_PLAYERS, REFORM_TO_WIN, DECREE_TO_WIN, VETO_AT, PRETENDER_DANGER, TRACKER_MAX, startingDeck } from './rules.js';
 import { makeTable, faqPage, wireFaqSearch } from './table_ui.js';
 import { makeFx } from './fx.js';
-import { roleCards, MAP } from './cards.js';
+import { makeTilt } from './tilt.js';
 import { FAQ } from './faq.js';
 
 const $app = document.getElementById('app');
@@ -49,6 +49,7 @@ function render() {
 document.addEventListener('focusout', () => { if (pending) setTimeout(render, 50); });
 const T = makeTable({ S, send, esc, ui, toast, render });
 const fx = makeFx({ S, send, esc });
+makeTilt({ enabled: () => S.view?.anim !== false });
 
 function screen() {
   if (S.fatal) return `<main class="wrap"><div class="empty">${ui('warning')}<h1 class="phase-title">${esc(S.fatal)}</h1><a class="btn" href="#/">Go to the home page</a></div></main>`;
@@ -71,23 +72,22 @@ const dimBtn = () => `<button type="button" class="icon-btn dim-btn" data-a="dim
 function home() {
   const mine = Object.keys(localStorage).filter((k) => k.startsWith(`${KEY}.player.`)).map((k) => k.slice(KEY.length + 8));
   return `<main class="wrap home"><div class="home-dim">${dimBtn()}</div>
-    <div class="home-hero">
-      <div class="card-fan" aria-hidden="true">${cardBack().repeat(3)}</div>
-      <h1 class="wordmark">The Gilded Chamber <span>Loyalty or ruin. Trust no one.</span></h1>
-      <p class="lede">The Loyalists hold the majority, but the Syndicate sits among them, and one of them is the Boss. Elect governments, pass policies, and unmask the Boss before they take power. 5 to 10 players. Play on phones, with a deck of cards, or a mix.</p>
-    </div>
+    <header class="home-head"><h1 class="wordmark">The Gilded Chamber</h1><p class="tagline">Loyalty or ruin. Trust no one.</p></header>
+    <section class="home-hero"><div class="card-fan" aria-hidden="true">${cardBack().repeat(3)}</div>
+      <p class="lede">The Loyalists hold the majority, but the Syndicate sits among them, and one of them is the Boss. Elect governments, pass policies, and unmask the Boss before they take power. 5 to 10 players, each on their own phone.</p>
+    </section>
     <div class="home-paths">
       <section class="path"><h2 class="path-title">Host a game</h2>
         <p class="muted">You can play too, or sit out as the moderator. Everyone else joins with a 6‑letter code.</p>
         <label class="field"><span>Your name</span><input data-i="hostName" maxlength="20" autocomplete="nickname" enterkeyhint="go" value="${esc(S.ui.draft.hostName || store.get(`${KEY}.name`) || '')}"></label>
-        <button type="button" class="btn big" data-a="host">Open a chamber</button>
         ${mine.map((c) => `<p class="resume-row"><a class="resume" href="#/play/${esc(c)}">Back to chamber <b class="code">${esc(c)}</b></a></p>`).join('')}</section>
-      <section class="path"><h2 class="path-title">Join a game</h2>
+      <section class="path c-blue"><h2 class="path-title">Join a game</h2>
         <div class="join-row"><label class="field"><span>Room code</span><input class="code-input" data-i="joinCode" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="go" placeholder="ABCDEF" value="${esc(S.ui.draft.joinCode || '')}"></label>
         <button type="button" class="btn ghost" data-a="goJoin">Join</button></div></section>
-      <p class="home-faq"><a class="path-link" href="#/rules">How to play</a> · <a class="path-link" href="#/faq">FAQ</a> · <a class="path-link" href="/print.html" target="_blank" rel="noopener">Print cards</a></p>
+      <p class="home-faq"><a class="path-link" href="#/rules">How to play</a><a class="path-link" href="#/faq">FAQ</a></p>
     </div>
-    <p class="credits">Same table as <a href="https://mafia-app.hatethespurs.workers.dev">Mafia Night</a> and <a href="https://quest-night.hatethespurs.workers.dev">Quest Night</a>. Torch, chain, mask and every board icon drawn for The Gilded Chamber. Interface icons from <a href="https://phosphoricons.com" target="_blank" rel="noopener">Phosphor</a> (MIT). Fonts: Limelight, Big Shoulders Display and Alegreya (SIL OFL), Special Elite (Apache 2.0).</p>
+    <p class="credits">Same table as <a href="https://mafia-app.hatethespurs.workers.dev">Mafia Night</a> and <a href="https://quest-night.hatethespurs.workers.dev">Quest Night</a>. Torch, chain, mask and every board icon drawn for The Gilded Chamber. Interface icons from <a href="https://phosphoricons.com" target="_blank" rel="noopener">Phosphor</a> (MIT). Font: Rubik (SIL OFL).</p>
+    <div class="sticky-act"><button type="button" class="btn big" data-a="host">Open a chamber</button></div>
   </main>`;
 }
 
@@ -101,21 +101,20 @@ function rulesPage() {
       <p><b>Each round</b> the Speaker role moves one seat left. The Speaker nominates a Chancellor, and everyone still in the game votes <b>Aye</b> or <b>Nay</b>. A strict majority elects them; a tie fails.</p>
       <p><b>Term limits:</b> the last elected Chancellor can’t be nominated, and neither can the last elected Speaker unless only five players are left.</p>
       <p><b>Unrest:</b> each failed election moves the Unrest marker. On the third, the top policy is enacted at once, with no power, and term limits are forgotten. Unrest resets whenever any policy is enacted.</p>
-      <p><b>Passing a law:</b> the Speaker draws three policies, secretly discards one and passes two to the Chancellor, who discards one and enacts the other. The deck holds 6 Reforms and 11 Decrees. When fewer than three remain, the discards are shuffled back in.</p>
+      <p><b>Passing a law:</b> the Speaker draws three policies, secretly discards one and passes two to the Chancellor, who discards one and enacts the other. The policy pile holds 6 Reforms and 11 Decrees. When fewer than three remain, the discards are shuffled back in.</p>
       <p><b>Powers:</b> some Decrees give the Speaker a power (below). After five Decrees, the Chancellor may propose a <b>veto</b>: if the Speaker agrees, both policies are discarded and Unrest moves on.</p>
       <p><b>Winning:</b> the Loyalists win with five Reforms, or by executing the Boss. The Syndicate win with six Decrees, or if the Boss is elected Chancellor once three Decrees are on the board.</p>
     </section>
     <section class="stage"><h2 class="block-title">Table sizes and powers</h2>
       <div class="table-scroll"><table class="sizes"><thead><tr><th>Players</th><th>Loyalists</th><th>Syndicate</th><th>Decree 1 to 5</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <ul class="tips">${Object.entries(POWER_TEXT).map(([k, [t, d]]) => `<li>${art(POWER_ART[k])} <b>${t}.</b> ${esc(d)}</li>`).join('')}</ul>
-      <p class="muted">Playing with a regular deck? <a href="/print.html" target="_blank" rel="noopener">Print the card guide</a> (every table size, with the eyes-closed script) or the Gilded Chamber cards.</p></section>
+      <ul class="tips">${Object.entries(POWER_TEXT).map(([k, [t, d]]) => `<li>${art(POWER_ART[k])} <b>${t}.</b> ${esc(d)}</li>`).join('')}</ul></section>
   </main>`;
 }
 
 function joinForm() {
   return `<main class="wrap join"><h1 class="phase-title">Join chamber <span class="code">${esc(S.code)}</span></h1>
     <label class="field"><span>Your name</span><input data-i="joinName" maxlength="20" autocomplete="nickname" enterkeyhint="go" value="${esc(S.ui.draft.joinName || store.get(`${KEY}.name`) || '')}"></label>
-    <button type="button" class="btn big" data-a="join">Take a seat</button>
+    <div class="sticky-act"><button type="button" class="btn big" data-a="join">Take a seat</button></div>
     <p class="muted" style="margin-top:var(--s4)">If the game has started you’ll watch, unless the host opened a seat for you. <a href="#/">Back</a></p></main>`;
 }
 
@@ -161,11 +160,11 @@ function myMove(v) {
 
 // ---------------------------------------------------------------- lobby (the setup part of the host dashboard)
 const MODES = [['phone', 'Phones only', 'Every player uses their phone. Works for online play too.'],
-  ['hybrid', 'Hybrid', 'Mix real cards and phones. Choose each piece below.'],
-  ['physical', 'All physical', 'A deck of cards on the table. This phone is the board, the tracker and the moderator.']];
+  ['hybrid', 'Hybrid', 'Choose below, for each piece, whether the table handles it out loud or the app does.'],
+  ['physical', 'All at the table', 'The table handles everything out loud. This phone is the board, the tracker and the moderator.']];
 const PIECE_TEXT = { roles: ['Secret roles', 'role'], votes: ['Aye / Nay votes', 'vote'], cards: ['Policy tiles', 'policy'] };
 const HOUSE = [
-  ['rebalance', 'Rebalanced tables', 'Community variant: at 6 players one Decree starts on the board; at 7 one Decree, and at 9 two Decrees, are left out of the deck.'],
+  ['rebalance', 'Rebalanced tables', 'Community variant: at 6 players one Decree starts on the board; at 7 one Decree, and at 9 two Decrees, are left out of the policy pile.'],
   ['exile', 'Exile instead of execution', 'Removed players stay at the table and still vote, but can’t hold office or be nominated. Exiling the Boss still wins for the Loyalists.'],
   ['anonVotes', 'Anonymous votes', 'Show only the count of Ayes and Nays, not who voted how.'],
   ['noClaims', 'No-claims mode', 'Turns off posting claims in the chat. Claims are made out loud.'],
@@ -185,11 +184,9 @@ function lobby(v) {
       ${p.host ? '' : `<button class="icon-btn" data-a="kick" data-id="${p.id}" aria-label="Remove ${esc(p.name)}">${ui('x')}</button>`}` : ''}</li>`).join('');
   const m = v.mode;
   const modes = MODES.map(([k, t, d]) => `<label class="toggle radio ${m.play === k ? 'is-on' : ''}"><input type="radio" name="play" data-a="modeSet" data-k="play" value="${k}" ${m.play === k ? 'checked' : ''} ${host ? '' : 'disabled'}><span><b>${t}</b><span class="muted">${d}</span></span></label>`).join('');
-  const pieces = m.play === 'hybrid' ? `<div class="pieces">${Object.entries(PIECE_TEXT).map(([k, [t]]) => `<div class="piece"><span>${t}</span><span class="seg mini">${['app', 'physical'].map((x) => `<button type="button" data-a="piece" data-k="${k}" data-v="${x}" aria-pressed="${m[k] === x}" ${host ? '' : 'disabled'}>${x === 'app' ? 'In the app' : 'Physical'}</button>`).join('')}</span></div>`).join('')}</div>` : '';
+  const pieces = m.play === 'hybrid' ? `<div class="pieces">${Object.entries(PIECE_TEXT).map(([k, [t]]) => `<div class="piece"><span>${t}</span><span class="seg mini">${['app', 'physical'].map((x) => `<button type="button" data-a="piece" data-k="${k}" data-v="${x}" aria-pressed="${m[k] === x}" ${host ? '' : 'disabled'}>${x === 'app' ? 'In the app' : 'At the table'}</button>`).join('')}</span></div>`).join('')}</div>` : '';
   const house = HOUSE.map(([k, t, d]) => `<label class="toggle ${v.house[k] ? 'is-on' : ''}"><input type="checkbox" data-a="houseSet" data-k="${k}" ${v.house[k] ? 'checked' : ''} ${host ? '' : 'disabled'}><span><b>${t}</b><span class="muted">${d}</span></span></label>`).join('');
   const sel = (k, opts2) => `<select data-a="houseSel" data-k="${k}" ${host ? '' : 'disabled'}>${opts2.map(([val, l]) => `<option value="${val}" ${String(v.house[k]) === String(val) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
-  const physAny = m.roles === 'physical' || m.cards === 'physical' || m.votes === 'physical';
-  const guide = physAny && n >= 5 && n <= 10 ? cardGuideBlock(n, v.house, m) : '';
   return `<section class="join-code"><p class="muted">Room code</p><p class="room-code">${esc(v.code)}</p>
       <p class="muted join-link">${esc(link)}</p>
       <div class="btn-row"><button class="btn ghost" data-a="copy" data-link="${esc(link)}">${ui('copy')} Copy invite link</button>
@@ -201,13 +198,12 @@ function lobby(v) {
       ${host ? `<div class="add-seat"><label class="field"><span>Add a seat without a phone</span><input data-i="seatName" maxlength="20" placeholder="Name" enterkeyhint="done" value="${esc(S.ui.draft.seatName || '')}"></label><button class="btn ghost" data-a="addSeat">Add</button></div>
       <div class="btn-row"><button class="btn ghost" data-a="shuffleSeats">${ui('shuffle')} Shuffle seats</button></div>` : ''}</section>
     <section class="stage"><h2 class="block-title">How you’re playing</h2><div class="settings">${modes}</div>${pieces}
-      ${m.play !== 'phone' ? `<p class="muted">Real cards: <a href="/print.html" target="_blank" rel="noopener">print the card guide or the Gilded Chamber cards</a>. Anything physical is entered by the host, who never sees a secret.</p>` : ''}</section>
+      ${m.play !== 'phone' ? `<p class="muted">Anything handled at the table is entered by the host, who never sees a secret.</p>` : ''}</section>
     <section class="stage"><h2 class="block-title">House rules</h2><p class="muted">All off unless the host turns them on. Otherwise the rules are exactly the classic game.</p>
       <div class="settings">${house}
       <label class="toggle"><span><b>Phase timer</b><span class="muted">A countdown starts each phase. Nothing happens at zero; the host decides.</span></span>${sel('turnTimer', [[0, 'Off'], [60, '1 min'], [90, '1:30'], [120, '2 min'], [180, '3 min'], [300, '5 min']])}</label>
       <label class="toggle"><span><b>Vote reveal delay</b><span class="muted">A short drumroll before the votes are shown.</span></span>${sel('revealDelay', [[0, 'Off'], [3, '3 s'], [5, '5 s']])}</label>
       <label class="toggle"><span><b>First Speaker</b><span class="muted">Who holds the gavel first.</span></span>${sel('firstLeader', [['random', 'Random'], ['host', 'The host']])}</label></div></section>
-    ${guide}
     ${host ? `<div class="sticky-act"><button class="btn big ${n < 5 || n > 10 || list.error ? 'disabled' : ''}" data-a="start">${m.roles === 'app' ? 'Deal the roles' : 'Start the game'}</button></div>`
     : '<div class="empty">Waiting for the host to start…</div>'}`;
 }
@@ -219,19 +215,6 @@ function balanceTips(n, house) {
   if (n >= 9) tips.push('At 9 or 10 the very first Decree gives an Inquiry: the Loyalists get information early.');
   if (house.exile) tips.push('Exile keeps everyone voting: good for groups where nobody likes to sit out.');
   return tips.length ? `<ul class="tips">${tips.map((t) => `<li>${ui('info')} ${esc(t)}</li>`).join('')}</ul>` : '';
-}
-
-function cardGuideBlock(n, house, m) {
-  const rc = roleCards(n, house.rebalance);
-  const pc = (c) => `<b class="pc ${/[♥♦]/.test(c) || c === 'Red joker' ? 'is-red' : ''}">${esc(c)}</b>`;
-  const span = (a) => (a.length > 1 ? `${a[0]}–${a.at(-1)}` : a[0]);
-  return `<section class="stage"><h2 class="block-title">Playing-card setup for ${n}</h2>
-    ${m.roles === 'physical' ? `<p class="muted">Roles: shuffle these ${n} cards and deal one face down to each player. Hearts are Loyalists; clubs are the Syndicate; the K♠ is the Boss.</p>
-    <ul class="card-key">${rc.roles.map((c) => `<li class="a-${ROLES[c.role].side}">${pc(c.card)} ${esc(ROLES[c.role].name)}</li>`).join('')}</ul>
-    <p class="muted">Party cards (for an Inquiry), kept face down in front of each player: ${pc(span(rc.party.filter((c) => /♦/.test(c))))} Loyalist, ${pc(span(rc.party.filter((c) => /♣/.test(c))))} Syndicate. Hand them out to match the roles at the start, eyes closed (see the script).</p>` : ''}
-    ${m.cards === 'physical' ? `<p class="muted">Policy pile: ${pc(span(rc.reform))} are Reforms, ${pc(span(rc.decree))} are Decrees (${rc.reform.length + rc.decree.length} cards). Shuffle face down.${rc.startDecrees ? ' Put one Decree face up on the board before you start.' : ''}</p>` : ''}
-    ${m.votes === 'physical' ? '<p class="muted">Votes: thumbs up for Aye, down for Nay, on three. Or give each player a red card (Aye) and a black card (Nay) from a second deck.</p>' : ''}
-    <p class="muted">The ${pc(MAP.speaker)} is the Speaker’s placard; the ${pc(MAP.chancellor)} is the Chancellor’s.</p></section>`;
 }
 
 // ---------------------------------------------------------------- the board
@@ -248,8 +231,9 @@ function board(v) {
     <div class="board a-reform"><h2 class="board-h">${art('torch')} Reforms <b data-roll="reform">${g.reform}/${REFORM_TO_WIN}</b></h2><div class="slots five">${rs}</div></div>
     <div class="board a-cabal"><h2 class="board-h">${art('chain')} Decrees <b data-roll="decree">${g.decree}/${DECREE_TO_WIN}</b></h2><div class="slots six">${ds}</div>
       <p class="board-note">${g.decree >= PRETENDER_DANGER ? 'Three Decrees: electing the Boss as Chancellor wins for the Syndicate.' : 'From the third Decree, the Boss must not be elected Chancellor.'}${g.vetoOn ? ' Veto is unlocked.' : ''}</p></div>
-    <div class="board-foot"><span class="rejects" title="Unrest">${art('unrest')} Unrest <b class="num" data-roll="tracker">${g.tracker}/${TRACKER_MAX}</b> ${pips}</span>
-      <span>Draw pile <b class="num" data-roll="pile">${g.pile}</b> · Discards <b class="num" data-roll="discards">${g.discards}</b></span></div>
+    <div class="board-foot"><div class="stat"><span class="lbl" title="Unrest">${art('unrest')} Unrest</span><b class="num" data-roll="tracker">${g.tracker}/${TRACKER_MAX}</b><span class="rejects">${pips}</span></div>
+      <div class="stat"><span class="lbl">Draw pile</span><b class="num" data-roll="pile">${g.pile}</b></div>
+      <div class="stat"><span class="lbl">Discards</span><b class="num" data-roll="discards">${g.discards}</b></div></div>
     ${g.reshuffleNow && !g.cardsApp ? `<p class="note is-warn">${ui('shuffle')} Fewer than three policies left: shuffle the discards into the draw pile.</p>` : ''}
   </section>`;
 }
@@ -300,7 +284,7 @@ function roundTable(v) {
   if (v.phase === 'nominate') felt = `<b>${esc(nameOf(v, g.speaker))}</b> holds the gavel${g.special ? ' (snap election)' : ''}.<br>Nominate a Chancellor.`;
   else if (v.phase === 'vote') felt = `<b>${esc(nameOf(v, g.speaker))}</b> and <b>${esc(nameOf(v, g.nominee))}</b>?<br>${v.mode.votes === 'app' ? `${g.voted.length} of ${g.alive.length + g.exiled.length} have voted` : 'Vote at the table'}`;
   else if (v.phase === 'legislate') felt = g.leg === 'speaker' ? `The Speaker reads three policies…` : g.leg === 'veto' ? 'A veto is proposed.' : 'The Chancellor chooses…';
-  else if (v.phase === 'reveal') felt = g.appRoles ? `${g.ready.length} of ${n} have read their role` : 'Look at your card';
+  else if (v.phase === 'reveal') felt = g.appRoles ? `${g.ready.length} of ${n} have read their role` : 'Look at your role';
   else if (v.phase === 'power') felt = `<b>${esc(nameOf(v, g.speaker))}</b>: ${esc(POWER_TEXT[g.power][0])}`;
   else if (v.phase === 'check') felt = 'The chamber holds its breath.';
   else if (v.phase === 'chaos') felt = 'Unrest! Turn over the top policy.';
@@ -315,14 +299,15 @@ function stage(v) {
   const S2 = esc(nameOf(v, g.speaker)); const C2 = esc(nameOf(v, g.nominee));
   const unrestWarn = g.tracker === TRACKER_MAX - 1 ? `<p class="note is-out">${ui('warning')} Two failed governments in a row. If this one fails too, the top policy is enacted.</p>` : '';
   if (v.phase === 'reveal') {
-    if (!g.appRoles || !me.role) return `<section class="stage"><h1 class="phase-title">Secret roles</h1>${say(g.appRoles ? 'The players are reading their roles.' : 'Everyone looks at their own card. The host reads the eyes-closed script from the Host tab.')}
-      ${host ? '<button class="btn big" data-a="skipReveal">Everyone is ready: begin</button>' : ''}</section>`;
+    if (!g.appRoles || !me.role) return `<section class="stage"><h1 class="phase-title">Secret roles</h1>${say(g.appRoles ? 'The players are reading their roles.' : 'Everyone checks their own role. The host reads the eyes-closed script from the Host tab.')}</section>
+      ${host ? '<div class="sticky-act"><button class="btn big" data-a="skipReveal">Everyone is ready: begin</button></div>' : ''}`;
     const ready = g.ready.includes(me.id);
     return `<section class="stage"><h1 class="phase-title">Your secret role</h1>
       ${say('Shield your screen, tap the card to turn it over, and remember who you are.')}
       ${cardView(v)}
-      ${ready ? '<p class="muted center">Waiting for the others…</p>' : '<button class="btn big" data-a="ready">I’ve read my role</button>'}
-      ${host && ready ? '<button class="btn ghost" data-a="skipReveal">Begin without waiting</button>' : ''}</section>`;
+      ${ready ? '<p class="muted center">Waiting for the others…</p>' : ''}
+      ${host && ready ? '<button class="btn ghost" data-a="skipReveal">Begin without waiting</button>' : ''}</section>
+      ${ready ? '' : '<div class="sticky-act"><button class="btn big" data-a="ready">I’ve read my role</button></div>'}`;
   }
   if (v.phase === 'nominate') {
     const mine = g.speaker === me.id; const forS = !mine && host && isPhys(v, g.speaker);
@@ -337,8 +322,8 @@ function stage(v) {
     if (v.mode.votes === 'physical') {
       if (!host) return `<section class="stage">${head}<p class="note">${ui('hand')} Vote at the table. On three, everyone shows Aye or Nay.</p></section>`;
       const yes = Object.values(S.ui.tally).filter(Boolean).length;
-      return `<section class="stage">${head}<p class="note">${ui('hand')} Tap everyone who voted <b>Aye</b> at the table above, then confirm.</p>
-        <div class="sticky-act"><button class="btn big" data-a="tallySend">Confirm: ${yes} Aye, ${nVoters - yes} Nay</button></div></section>`;
+      return `<section class="stage">${head}<p class="note">${ui('hand')} Tap everyone who voted <b>Aye</b> at the table above, then confirm.</p></section>
+        <div class="sticky-act"><button class="btn big" data-a="tallySend">Confirm: ${yes} Aye, ${nVoters - yes} Nay</button></div>`;
     }
     if (me.watch || me.out && !g.exiled.includes(me.id)) return `<section class="stage">${head}</section>`;
     const voted = 'vote' in me;
@@ -348,7 +333,7 @@ function stage(v) {
   }
   if (v.phase === 'check') {
     const c = g.check;
-    const q = c.kind === 'chancellor' ? `Three Decrees are down. ${esc(nameOf(v, c.id))}, are you the Boss? Show your card to the table only if so; otherwise say “No”.` : `${esc(nameOf(v, c.id))} is ${v.house.exile ? 'exiled' : 'executed'}. Were they the Boss? Only say whether they were; don’t show the card.`;
+    const q = c.kind === 'chancellor' ? `Three Decrees are down. ${esc(nameOf(v, c.id))}, are you the Boss? Answer truthfully: say “Yes” only if you are; otherwise say “No”.` : `${esc(nameOf(v, c.id))} is ${v.house.exile ? 'exiled' : 'executed'}. Were they the Boss? Only say whether they were.`;
     return `<section class="stage"><h1 class="phase-title">The question</h1>${say(q)}
       ${host ? `<div class="choice-pair"><button class="choice no" data-a="check" data-v="1">Yes, the Boss</button><button class="choice yes" data-a="check" data-v="0">No</button></div>` : ''}</section>`;
   }
@@ -376,8 +361,8 @@ function stage(v) {
     const pw = g.power; const [t, d] = POWER_TEXT[pw];
     const mine = g.speaker === me.id; const forS = !mine && host && isPhys(v, g.speaker);
     if (pw === 'peek') {
-      if (mine && me.docket) return `<section class="stage"><h1 class="phase-title">${art('eye')} The docket</h1>${say('The top three policies, in order. Only you see this. Tell the table whatever you like.')}<div class="tiles">${me.docket.map((p) => tile(p)).join('')}</div><button class="btn big" data-a="peekDone">Done</button></section>`;
-      if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art('eye')} The docket</h1>${say(`${mine ? 'Look' : `${S2}, look`} at the top three policies of the draw pile without changing their order, then put them back.`)}<button class="btn big" data-a="peekDone">Done</button></section>`;
+      if (mine && me.docket) return `<section class="stage"><h1 class="phase-title">${art('eye')} The docket</h1>${say('The top three policies, in order. Only you see this. Tell the table whatever you like.')}<div class="tiles">${me.docket.map((p) => tile(p)).join('')}</div></section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
+      if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art('eye')} The docket</h1>${say(`${mine ? 'Look' : `${S2}, look`} at the top three policies of the draw pile without changing their order, then put them back.`)}</section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
       return `<section class="stage"><h1 class="phase-title">${art('eye')} The docket</h1>${say(`${S2} looks at the top three policies.`)}</section>`;
     }
     if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art(POWER_ART[pw])} ${esc(t)}</h1>${say(`${esc(d)} Tap a player at the table.${pw === 'investigate' && !g.appRoles ? ' They hand you their party card face down.' : ''}`)}</section>`;
@@ -395,7 +380,7 @@ function over(v) {
   const roles = g.roles ? v.players.filter((p) => g.roles[p.id]).map((p) => { const r = g.roles[p.id]; return `<li class="a-${r.side}">${art(ROLE_ART[r.id])}<span><b>${esc(p.name)}</b><small>${esc(r.name)}</small></span></li>`; }).join('') : '';
   return `<section class="winner a-${side}">${art(side === 'reform' ? 'torch' : g.reason === 'pretender' ? 'mask' : 'chain')}<h1>${side === 'reform' ? 'The Loyalists win' : 'The Syndicate wins'}</h1>
       <p class="say">${why}</p>${won}</section>
-    ${roles ? `<section class="stage"><h2 class="block-title">Who was who</h2><ul class="roles-list">${roles}</ul></section>` : '<section class="stage"><p class="say">Everyone, turn your cards over.</p></section>'}
+    ${roles ? `<section class="stage"><h2 class="block-title">Who was who</h2><ul class="roles-list">${roles}</ul></section>` : '<section class="stage"><p class="say">Everyone, reveal your roles.</p></section>'}
     ${me?.host ? '<div class="sticky-act"><button class="btn big" data-a="again">Play again with this table</button></div>' : v.kind === 'screen' ? '' : '<p class="muted center">The host can start another game.</p>'}`;
 }
 
@@ -403,7 +388,7 @@ function lastReveals(v) {
   const g = v.game; const out = [];
   const lv = g.lastVote; const lp = g.lastPolicy;
   if (lp && ['nominate', 'power', 'over'].includes(v.phase) && !(lv && !lv.passed && g.history.length && g.history.at(-1) === lv && v.phase === 'nominate' && g.tracker)) {
-    out.push(`<section class="reveal ${S.ui.fresh.policy ? 'is-new' : ''}"><h2 class="reveal-h ${lp.policy === 'R' ? 'ok' : 'bad'}">${lp.policy === 'R' ? 'A Reform' : 'A Decree'} is enacted</h2>
+    out.push(`<section class="reveal ${lp.policy === 'R' ? 'a-reform' : 'a-cabal'} ${S.ui.fresh.policy ? 'is-new' : ''}"><h2 class="reveal-h ${lp.policy === 'R' ? 'ok' : 'bad'}">${lp.policy === 'R' ? 'A Reform' : 'A Decree'} is enacted</h2>
       <div class="flips">${tile(lp.policy, 'flip')}</div><p class="muted center">${lp.byGov ? `By ${esc(nameOf(v, lp.speaker))} and ${esc(nameOf(v, lp.chancellor))}.` : 'Turned over by the Unrest.'}</p></section>`);
   }
   if (lv && ['nominate', 'legislate', 'check', 'over', 'chaos'].includes(v.phase) && (v.phase !== 'nominate' || !lv.passed)) {
@@ -449,7 +434,7 @@ function chronicle(v) {
 // ---------------------------------------------------------------- moderator script (read aloud)
 function openingScript(n, physRoles) {
   const L = [];
-  if (physRoles) L.push('Everyone, look at your role card and keep it hidden. Put your party card face down in front of you: diamond if your role card is a heart, club if it is a club or the king of spades.');
+  if (physRoles) L.push('Everyone, look at your role and keep it hidden.');
   L.push('Everyone, close your eyes and put your fist on the table.');
   if (n <= 6) L.push('Syndicate and the Boss, open your eyes and look around. These are your allies.', 'Boss, raise your thumb so the Syndicate know you.', '(Pause.) Everyone, close your eyes. Thumbs down.');
   else L.push('Syndicate, open your eyes. Do not open them, Boss.', 'Boss, keep your eyes closed and raise your thumb, so the Syndicate know who you are.', '(Pause.) Syndicate, close your eyes. Boss, thumb down.');
@@ -467,7 +452,7 @@ function phaseScript(v) {
     case 'legislate': return g.cardsApp ? [`${sp}, discard one policy. ${ch}, enact one of the two you receive.`, 'No talking during the session.'] : [`${sp}, draw three policies, discard one face down, and pass two to ${ch}.`, `${ch}, discard one face down and enact the other face up.`, 'No talking during the session.'];
     case 'chaos': return ['Unrest! Turn over the top policy and place it on the board. Its power is ignored.'];
     case 'power': return [`${sp}, you have a power: ${POWER_TEXT[g.power][0]}.`, POWER_TEXT[g.power][1]];
-    case 'over': return ['The game is over. Everyone, turn your cards over.'];
+    case 'over': return ['The game is over. Everyone, reveal your roles.'];
     default: return [];
   }
 }

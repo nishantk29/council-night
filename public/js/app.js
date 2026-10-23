@@ -8,6 +8,8 @@ import { ROLES, TEAMS, POWERS, POWER_TEXT, roleList, MIN_PLAYERS, MAX_PLAYERS, R
 import { makeTable, askConfirm, faqPage, wireFaqSearch } from './table_ui.js';
 import { makeFx } from './fx.js';
 import { makeTilt } from './tilt.js';
+import { qrSvg } from './qr.js';
+import { toggleFullscreen, revealAfterRelease, TAP_REVEAL_MS, wantsWake, screenKey, motionOk, makeWake, haptic } from './phone.js';
 import { FAQ } from './faq.js';
 
 const $app = document.getElementById('app');
@@ -16,7 +18,7 @@ const $html = document.documentElement;
 const KEY = 'council';
 
 const S = { mode: 'home', code: null, view: null, fatal: null, conn: true, transport: null,
-  ui: { showCard: false, flip: false, draft: {}, fresh: {}, tab: 'game', side: 'chat', tally: {} } };
+  ui: { open: {}, flip: false, draft: {}, fresh: {}, tab: 'game', side: 'chat', tally: {} } };
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const initial = (n) => esc(([...String(n || '').trim()][0] || '?').toUpperCase());
@@ -33,11 +35,24 @@ const applyDim = () => { $html.dataset.dim = store.get(`${KEY}.dim`) === '1' ? '
 applyDim();
 
 // ---------------------------------------------------------------- render
-let pending = false;
+let pending = false; let lastKey = null;
+const reducedMq = matchMedia('(prefers-reduced-motion: reduce)');
+const wake = makeWake();
+// A new screen or step (not every live update) is wrapped in a View Transition where the browser has them.
+// Same-screen updates paint directly, so nothing animates twice. Honours reduced motion and the Animations switch.
 function render() {
   const a = document.activeElement;
   if (a && $app.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'checkbox' && a.type !== 'radio') { pending = true; return; }
   pending = false;
+  const key = screenKey(S.mode, S.view); const changed = lastKey !== null && key !== lastKey; lastKey = key;
+  if (changed && typeof document.startViewTransition === 'function' && !document.hidden && motionOk(S.view, reducedMq.matches)) {
+    let ran = false; const run = () => { ran = true; paint(); };
+    const vt = document.startViewTransition(run);
+    setTimeout(() => { if (!ran) run(); }, 600); // a tab that isn't producing frames must still get its screen
+    vt.ready.catch(() => {}); vt.finished.catch(() => {}); vt.updateCallbackDone.catch(() => {});
+  } else paint();
+}
+function paint() {
   const y = window.scrollY;
   $html.dataset.phase = S.view?.phase || S.mode;
   $html.dataset.screen = S.mode === 'screen' ? '1' : '';
@@ -47,6 +62,7 @@ function render() {
   window.scrollTo(0, y);
   for (const el of $app.querySelectorAll('[data-scroll]')) el.scrollTop = el.scrollHeight;
   fx.after();
+  wake(S.mode !== 'home' && wantsWake(S.view));
 }
 document.addEventListener('focusout', () => { if (pending) setTimeout(render, 50); });
 const T = makeTable({ S, send, esc, ui, toast, render });
@@ -54,7 +70,7 @@ const fx = makeFx({ S, send, esc });
 makeTilt({ enabled: () => S.view?.anim !== false });
 
 function screen() {
-  if (S.fatal) return `<main class="wrap"><div class="empty">${ui('warning')}<h1 class="phase-title">${esc(S.fatal)}</h1><a class="btn" href="#/">Go to the home page</a></div></main>`;
+  if (S.fatal) return `<main class="wrap"><div class="empty">${ui('warning')}<h1 class="phase-title">${esc(S.fatal)}</h1><a class="btn" href="#/">Go Home</a></div></main>`;
   if (S.mode === 'home') return home();
   if (S.mode === 'rules') return rulesPage();
   if (S.mode === 'faq') return faqPage(FAQ, esc, ui);
@@ -68,12 +84,16 @@ function screen() {
   return banner + appbar(v) + layout(v);
 }
 
+// Swipeable scroll-snap row with a peek of the next slide and tappable dots (dots follow the scroll, see the scroll listener).
+const carousel = (cls, label, slides) => `<div class="car" role="group" aria-roledescription="carousel" aria-label="${label}">
+  <ol class="${cls} car-track" tabindex="0">${slides.map((x, i) => `<li class="car-slide" aria-label="${i + 1} of ${slides.length}">${x}</li>`).join('')}</ol>
+  <div class="car-dots">${slides.map((_, i) => `<button type="button" class="car-dot${i ? '' : ' on'}" data-a="slide" data-i="${i}" aria-label="Go to ${i + 1} of ${slides.length}"></button>`).join('')}</div></div>`;
 const dimBtn = (label = '') => `<button type="button" class="icon-btn dim-btn${label ? ' has-label' : ''}" data-a="dim" aria-pressed="${$html.dataset.dim === '1'}" aria-label="Low-light mode" title="Low-light mode"><svg class="dim-glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path class="moon" d="M20 15.5A9 9 0 0 1 8.5 4a9 9 0 1 0 11.5 11.5z"/><g class="lamp"><circle cx="12" cy="12" r="5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" fill="none"/></g></svg>${label}</button>`;
 
 function home() {
   const mine = Object.keys(localStorage).filter((k) => k.startsWith(`${KEY}.player.`)).map((k) => k.slice(KEY.length + 8));
   return `<main class="wrap home">
-    <header class="home-head"><div class="home-top"><p class="home-meta">5 to 10 players, one phone each</p>${dimBtn('Low light')}</div>
+    <header class="home-head"><div class="home-top"><p class="home-meta">5–10 players · One phone each</p>${dimBtn('Low Light')}</div>
       <h1 class="wordmark">The Gilded Chamber</h1></header>
     <section class="home-hero"><p class="lede">The Loyalists hold the majority, but the Syndicate sits among them, and one of them is the Boss.</p>
       <p class="lede-sub">Elect governments, pass policies, and unmask the Boss before they take power.</p>
@@ -81,33 +101,34 @@ function home() {
     </section>
     <div class="home-paths">
       <section class="path"><h2 class="path-title">Host</h2>
-        <p class="muted">You can play too, or sit out as the moderator. Everyone else joins with a 6‑letter code.</p>
+        <p class="muted">You can play too, or just run the table. Everyone else joins with a 6-letter code.</p>
         <label class="field"><span>Your name</span><input data-i="hostName" maxlength="20" autocomplete="nickname" enterkeyhint="go" value="${esc(S.ui.draft.hostName || store.get(`${KEY}.name`) || '')}"></label>
-        ${mine.map((c) => `<p class="resume-row"><a class="resume" href="#/play/${esc(c)}">Back to chamber <b class="code">${esc(c)}</b></a></p>`).join('')}</section>
+        ${mine.map((c) => `<p class="resume-row"><a class="resume" href="#/play/${esc(c)}">Back to Chamber <b class="code">${esc(c)}</b></a></p>`).join('')}</section>
       <section class="path c-blue"><h2 class="path-title">Join</h2>
         <div class="join-row"><label class="field"><span>Room code</span><input class="code-input" data-i="joinCode" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="go" placeholder="ABCDEF" value="${esc(S.ui.draft.joinCode || '')}"></label>
-        <button type="button" class="btn ghost" data-a="goJoin">Join</button></div></section>
+        <button type="button" class="btn ghost" data-a="goJoin">Join Room</button></div></section>
       <a class="side" href="#/faq"><span><b>Rules &amp; FAQ</b><small>Roles, powers, house rules and edge cases.</small></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
       <h2 class="path-title how-title">How to Play</h2>
-      <ol class="how">
-        <li><h3>Roles</h3><p>Everyone gets a secret role. Most are Loyalists; the rest are the Syndicate, and one of them is the Boss.</p></li>
-        <li><h3>Vote</h3><p>Each round the Speaker nominates a Chancellor. A strict majority of Aye votes elects them; a tie fails.</p></li>
-        <li><h3>Pass</h3><p>The Speaker passes two policies to the Chancellor, who enacts one. Some Decrees give a power.</p></li>
-        <li><h3>Win</h3><p>Loyalists win with five Reforms or by executing the Boss. The Syndicate win with six Decrees, or by electing the Boss after three Decrees.</p></li>
-      </ol>
+      ${carousel('how', 'How to Play, 4 steps', [
+        '<h3>Roles</h3><p>Everyone gets a secret role. Most are Loyalists; the rest are the Syndicate, and one of them is the Boss.</p>',
+        '<h3>Vote</h3><p>Each round the Speaker nominates a Chancellor. A strict majority of Aye votes elects them; a tie fails.</p>',
+        '<h3>Pass</h3><p>The Speaker passes two policies to the Chancellor, who enacts one. Some Decrees give a power.</p>',
+        '<h3>Win</h3><p>Loyalists win with five Reforms or by executing the Boss. The Syndicate win with six Decrees, or by electing the Boss after three Decrees.</p>'])}
     </div>
     <p class="credits">Same table as <a href="https://mafia-app.hatethespurs.workers.dev">Mafia Night</a> and <a href="https://quest-night.hatethespurs.workers.dev">Quest Night</a>. Torch, chain, mask and every board icon drawn for The Gilded Chamber. Interface icons from <a href="https://phosphoricons.com" target="_blank" rel="noopener">Phosphor</a> (MIT). Font: Rubik (SIL OFL).</p>
-    <div class="sticky-act"><button type="button" class="btn big" data-a="host">Open a chamber</button></div>
+    <div class="sticky-act"><button type="button" class="btn big" data-a="host">Open Chamber</button></div>
   </main>`;
 }
 
 const powerRow = (n) => POWERS[n].map((p) => (p ? POWER_TEXT[p][0] : '–')).join(' · ');
+const CARD_GALLERY = [['loyalistRole', 'Loyalist', 'Most of the table. Knows nothing.'], ['syndicateRole', 'Syndicate', 'Knows the team and the Boss.'], ['bossRole', 'The Boss', 'Wins if elected after three Decrees.'],
+  ['reform', 'Reform', 'Five win it for the Loyalists.'], ['decree', 'Decree', 'Six win it for the Syndicate.'], ['loyalistParty', 'Loyalist Party', 'What an Inquiry shows.'], ['syndicateParty', 'Syndicate Party', 'The Boss shows this too.']];
 function rulesPage() {
   const rows = Object.keys(TEAMS).map((n) => `<tr><td>${n}</td><td>${TEAMS[n][0]}</td><td>${TEAMS[n][1]} + the Boss</td><td>${powerRow(n)}</td></tr>`).join('');
-  return `<main class="wrap game">
+  return `<main class="wrap game rules">
     <p><a class="link" href="#/">${ui('back')} Home</a> · <a class="link" href="#/faq">FAQ</a></p>
-    <section class="stage"><h1 class="phase-title">How to play</h1>
-      <p>Everyone gets a secret role. Most of you are <b class="t-reform">Loyalists</b>. The rest are <b class="t-cabal">the Syndicate</b>, and one of them is <b class="t-cabal">the Boss</b>. The Syndicate know each other and who the Boss is; the Boss only knows the Syndicate in 5 or 6 player games.</p>
+    <section class="stage"><h1 class="phase-title">How to Play</h1>
+      <p>Everyone gets a secret role. Most of you are <b class="t-reform">Loyalists</b>. The rest are <b class="t-cabal">the Syndicate</b>, and one of them is <b class="t-cabal">the Boss</b>. The Syndicate know each other and who the Boss is; the Boss only knows the Syndicate in 5–6 player games.</p>
       <p><b>Each round</b> the Speaker role moves one seat left. The Speaker nominates a Chancellor, and everyone still in the game votes <b>Aye</b> or <b>Nay</b>. A strict majority elects them; a tie fails.</p>
       <p><b>Term limits:</b> the last elected Chancellor can’t be nominated, and neither can the last elected Speaker unless only five players are left.</p>
       <p><b>Unrest:</b> each failed election moves the Unrest marker. On the third, the top policy is enacted at once, with no power, and term limits are forgotten. Unrest resets whenever any policy is enacted.</p>
@@ -115,21 +136,24 @@ function rulesPage() {
       <p><b>Powers:</b> some Decrees give the Speaker a power (below). After five Decrees, the Chancellor may propose a <b>veto</b>: if the Speaker agrees, both policies are discarded and Unrest moves on.</p>
       <p><b>Winning:</b> the Loyalists win with five Reforms, or by executing the Boss. The Syndicate win with six Decrees, or if the Boss is elected Chancellor once three Decrees are on the board.</p>
     </section>
-    <section class="stage"><h2 class="block-title">Table sizes and powers</h2>
-      <div class="table-scroll"><table class="sizes"><thead><tr><th>Players</th><th>Loyalists</th><th>Syndicate</th><th>Decree 1 to 5</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <section class="stage cards-gallery"><h2 class="block-title">The Cards</h2>
+      <p class="muted">Swipe to see every card used in Phones mode.</p>
+      ${carousel('cards', 'The cards, swipe to browse', CARD_GALLERY.map(([k, t, d]) => `<figure class="gal-card">${cardArt(k)}<figcaption><b>${t}</b>${d}</figcaption></figure>`))}</section>
+    <section class="stage"><h2 class="block-title">Table Sizes and Powers</h2>
+      <div class="table-scroll"><table class="sizes"><thead><tr><th>Players</th><th>Loyalists</th><th>Syndicate</th><th>Decrees 1–5</th></tr></thead><tbody>${rows}</tbody></table></div>
       <ul class="tips">${Object.entries(POWER_TEXT).map(([k, [t, d]]) => `<li>${art(POWER_ART[k])} <b>${t}.</b> ${esc(d)}</li>`).join('')}</ul></section>
   </main>`;
 }
 
 function joinForm() {
-  return `<main class="wrap join"><h1 class="phase-title">Join chamber <span class="code">${esc(S.code)}</span></h1>
+  return `<main class="wrap join"><h1 class="phase-title">Join Chamber <span class="code">${esc(S.code)}</span></h1>
     <label class="field"><span>Your name</span><input data-i="joinName" maxlength="20" autocomplete="nickname" enterkeyhint="go" value="${esc(S.ui.draft.joinName || store.get(`${KEY}.name`) || '')}"></label>
-    <div class="sticky-act"><button type="button" class="btn big" data-a="join">Take a seat</button></div>
+    <div class="sticky-act"><button type="button" class="btn big" data-a="join">Take Seat</button></div>
     <p class="muted" style="margin-top:var(--s4)">If the game has started you’ll watch, unless the host opened a seat for you. <a href="#/">Back</a></p></main>`;
 }
 
-const PHASE = { lobby: ['Gathering', 'table'], reveal: ['Secret roles', 'cards'], nominate: ['Nomination', 'gavel'], vote: ['Election', 'hand'],
-  check: ['A question', 'question'], legislate: ['Session', 'rules'], chaos: ['Unrest', 'warning'], power: ['Power', 'sparkle'], over: ['Game over', 'trophy'] };
+const PHASE = { lobby: ['Gathering', 'table'], reveal: ['Secret Roles', 'cards'], nominate: ['Nomination', 'gavel'], vote: ['Election', 'hand'],
+  check: ['A Question', 'question'], legislate: ['Session', 'rules'], chaos: ['Unrest', 'warning'], power: ['Power', 'sparkle'], over: ['Game Over', 'trophy'] };
 function appbar(v) {
   const [label, icon] = PHASE[v.phase] || ['', 'game'];
   return `<header class="appbar"><a class="appbar-mark" href="#/" aria-label="Home">${art('torch')}</a>
@@ -169,26 +193,26 @@ function myMove(v) {
 }
 
 // ---------------------------------------------------------------- lobby (the setup part of the host dashboard)
-const MODES = [['phone', 'Phones only', 'Every player uses their phone. Works for online play too.'],
+const MODES = [['phone', 'Phones mode', 'Every player uses their own phone. Works for online play too.'],
   ['hybrid', 'Hybrid', 'Choose below, for each piece, whether the table handles it out loud or the app does.'],
-  ['physical', 'All at the table', 'The table handles everything out loud. This phone is the board, the tracker and the moderator.']];
-const PIECE_TEXT = { roles: ['Secret roles', 'role'], votes: ['Aye / Nay votes', 'vote'], cards: ['Policy tiles', 'policy'] };
+  ['physical', 'Host-only mode', 'The table handles everything out loud. This phone is the board, the tracker and the Host.']];
+const PIECE_TEXT = { roles: ['Secret Roles', 'role'], votes: ['Aye/Nay Votes', 'vote'], cards: ['Policy Tiles', 'policy'] };
 const HOUSE = [
-  ['rebalance', 'Rebalanced tables', 'Community variant: at 6 players one Decree starts on the board; at 7 one Decree, and at 9 two Decrees, are left out of the policy pile.'],
-  ['exile', 'Exile instead of execution', 'Removed players stay at the table and still vote, but can’t hold office or be nominated. Exiling the Boss still wins for the Loyalists.'],
-  ['anonVotes', 'Anonymous votes', 'Show only the count of Ayes and Nays, not who voted how.'],
-  ['noClaims', 'No-claims mode', 'Turns off posting claims in the chat. Claims are made out loud.'],
-  ['sitOut', 'Moderator sits out', 'The host doesn’t get a role and sees the whole deal on their own phone.'],
+  ['rebalance', 'Rebalanced Tables', 'Community variant: at 6 players one Decree starts on the board; at 7 one Decree, and at 9 two Decrees, are left out of the policy pile.'],
+  ['exile', 'Exile Instead of Execution', 'Removed players stay at the table and still vote, but can’t hold office or be nominated. Exiling the Boss still wins for the Loyalists.'],
+  ['anonVotes', 'Anonymous Votes', 'Show only the count of Ayes and Nays, not who voted how.'],
+  ['noClaims', 'No-Claims Mode', 'Turns off posting claims in the chat. Claims are made out loud.'],
+  ['sitOut', 'Host Sits Out', 'The host doesn’t get a role and sees the whole deal on their own phone.'],
 ];
 function lobby(v) {
   const me = v.me; const seatedP = v.players.filter((p) => !p.watch); const n = seatedP.length; const host = me.host;
   const link = `${location.origin}/#/play/${v.code}`;
   const list = roleList(Math.max(5, Math.min(10, n)));
-  const status = n < MIN_PLAYERS ? `<p class="note is-warn">${ui('info')} ${MIN_PLAYERS - n} more to start (5 to 10 players).</p>`
+  const status = n < MIN_PLAYERS ? `<p class="note is-warn">${ui('info')} ${MIN_PLAYERS - n} more to start (5–10 players).</p>`
     : n > MAX_PLAYERS ? `<p class="note is-warn">${ui('warning')} At most ${MAX_PLAYERS} players.</p>`
       : `<p class="note">${ui('check')} ${TEAMS[n][0]} Loyalists, ${TEAMS[n][1]} Syndicate and the Boss. Powers: ${powerRow(n)}.</p>`;
   const seats = v.players.map((p, i) => `<li><span class="n">${p.watch ? '–' : i + 1}</span><span class="dot ${p.online || p.phoneless ? 'on' : ''}" title="${p.phoneless ? 'No phone' : p.online ? 'Connected' : 'Not connected'}"></span>
-      <span class="who">${esc(p.name)}${p.host ? ' <small class="muted">host</small>' : ''}${p.watch ? ' <small class="muted">moderator</small>' : ''}${p.phoneless ? ' <small class="muted">no phone</small>' : ''}${p.id === me.id ? ' <small class="muted">you</small>' : ''}</span>
+      <span class="who">${esc(p.name)}${p.host ? ' <small class="muted">Host</small>' : ''}${p.watch ? ' <small class="muted">Sitting Out</small>' : ''}${p.phoneless ? ' <small class="muted">No Phone</small>' : ''}${p.id === me.id ? ' <small class="muted">You</small>' : ''}</span>
       ${host ? `<button class="icon-btn" data-a="move" data-id="${p.id}" data-dir="up" aria-label="Move ${esc(p.name)} up" ${i === 0 ? 'disabled' : ''}>${ui('caret-down', 'flip-up')}</button>
       <button class="icon-btn" data-a="move" data-id="${p.id}" data-dir="down" aria-label="Move ${esc(p.name)} down" ${i === v.players.length - 1 ? 'disabled' : ''}>${ui('caret-down')}</button>
       ${p.host ? '' : `<button class="icon-btn" data-a="kick" data-id="${p.id}" aria-label="Remove ${esc(p.name)}">${ui('x')}</button>`}` : ''}</li>`).join('');
@@ -198,29 +222,30 @@ function lobby(v) {
   const house = HOUSE.map(([k, t, d]) => `<label class="toggle ${v.house[k] ? 'is-on' : ''}"><input type="checkbox" data-a="houseSet" data-k="${k}" ${v.house[k] ? 'checked' : ''} ${host ? '' : 'disabled'}><span><b>${t}</b><span class="muted">${d}</span></span></label>`).join('');
   const sel = (k, opts2) => `<select data-a="houseSel" data-k="${k}" ${host ? '' : 'disabled'}>${opts2.map(([val, l]) => `<option value="${val}" ${String(v.house[k]) === String(val) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
   return `<section class="join-code"><p class="muted">Room code</p><p class="room-code">${esc(v.code)}</p>
+      <button type="button" class="qr-tap" data-a="qrFull" data-link="${esc(link)}" data-code="${esc(v.code)}" aria-label="Show the join QR code full screen">${qrSvg(link, `QR code to join room ${v.code}`)}<span>Scan to join. Tap for full screen.</span></button>
       <p class="muted join-link">${esc(link)}</p>
-      <div class="btn-row"><button class="btn ghost" data-a="copy" data-link="${esc(link)}">${ui('copy')} Copy invite link</button>
+      <div class="btn-row"><button class="btn ghost" data-a="copy" data-link="${esc(link)}">${ui('copy')} Copy Invite Link</button>
       ${navigator.share ? `<button class="btn ghost" data-a="share" data-link="${esc(link)}">Share</button>` : ''}</div>
-      <p class="muted"><a href="#/rules">How to play</a> · <a href="#/faq">FAQ</a></p></section>
-    <section class="stage"><h2 class="block-title">At the table (${n})</h2>
+      <p class="muted"><a href="#/rules">How to Play</a> · <a href="#/faq">FAQ</a></p></section>
+    <section class="stage"><h2 class="block-title">At the Table (${n})</h2>
       <p class="muted">Seat order is the order the Speaker role travels. ${host ? 'Match it to how you are sitting.' : ''}</p>
       <ul class="seat-list">${seats}</ul>${status}${n >= 5 && n <= 10 ? balanceTips(n, v.house) : ''}
       ${host ? `<div class="add-seat"><label class="field"><span>Add a seat without a phone</span><input data-i="seatName" maxlength="20" placeholder="Name" enterkeyhint="done" value="${esc(S.ui.draft.seatName || '')}"></label><button class="btn ghost" data-a="addSeat">Add</button></div>
-      <div class="btn-row"><button class="btn ghost" data-a="shuffleSeats">${ui('shuffle')} Shuffle seats</button></div>` : ''}</section>
-    <section class="stage"><h2 class="block-title">How you’re playing</h2><div class="settings">${modes}</div>${pieces}
+      <div class="btn-row"><button class="btn ghost" data-a="shuffleSeats">${ui('shuffle')} Shuffle Seats</button></div>` : ''}</section>
+    <section class="stage"><h2 class="block-title">How You’re Playing</h2><div class="settings">${modes}</div>${pieces}
       ${m.play !== 'phone' ? `<p class="muted">Anything handled at the table is entered by the host, who never sees a secret.</p>` : ''}</section>
-    <section class="stage"><h2 class="block-title">House rules</h2><p class="muted">All off unless the host turns them on. Otherwise the rules are exactly the classic game.</p>
+    <section class="stage"><h2 class="block-title">House Rules</h2><p class="muted">All off unless the host turns them on. Otherwise the rules are exactly the classic game.</p>
       <div class="settings">${house}
-      <label class="toggle"><span><b>Phase timer</b><span class="muted">A countdown starts each phase. Nothing happens at zero; the host decides.</span></span>${sel('turnTimer', [[0, 'Off'], [60, '1 min'], [90, '1:30'], [120, '2 min'], [180, '3 min'], [300, '5 min']])}</label>
-      <label class="toggle"><span><b>Vote reveal delay</b><span class="muted">A short drumroll before the votes are shown.</span></span>${sel('revealDelay', [[0, 'Off'], [3, '3 s'], [5, '5 s']])}</label>
+      <label class="toggle"><span><b>Phase Timer</b><span class="muted">A countdown starts each phase. Nothing happens at zero; the host decides.</span></span>${sel('turnTimer', [[0, 'Off'], [60, '1 min'], [90, '1:30'], [120, '2 min'], [180, '3 min'], [300, '5 min']])}</label>
+      <label class="toggle"><span><b>Vote Reveal Delay</b><span class="muted">A short drumroll before the votes are shown.</span></span>${sel('revealDelay', [[0, 'Off'], [3, '3 sec'], [5, '5 sec']])}</label>
       <label class="toggle"><span><b>First Speaker</b><span class="muted">Who holds the gavel first.</span></span>${sel('firstLeader', [['random', 'Random'], ['host', 'The host']])}</label></div></section>
-    ${host ? `<div class="sticky-act"><button class="btn big ${n < 5 || n > 10 || list.error ? 'disabled' : ''}" data-a="start">${m.roles === 'app' ? 'Deal the roles' : 'Start the game'}</button></div>`
+    ${host ? `<div class="sticky-act"><button class="btn big ${n < 5 || n > 10 || list.error ? 'disabled' : ''}" data-a="start">${m.roles === 'app' ? 'Deal Roles' : 'Start Game'}</button></div>`
     : '<div class="empty">Waiting for the host to start…</div>'}`;
 }
 
 function balanceTips(n, house) {
   const tips = [];
-  if ([6, 7, 9].includes(n) && !house.rebalance) tips.push(`At ${n} players the classic game leans towards the Syndicate. The “Rebalanced tables” house rule evens it out.`);
+  if ([6, 7, 9].includes(n) && !house.rebalance) tips.push(`At ${n} players the classic game leans towards the Syndicate. The Rebalanced Tables house rule evens it out.`);
   if (n <= 6) tips.push('At 5 or 6 the Boss knows the Syndicate, and the third Decree lets the Speaker peek at the docket.');
   if (n >= 9) tips.push('At 9 or 10 the very first Decree gives an Inquiry: the Loyalists get information early.');
   if (house.exile) tips.push('Exile keeps everyone voting: good for groups where nobody likes to sit out.');
@@ -242,7 +267,7 @@ function board(v) {
     <div class="board a-cabal"><h2 class="board-h">${art('chain')} Decrees <b data-roll="decree">${g.decree}/${DECREE_TO_WIN}</b></h2><div class="slots six">${ds}</div>
       <p class="board-note">${g.decree >= PRETENDER_DANGER ? 'Three Decrees: electing the Boss as Chancellor wins for the Syndicate.' : 'From the third Decree, the Boss must not be elected Chancellor.'}${g.vetoOn ? ' Veto is unlocked.' : ''}</p></div>
     <div class="board-foot"><div class="stat"><span class="lbl" title="Unrest">${art('unrest')} Unrest</span><b class="num" data-roll="tracker">${g.tracker}/${TRACKER_MAX}</b><span class="rejects">${pips}</span></div>
-      <div class="stat"><span class="lbl">Draw pile</span><b class="num" data-roll="pile">${g.pile}</b></div>
+      <div class="stat"><span class="lbl">Draw Pile</span><b class="num" data-roll="pile">${g.pile}</b></div>
       <div class="stat"><span class="lbl">Discards</span><b class="num" data-roll="discards">${g.discards}</b></div></div>
     ${g.reshuffleNow && !g.cardsApp ? `<p class="note is-warn">${ui('shuffle')} Fewer than three policies left: shuffle the discards into the draw pile.</p>` : ''}
   </section>`;
@@ -297,13 +322,39 @@ function roundTable(v) {
   else if (v.phase === 'reveal') felt = g.appRoles ? `${g.ready.length} of ${n} have read their role` : 'Look at your role';
   else if (v.phase === 'power') felt = `<b>${esc(nameOf(v, g.speaker))}</b>: ${esc(POWER_TEXT[g.power][0])}`;
   else if (v.phase === 'check') felt = 'The chamber holds its breath.';
-  else if (v.phase === 'chaos') felt = 'Unrest! Turn over the top policy.';
+  else if (v.phase === 'chaos') felt = 'Unrest. Turn over the top policy.';
   else if (v.phase === 'over') felt = g.winner === 'reform' ? 'The Loyalists hold the chamber.' : 'The Syndicate takes the chamber.';
   return `<section class="round" aria-label="The table"><div class="round-felt">${art('table')}<p>${felt}</p></div>${seatEls}</section>`;
 }
 
+// ---- Phones mode privacy: a secret (role, hand, docket) is drawn only while it is open. Closed, every player sees the
+// same blurred card back, so a glance at someone's phone shows nothing. Press and hold to look; a quick tap peeks for a few seconds.
+const isOpen = (k) => !!S.ui.open[k];
+const holdChip = '<span class="hold-chip">Hold to Reveal</span>';
+const hiddenCards = (n) => Array.from({ length: n }, () => `<span class="dc">${cardArt('back')}</span>`).join('');
+// Policy cards the player may choose from: real cards while open, blurred backs while closed.
+const secretTiles = (k, items, build) => isOpen(k)
+  ? `<div class="tiles">${items.map(build).join('')}</div><button type="button" class="btn ghost sm hold" data-a="reveal" data-k="${k}">Hide Cards</button>`
+  : `<button type="button" class="tiles hold is-hidden" data-a="reveal" data-k="${k}" aria-label="Reveal your cards. Press and hold, or tap to peek.">${hiddenCards(items.length)}${holdChip}</button><p class="muted center">Hold to look. A quick tap shows them for ${TAP_REVEAL_MS / 1000} seconds.</p>`;
+const holdState = { key: null, t0: 0 }; const hideT = {};
+function setOpen(k, on) {
+  if (isOpen(k) === on) return;
+  S.ui.open[k] = on; S.ui.flip = k === 'role'; clearTimeout(hideT[k]); render();
+}
+function closeAll() { for (const k of Object.keys(S.ui.open)) { clearTimeout(hideT[k]); S.ui.open[k] = false; } if (S.view) { S.ui.flip = false; render(); } }
+function holdEnd(cancelled) {
+  const k = holdState.key; if (!k) return;
+  holdState.key = null; S.ui.noClickUntil = Date.now() + 450;
+  const ms = cancelled ? 0 : revealAfterRelease(performance.now() - holdState.t0);
+  if (ms === 0) setOpen(k, false); else hideT[k] = setTimeout(() => setOpen(k, false), ms);
+}
+addEventListener('pointerup', () => holdEnd(false)); addEventListener('pointercancel', () => holdEnd(true));
+document.addEventListener('visibilitychange', () => { if (document.hidden) closeAll(); });
+addEventListener('pagehide', () => { for (const k of Object.keys(S.ui.open)) S.ui.open[k] = false; });
+document.addEventListener('contextmenu', (e) => { if (e.target.closest?.('.hold')) e.preventDefault(); });
+
 // Designed policy card (app mode). `extra` 'flip' gives the short 3D turn-over (off for reduced motion / the fx-off switch).
-const tile = (p, extra = '') => `<span class="dc ${extra}">${cardArt(POLICY_CARD[p])}</span>`;
+const tile = (p, extra = '', name = '') => `<span class="dc ${extra}"${name ? ` style="view-transition-name:${name}"` : ''}>${cardArt(POLICY_CARD[p])}</span>`;
 // Flip only when the cards on screen changed (the page re-renders on every update; an unchanged hand must not re-turn).
 const flipOnce = (key) => { const f = S.ui.flipKey !== key; S.ui.flipKey = key; return f ? 'flip' : ''; };
 const mini = (kind, extra = '') => `<span class="mini ${extra}">${cardArt(kind)}</span>`;
@@ -314,25 +365,25 @@ function stage(v) {
   const S2 = esc(nameOf(v, g.speaker)); const C2 = esc(nameOf(v, g.nominee));
   const unrestWarn = g.tracker === TRACKER_MAX - 1 ? `<p class="note is-out">${ui('warning')} Two failed governments in a row. If this one fails too, the top policy is enacted.</p>` : '';
   if (v.phase === 'reveal') {
-    if (!g.appRoles || !me.role) return `<section class="stage"><h1 class="phase-title">Secret roles</h1>${say(g.appRoles ? 'The players are reading their roles.' : 'Everyone checks their own role. The host reads the eyes-closed script from the Host tab.')}</section>
-      ${host ? '<div class="sticky-act"><button class="btn big" data-a="skipReveal">Everyone is ready: begin</button></div>' : ''}`;
+    if (!g.appRoles || !me.role) return `<section class="stage"><h1 class="phase-title">Secret Roles</h1>${say(g.appRoles ? 'The players are reading their roles.' : 'Everyone checks their own role. The host reads the eyes-closed script from the Host tab.')}</section>
+      ${host ? '<div class="sticky-act"><button class="btn big" data-a="skipReveal">Begin Game</button></div>' : ''}`;
     const ready = g.ready.includes(me.id);
-    return `<section class="stage"><h1 class="phase-title">Your secret role</h1>
-      ${say('Shield your screen, tap the card to turn it over, and remember who you are.')}
+    return `<section class="stage"><h1 class="phase-title">Your Secret Role</h1>
+      ${say('Shield your screen. Hold the card to look, then let go to hide it again.')}
       ${cardView(v)}
       ${ready ? '<p class="muted center">Waiting for the others…</p>' : ''}
-      ${host && ready ? '<button class="btn ghost" data-a="skipReveal">Begin without waiting</button>' : ''}</section>
-      ${ready ? '' : '<div class="sticky-act"><button class="btn big" data-a="ready">I’ve read my role</button></div>'}`;
+      ${host && ready ? '<button class="btn ghost" data-a="skipReveal">Begin Now</button>' : ''}</section>
+      ${ready ? '' : '<div class="sticky-act"><button class="btn big" data-a="ready">I’m Ready</button></div>'}`;
   }
   if (v.phase === 'nominate') {
     const mine = g.speaker === me.id; const forS = !mine && host && isPhys(v, g.speaker);
-    if (!mine && !forS) return `<section class="stage"><h1 class="phase-title">${S2} is nominating</h1>${say('Make your case out loud. Term-limited players are marked at the table.')}${unrestWarn}</section>`;
-    return `<section class="stage"><h1 class="phase-title">${forS ? `Enter ${S2}’s nominee` : 'You hold the gavel'}</h1>
+    if (!mine && !forS) return `<section class="stage"><h1 class="phase-title">${S2} Is Nominating</h1>${say('Make your case out loud. Term-limited players are marked at the table.')}${unrestWarn}</section>`;
+    return `<section class="stage"><h1 class="phase-title">${forS ? `Enter ${S2}’s Nominee` : 'You Hold the Gavel'}</h1>
       ${say(forS ? `Tap the player ${S2} nominates as Chancellor.` : 'Tap a player at the table to nominate them as Chancellor. Term-limited players can’t be chosen.')}${unrestWarn}
       ${g.decree >= PRETENDER_DANGER ? `<p class="note is-out">${art('mask')} Three Decrees are down: if the Boss is elected Chancellor, the Syndicate wins.</p>` : ''}</section>`;
   }
   if (v.phase === 'vote') {
-    const head = `<h1 class="phase-title">Elect this government?</h1>${say(`Speaker <b>${S2}</b>, Chancellor <b>${C2}</b>.`)}${placards(S2, C2)}${unrestWarn}`;
+    const head = `<h1 class="phase-title">Elect This Government?</h1>${say(`Speaker <b>${S2}</b>, Chancellor <b>${C2}</b>.`)}${placards(S2, C2)}${unrestWarn}`;
     const nVoters = g.alive.length + g.exiled.length;
     if (v.mode.votes === 'physical') {
       if (!host) return `<section class="stage">${head}<p class="note">${ui('hand')} Vote at the table. On three, everyone shows Aye or Nay.</p></section>`;
@@ -349,26 +400,26 @@ function stage(v) {
   if (v.phase === 'check') {
     const c = g.check;
     const q = c.kind === 'chancellor' ? `Three Decrees are down. ${esc(nameOf(v, c.id))}, are you the Boss? Answer truthfully: say “Yes” only if you are; otherwise say “No”.` : `${esc(nameOf(v, c.id))} is ${v.house.exile ? 'exiled' : 'executed'}. Were they the Boss? Only say whether they were.`;
-    return `<section class="stage"><h1 class="phase-title">The question</h1>${say(q)}
+    return `<section class="stage"><h1 class="phase-title">The Question</h1>${say(q)}
       ${host ? `<div class="choice-pair"><button class="choice no" data-a="check" data-v="1">Yes, the Boss</button><button class="choice yes" data-a="check" data-v="0">No</button></div>` : ''}</section>`;
   }
   if (v.phase === 'legislate') {
     if (!g.cardsApp) {
-      const head = `<h1 class="phase-title">The session</h1>${say(`${S2} draws the top three policies, discards one face down and passes two to ${C2}, who enacts one. No talking!`)}`;
+      const head = `<h1 class="phase-title">The Session</h1>${say(`${S2} draws the top three policies, discards one face down and passes two to ${C2}, who enacts one. No talking.`)}`;
       if (!host) return `<section class="stage">${head}</section>`;
       return `<section class="stage">${head}<p class="note">Which policy did ${C2} turn face up?</p>
         <div class="choice-pair"><button class="choice ballot reform" data-a="hostEnact" data-v="R" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree" data-a="hostEnact" data-v="D" aria-label="Decree">${cardArt('decree')}</button></div>
-        ${g.vetoOn ? '<button class="btn ghost" data-a="hostVeto">The Speaker agreed to a veto</button>' : ''}</section>`;
+        ${g.vetoOn ? '<button class="btn ghost" data-a="hostVeto">Confirm Veto</button>' : ''}</section>`;
     }
     const hand = me.hand || []; const hf = flipOnce(`h${g.leg}${hand.join('')}`);
-    if (g.leg === 'speaker' && g.speaker === me.id) return `<section class="stage"><h1 class="phase-title">Discard one</h1>${say(`Tap the policy to <b>discard</b>. The other two go to ${C2}. Nobody else sees these.`)}
-      <div class="tiles">${hand.map((p, i) => `<button type="button" class="tile-btn" data-a="discard" data-v="${i}" aria-label="Discard this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p, hf)}</button>`).join('')}</div></section>`;
-    if (g.leg === 'chancellor' && g.nominee === me.id) return `<section class="stage"><h1 class="phase-title">Enact one</h1>${say('Tap the policy to <b>enact</b>. The other is discarded face down.')}
-      <div class="tiles">${hand.map((p, i) => `<button type="button" class="tile-btn" data-a="enact" data-v="${i}" aria-label="Enact this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p, hf)}</button>`).join('')}</div>
-      ${g.vetoOn && !g.vetoRefused ? '<button class="btn ghost" data-a="veto">Propose a veto (discard both)</button>' : g.vetoRefused ? '<p class="muted">The Speaker refused the veto. You must enact one.</p>' : ''}</section>`;
+    if (g.leg === 'speaker' && g.speaker === me.id) return `<section class="stage"><h1 class="phase-title">Discard One</h1>${say(`Tap the policy to <b>discard</b>. The other two go to ${C2}. Nobody else sees these.`)}
+      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn" data-a="discard" data-v="${i}" aria-label="Discard this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p, hf)}</button>`)}</section>`;
+    if (g.leg === 'chancellor' && g.nominee === me.id) return `<section class="stage"><h1 class="phase-title">Enact One</h1>${say('Tap the policy to <b>enact</b>. The other is discarded face down.')}
+      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn" data-a="enact" data-v="${i}" aria-label="Enact this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p, hf, S.ui.enactIdx === i ? 'enacted-policy' : '')}</button>`)}
+      ${g.vetoOn && !g.vetoRefused ? '<button class="btn ghost" data-a="veto">Propose Veto</button>' : g.vetoRefused ? '<p class="muted">The Speaker refused the veto. You must enact one.</p>' : ''}</section>`;
     if (g.leg === 'veto' && g.speaker === me.id) return `<section class="stage"><h1 class="phase-title">Veto?</h1>${say(`${C2} wants to veto this agenda. If you agree, both policies are discarded and Unrest moves one step.`)}
       <div class="choice-pair"><button class="choice yes" data-a="vetoReply" data-v="1">${art('aye')}Agree</button><button class="choice no" data-a="vetoReply" data-v="0">${art('nay')}Refuse</button></div></section>`;
-    return `<section class="stage"><h1 class="phase-title">In session</h1>${say(g.leg === 'speaker' ? `${S2} is choosing a policy to discard.` : g.leg === 'veto' ? `${C2} proposed a veto. ${S2} decides.` : `${C2} is choosing a policy to enact.`)}</section>`;
+    return `<section class="stage"><h1 class="phase-title">In Session</h1>${say(g.leg === 'speaker' ? `${S2} is choosing a policy to discard.` : g.leg === 'veto' ? `${C2} proposed a veto. ${S2} decides.` : `${C2} is choosing a policy to enact.`)}</section>`;
   }
   if (v.phase === 'chaos') return `<section class="stage"><h1 class="phase-title">Unrest</h1>${say('Three failed governments. Turn over the top policy of the draw pile and place it on the board. It gives no power.')}
     ${host ? `<div class="choice-pair"><button class="choice ballot reform" data-a="hostEnact" data-v="R" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree" data-a="hostEnact" data-v="D" aria-label="Decree">${cardArt('decree')}</button></div>` : ''}</section>`;
@@ -376,9 +427,9 @@ function stage(v) {
     const pw = g.power; const [t, d] = POWER_TEXT[pw];
     const mine = g.speaker === me.id; const forS = !mine && host && isPhys(v, g.speaker);
     if (pw === 'peek') {
-      if (mine && me.docket) return `<section class="stage"><h1 class="phase-title">${art('eye')} The docket</h1>${say('The top three policies, in order. Only you see this. Tell the table whatever you like.')}<div class="tiles">${me.docket.map((p) => tile(p, flipOnce(`d${me.docket.join('')}`))).join('')}</div></section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
-      if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art('eye')} The docket</h1>${say(`${mine ? 'Look' : `${S2}, look`} at the top three policies of the draw pile without changing their order, then put them back.`)}</section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
-      return `<section class="stage"><h1 class="phase-title">${art('eye')} The docket</h1>${say(`${S2} looks at the top three policies.`)}</section>`;
+      if (mine && me.docket) return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say('The top three policies, in order. Only you see this. Tell the table whatever you like.')}${secretTiles('docket', me.docket, (p) => tile(p, flipOnce(`d${me.docket.join('')}`)))}</section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
+      if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say(`${mine ? 'Look' : `${S2}, look`} at the top three policies of the draw pile without changing their order, then put them back.`)}</section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
+      return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say(`${S2} looks at the top three policies.`)}</section>`;
     }
     if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art(POWER_ART[pw])} ${esc(t)}</h1>${say(`${esc(d)} Tap a player at the table.${pw === 'investigate' && !g.appRoles ? ' They hand you their party card face down.' : ''}`)}</section>`;
     return `<section class="stage"><h1 class="phase-title">${art(POWER_ART[pw])} ${esc(t)}</h1>${say(`${S2}: ${esc(d)}`)}</section>`;
@@ -393,10 +444,10 @@ function over(v) {
   const why = { reforms: 'Five Reforms passed.', decrees: 'Six Decrees passed.', pretender: `The Boss${pre ? `, ${esc(nameOf(v, pre))},` : ''} was elected Chancellor after three Decrees.`, executed: `The Boss${pre ? `, ${esc(nameOf(v, pre))},` : ''} was removed.` }[g.reason];
   const won = me?.role ? (me.role.side === side ? '<p><b>You won.</b></p>' : '<p><b>You lost.</b></p>') : '';
   const roles = g.roles ? v.players.filter((p) => g.roles[p.id]).map((p) => { const r = g.roles[p.id]; return `<li class="a-${r.side}">${art(ROLE_ART[r.id])}<span><b>${esc(p.name)}</b><small>${esc(r.name)}</small></span></li>`; }).join('') : '';
-  return `<section class="winner a-${side}">${art(side === 'reform' ? 'torch' : g.reason === 'pretender' ? 'mask' : 'chain')}<h1>${side === 'reform' ? 'The Loyalists win' : 'The Syndicate wins'}</h1>
+  return `<section class="winner a-${side}">${art(side === 'reform' ? 'torch' : g.reason === 'pretender' ? 'mask' : 'chain')}<h1>${side === 'reform' ? 'The Loyalists Win' : 'The Syndicate Wins'}</h1>
       <p class="say">${why}</p>${won}</section>
-    ${roles ? `<section class="stage"><h2 class="block-title">Who was who</h2><ul class="roles-list">${roles}</ul></section>` : '<section class="stage"><p class="say">Everyone, reveal your roles.</p></section>'}
-    ${me?.host ? '<div class="sticky-act"><button class="btn big" data-a="again">Play again with this table</button></div>' : v.kind === 'screen' ? '' : '<p class="muted center">The host can start another game.</p>'}`;
+    ${roles ? `<section class="stage"><h2 class="block-title">Who Was Who</h2><ul class="roles-list">${roles}</ul></section>` : '<section class="stage"><p class="say">Everyone, reveal your roles.</p></section>'}
+    ${me?.host ? '<div class="sticky-act"><button class="btn big" data-a="again">Play Again</button></div>' : v.kind === 'screen' ? '' : '<p class="muted center">The host can start another game.</p>'}`;
 }
 
 function lastReveals(v) {
@@ -404,7 +455,7 @@ function lastReveals(v) {
   const lv = g.lastVote; const lp = g.lastPolicy;
   if (lp && ['nominate', 'power', 'over'].includes(v.phase) && !(lv && !lv.passed && g.history.length && g.history.at(-1) === lv && v.phase === 'nominate' && g.tracker)) {
     out.push(`<section class="reveal ${lp.policy === 'R' ? 'a-reform' : 'a-cabal'} ${S.ui.fresh.policy ? 'is-new' : ''}"><h2 class="reveal-h ${lp.policy === 'R' ? 'ok' : 'bad'}">${lp.policy === 'R' ? 'A Reform' : 'A Decree'} is enacted</h2>
-      <div class="flips">${tile(lp.policy, 'flip')}</div><p class="muted center">${lp.byGov ? `By ${esc(nameOf(v, lp.speaker))} and ${esc(nameOf(v, lp.chancellor))}.` : 'Turned over by the Unrest.'}</p></section>`);
+      <div class="flips">${tile(lp.policy, 'flip', 'enacted-policy')}</div><p class="muted center">${lp.byGov ? `By ${esc(nameOf(v, lp.speaker))} and ${esc(nameOf(v, lp.chancellor))}.` : 'Turned over by the Unrest.'}</p></section>`);
   }
   if (lv && ['nominate', 'legislate', 'check', 'over', 'chaos'].includes(v.phase) && (v.phase !== 'nominate' || !lv.passed)) {
     const delay = v.house.revealDelay && S.ui.fresh.vote ? v.house.revealDelay : 0;
@@ -420,21 +471,22 @@ function lastReveals(v) {
 }
 
 function cardView(v) {
-  const r = v.me.role; const shown = S.ui.showCard;
+  const r = v.me.role; const open = isOpen('role');
   const sees = (v.me.sees || []).map((k) => `<li class="is-cabal">${mini(k.tag === 'pretender' ? 'bossRole' : 'syndicateRole')}<span><b>${esc(nameOf(v, k.id))}</b> ${k.tag === 'pretender' ? 'is the Boss' : 'is in the Syndicate'}</span></li>`).join('');
   const inq = (v.me.inquiries || []).map((k) => `<li class="${k.party === 'cabal' ? 'is-cabal' : 'is-reform'}">${mini(PARTY_CARD[k.party === 'cabal' ? 'cabal' : 'reform'])}<span>Inquiry: <b>${esc(nameOf(v, k.id))}</b> is ${k.party === 'cabal' ? 'Syndicate' : 'a Loyalist'}</span></li>`).join('');
   const peek = v.me.peeked ? `<li>${art('eye')}<span>You saw the docket: ${v.me.peeked.map((p) => (p === 'R' ? 'Reform' : 'Decree')).join(', ')}</span></li>` : '';
   const hint = { pretender: v.game.n <= 6 ? '' : 'You don’t know who the Syndicate are. They know you.', reformer: 'You know nothing. Watch the votes and the policies.' }[r.id] || '';
-  const card = `<button type="button" class="rcard-tap" data-a="flip" aria-label="${shown ? 'Hide your role' : 'Show your role'}">
-    <div class="rcard a-${r.side} ${S.ui.flip ? (shown ? 'is-flipping' : 'is-unflipping') : ''}" data-face="${shown ? 'front' : 'back'}"><div class="rcard-inner">
-      <div class="rcard-face rcard-front dface">${cardArt(ROLE_CARD[r.id])}</div>
-      <div class="rcard-face rcard-back dface">${cardArt('back')}</div></div></div></button>`;
-  return `<div class="hand">${card}${shown ? `<p class="rcard-blurb center">${esc(r.blurb)}</p>` : ''}${shown && (sees || hint || inq || peek) ? `<ul class="sees">${sees}${inq}${peek}</ul>${hint ? `<p class="muted">${hint}</p>` : ''}` : ''}${shown ? '' : '<p class="muted">Tap to turn over</p>'}</div>`;
+  // Closed: no role-specific markup at all (same neutral class, same back face), so the screen is identical for every player.
+  const card = `<button type="button" class="rcard-tap hold ${open ? '' : 'is-hidden'}" data-a="reveal" data-k="role" aria-pressed="${open}" aria-label="${open ? 'Hide your role' : 'Reveal your role. Press and hold, or tap to peek.'}">
+    <div class="rcard ${open ? `a-${r.side}` : 'a-hidden'} ${S.ui.flip ? (open ? 'is-flipping' : 'is-unflipping') : ''}" data-face="${open ? 'front' : 'back'}" style="view-transition-name:role-card"><div class="rcard-inner">
+      <div class="rcard-face rcard-front dface">${cardArt(open ? ROLE_CARD[r.id] : 'back')}</div>
+      <div class="rcard-face rcard-back dface">${cardArt('back')}</div></div></div>${open ? '' : holdChip}</button>`;
+  return `<div class="hand">${card}${open ? `<p class="rcard-blurb center">${esc(r.blurb)}</p>` : ''}${open && (sees || hint || inq || peek) ? `<ul class="sees">${sees}${inq}${peek}</ul>${hint ? `<p class="muted">${hint}</p>` : ''}` : ''}${open ? '' : `<p class="muted center">Hold to look. A quick tap shows it for ${TAP_REVEAL_MS / 1000} seconds.</p>`}</div>`;
 }
 
 function myCardBlock(v) {
   if (v.phase === 'reveal' || v.phase === 'over' || !v.me?.role) return '';
-  return `<section class="stage"><h2 class="block-title">Your role${v.me.out ? ' (you are out)' : ''}</h2>${cardView(v)}</section>`;
+  return `<section class="stage"><h2 class="block-title">Your Role${v.me.out ? ' (you are out)' : ''}</h2>${cardView(v)}</section>`;
 }
 
 function chronicle(v) {
@@ -444,7 +496,7 @@ function chronicle(v) {
   return `<h3 class="sub">Governments</h3><ul class="history">${items}</ul>`;
 }
 
-// ---------------------------------------------------------------- moderator script (read aloud)
+// ---------------------------------------------------------------- host script (read aloud)
 function openingScript(n, physRoles) {
   const L = [];
   if (physRoles) L.push('Everyone, look at your role and keep it hidden.');
@@ -463,7 +515,7 @@ function phaseScript(v) {
     case 'vote': return [`Speaker ${sp}, Chancellor ${ch}.`, v.mode.votes === 'physical' ? 'Everyone, decide. On three, show your vote. One, two, three.' : 'Vote Aye or Nay on your phones. The votes appear together.'];
     case 'check': return g.check.kind === 'chancellor' ? [`${ch}, are you the Boss?`] : [`${nameOf(v, g.check.id)}, were you the Boss? Say only yes or no.`];
     case 'legislate': return g.cardsApp ? [`${sp}, discard one policy. ${ch}, enact one of the two you receive.`, 'No talking during the session.'] : [`${sp}, draw three policies, discard one face down, and pass two to ${ch}.`, `${ch}, discard one face down and enact the other face up.`, 'No talking during the session.'];
-    case 'chaos': return ['Unrest! Turn over the top policy and place it on the board. Its power is ignored.'];
+    case 'chaos': return ['Unrest. Turn over the top policy and place it on the board. Its power is ignored.'];
     case 'power': return [`${sp}, you have a power: ${POWER_TEXT[g.power][0]}.`, POWER_TEXT[g.power][1]];
     case 'over': return ['The game is over. Everyone, reveal your roles.'];
     default: return [];
@@ -477,20 +529,20 @@ function hostControls(v) {
   let idle = [];
   if (v.phase === 'reveal') idle = seats.filter((p) => !g.ready.includes(p.id) && !p.phoneless);
   if (v.phase === 'vote' && v.mode.votes === 'app') idle = seats.filter((p) => (g.alive.includes(p.id) || g.exiled.includes(p.id)) && !g.voted.includes(p.id));
-  const skipText = { reveal: 'Mark ready', vote: 'Skip (counts as Nay)' }[v.phase];
+  const skipText = { reveal: 'Mark Ready', vote: 'Skip Vote' }[v.phase];
   const who = v.phase === 'legislate' ? (g.leg === 'chancellor' ? g.nominee : g.speaker) : g.speaker;
-  const phaseSkip = { nominate: 'Pass the gavel on', legislate: g.cardsApp ? (g.leg === 'veto' ? 'Skip: refuse the veto' : g.leg === 'speaker' ? 'Skip: discard at random' : 'Skip: enact at random') : '', power: 'Skip the power' }[v.phase];
-  return `<h3 class="sub">This phase</h3>
+  const phaseSkip = { nominate: 'Pass Gavel', legislate: g.cardsApp ? (g.leg === 'veto' ? 'Refuse Veto' : g.leg === 'speaker' ? 'Random Discard' : 'Random Enact') : '', power: 'Skip Power' }[v.phase];
+  return `<h3 class="sub">This Phase</h3>
     ${idle.length ? `<ul class="dash-list">${idle.map((p) => `<li><span class="who">${esc(p.name)} <small class="muted">waiting</small></span><span class="btn-row"><button class="btn ghost sm" data-a="nudge" data-id="${p.id}">Nudge</button><button class="btn ghost sm" data-a="skip" data-id="${p.id}">${skipText}</button></span></li>`).join('')}</ul>` : ''}
-    <div class="btn-row wrap">${v.phase === 'reveal' ? '<button class="btn ghost" data-a="skipReveal">Advance: first nomination</button>' : ''}
+    <div class="btn-row wrap">${v.phase === 'reveal' ? '<button class="btn ghost" data-a="skipReveal">Skip to Nomination</button>' : ''}
     ${['nominate', 'legislate', 'power'].includes(v.phase) && phaseSkip ? `<button class="btn ghost sm" data-a="nudge" data-id="${who}">Nudge ${esc(nameOf(v, who))}</button><button class="btn ghost" data-a="skip">${phaseSkip}</button>` : ''}</div>
     <p class="muted">Skips and undos are written in the log for everyone. A random skip is drawn by the server; nobody, including you, sees the policies.</p>
-    ${v.moderator ? `<h3 class="sub">The deal (moderator only)</h3><ul class="roles-list">${seats.map((p) => { const r = v.moderator.roles[p.id]; return r ? `<li class="a-${r.side}">${art(ROLE_ART[r.id])}<span><b>${esc(p.name)}</b><small>${esc(r.name)}</small></span></li>` : ''; }).join('')}</ul>` : ''}`;
+    ${v.moderator ? `<h3 class="sub">The Deal (Host Only)</h3><ul class="roles-list">${seats.map((p) => { const r = v.moderator.roles[p.id]; return r ? `<li class="a-${r.side}">${art(ROLE_ART[r.id])}<span><b>${esc(p.name)}</b><small>${esc(r.name)}</small></span></li>` : ''; }).join('')}</ul>` : ''}`;
 }
 
 function hostPane(v) {
   const g = v.game;
-  const script = g ? `${scriptHtml(phaseScript(v))}<details class="faq-q"><summary>Opening script (eyes closed)</summary>${scriptHtml(openingScript(g.n, !g.appRoles))}</details>`
+  const script = g ? `${scriptHtml(phaseScript(v))}<details class="faq-q"><summary>Opening Script (Eyes Closed)</summary>${scriptHtml(openingScript(g.n, !g.appRoles))}</details>`
     : `<p class="muted">Once you start, the lines to read aloud for each phase appear here.</p>`;
   const animOn = v.anim !== false;
   const animToggle = `<label class="toggle ${animOn ? 'is-on' : ''}"><input type="checkbox" data-a="anim" ${animOn ? 'checked' : ''}><span><b>Animations</b><span class="muted">Pop-out effects on every phone and the table screen. Anyone whose device asks for reduced motion never sees them.</span></span></label>`;
@@ -501,10 +553,24 @@ function hostPane(v) {
 function tableScreen(v) {
   const g = v.game;
   const head = `<header class="appbar"><span class="appbar-mark">${art('torch')}</span><div class="appbar-title">The Gilded Chamber · <span class="code">${esc(v.code)}</span></div>${T.timerChip(v)}${dimBtn()}<span class="phase-badge">${ui(PHASE[v.phase]?.[1] || 'game')}${PHASE[v.phase]?.[0] || ''}</span></header>`;
-  if (!g) return `${head}<main class="wrap screen-lobby"><h1 class="phase-title">Join at ${esc(location.host)}</h1><p class="room-code">${esc(v.code)}</p><p class="say">${v.players.filter((p) => !p.watch).map((p) => esc(p.name)).join(' · ') || 'Nobody yet.'}</p></main>`;
+  if (!g) return `${head}<main class="wrap screen-lobby"><h1 class="phase-title">Join at ${esc(location.host)}</h1><p class="room-code">${esc(v.code)}</p><div class="qr-tap is-static">${qrSvg(`${location.origin}/#/play/${v.code}`, `QR code to join room ${v.code}`)}</div><p class="say">${v.players.filter((p) => !p.watch).map((p) => esc(p.name)).join(' · ') || 'Nobody yet.'}</p></main>`;
   const lines = phaseScript(v).slice(0, 2);
   return `${head}<div class="layout is-screen"><main class="col col-main wrap game">${board(v)}${roundTable({ ...v, me: null })}${v.phase === 'over' ? over(v) : `<section class="stage"><p class="say">${esc(lines.join(' '))}</p></section>`}${lastReveals(v)}</main>
     <aside class="col col-log">${T.logPane(v, chronicle(v))}</aside><aside class="col col-side">${T.chatPane(v, true)}</aside></div>`;
+}
+
+// The full-screen QR lives outside #app so a live update (someone joins) can't tear it down and exit fullscreen.
+function showQr(link, code) {
+  let el = document.getElementById('qrfs');
+  if (!el) {
+    el = Object.assign(document.createElement('div'), { id: 'qrfs', role: 'dialog', tabIndex: 0 });
+    el.setAttribute('aria-label', 'Join QR code. Tap to close.');
+    el.addEventListener('click', () => { toggleFullscreen(el); el.classList.remove('is-full'); if (document.fullscreenElement !== el) el.hidden = true; });
+    document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) el.hidden = true; });
+    document.body.append(el);
+  }
+  el.innerHTML = `${qrSvg(link, `QR code to join room ${code}`)}<p class="qr-code">${esc(code)}</p><p class="qr-hint">Tap to close</p>`;
+  el.hidden = false; el.classList.remove('is-full'); toggleFullscreen(el);
 }
 
 // ---------------------------------------------------------------- transport
@@ -530,7 +596,7 @@ function wsTransport(code, asScreen) {
   };
   open();
   return {
-    send: (a) => { if (ws?.readyState === 1) ws.send(JSON.stringify(a)); else toast('Not connected to the room yet. Try again in a moment.'); },
+    send: (a) => { if (ws?.readyState === 1) ws.send(JSON.stringify(a)); else toast('Not connected to the room yet. Wait a moment and try again.'); },
     close: () => { closed = true; clearTimeout(timer); ws?.close(); },
   };
 }
@@ -541,8 +607,9 @@ function onView(v) {
     if (v.game.reform + v.game.decree > p.game.reform + p.game.decree) S.ui.fresh.policy = true;
     if (v.game.history.length > p.game.history.length) S.ui.fresh.vote = true;
   }
-  if (v.phase !== p?.phase) { S.ui.showCard = false; S.ui.tally = {}; }
-  if (p?.phase !== v.phase && navigator.vibrate && ['vote', 'legislate', 'power', 'over'].includes(v.phase)) try { navigator.vibrate(30); } catch { /* ignore */ }
+  if (v.phase !== p?.phase) { S.ui.open = {}; S.ui.tally = {}; S.ui.enactIdx = null; }
+  else if (JSON.stringify(p?.me?.hand) !== JSON.stringify(v.me?.hand) || JSON.stringify(p?.me?.docket) !== JSON.stringify(v.me?.docket)) { S.ui.open.hand = false; S.ui.open.docket = false; S.ui.enactIdx = null; }
+  if (p?.phase !== v.phase && v.anim !== false && ['vote', 'legislate', 'power', 'over'].includes(v.phase)) haptic(30);
   T.onView(p, v);
   fx.onView(p, v);
   S.view = v; render();
@@ -551,7 +618,7 @@ function onView(v) {
 // ---------------------------------------------------------------- routing
 async function route() {
   fx.reset();
-  S.transport?.close(); S.transport = null; S.view = null; S.fatal = null; S.conn = true; S.ui.showCard = false;
+  S.transport?.close(); S.transport = null; S.view = null; S.fatal = null; S.conn = true; S.ui.open = {};
   const [kind, arg] = location.hash.replace(/^#\/?/, '').split('/');
   if ((kind === 'play' || kind === 'join' || kind === 'screen') && /^[A-Za-z]{6}$/.test(arg || '')) {
     S.mode = kind === 'screen' ? 'screen' : 'play'; S.code = arg.toUpperCase();
@@ -589,8 +656,25 @@ $app.addEventListener('change', (e) => {
   else if (el.dataset.a === 'modeSet') send({ type: 'mode', mode: { play: el.value } });
   else if (el.dataset.a === 'anim') send({ type: 'anim', on: el.checked });
 });
+$app.addEventListener('pointerdown', (e) => {
+  const el = e.target.closest('[data-a="reveal"]'); if (!el || e.button > 0) return;
+  const k = el.dataset.k; clearTimeout(hideT[k]);
+  if (isOpen(k)) { setOpen(k, false); return; } // a press on an open secret hides it
+  holdState.key = k; holdState.t0 = performance.now(); setOpen(k, true);
+});
+$app.addEventListener('scroll', (e) => {
+  const t = e.target; if (!t.classList?.contains('car-track')) return;
+  const slide = t.firstElementChild; if (!slide) return;
+  const i = Math.round(t.scrollLeft / (slide.getBoundingClientRect().width + (parseFloat(getComputedStyle(t).columnGap) || 0)));
+  t.parentElement.querySelectorAll('.car-dot').forEach((d, n) => d.classList.toggle('on', n === i));
+}, { capture: true, passive: true });
 $app.addEventListener('click', (e) => {
   const el = e.target.closest('[data-a]');
+  if (el?.dataset.a === 'reveal') { // pointer presses are handled above; a click with no pointer is the keyboard
+    if (e.detail === 0) { const k = el.dataset.k; clearTimeout(hideT[k]); const on = !isOpen(k); setOpen(k, on); if (on) hideT[k] = setTimeout(() => setOpen(k, false), TAP_REVEAL_MS * 2); }
+    return;
+  }
+  if (S.ui.noClickUntil > Date.now() && el?.classList.contains('tile-btn')) return; // the finger that lifted off a hold is not a choice
   if (!el || ['set', 'houseSet', 'houseSel', 'modeSet', 'anim'].includes(el.dataset.a)) return;
   if (el.getAttribute('aria-disabled') === 'true') return;
   if (T.handle(el.dataset.a, el)) return;
@@ -604,7 +688,7 @@ async function act(a, el) {
       const name = (S.ui.draft.hostName ?? store.get(`${KEY}.name`) ?? '').trim();
       if (!name) { toast('Type your name first.'); return; }
       store.set(`${KEY}.name`, name);
-      const r = await fetch('/api/create', { method: 'POST' }).then((x) => x.json()).catch(() => ({ error: 'Could not reach the server.' }));
+      const r = await fetch('/api/create', { method: 'POST' }).then((x) => x.json()).catch(() => ({ error: 'Couldn’t reach the server. Check your connection and try again.' }));
       if (r.error) { toast(r.error); return; }
       store.set(`${KEY}.host.${r.code}`, r.hostKey);
       sessionStorage.setItem(`${KEY}.pendingJoin`, name);
@@ -625,13 +709,14 @@ async function act(a, el) {
     case 'addSeat': { const n = (S.ui.draft.seatName || '').trim(); if (!n) { toast('Type a name for the seat.'); return; } send({ type: 'addSeat', name: n }); S.ui.draft.seatName = ''; document.activeElement?.blur?.(); return; }
     case 'copy': try { await navigator.clipboard.writeText(d.link); toast('Invite link copied.'); } catch { toast(d.link); } return;
     case 'share': try { await navigator.share({ title: 'The Gilded Chamber', text: 'Join my game of The Gilded Chamber', url: d.link }); } catch { /* cancelled */ } return;
-    case 'flip': S.ui.showCard = !S.ui.showCard; S.ui.flip = true; render(); return;
+    case 'slide': { const t = el.closest('.car').querySelector('.car-track'); const sl = t.children[+d.i]; if (sl) t.scrollTo({ left: sl.offsetLeft - t.firstElementChild.offsetLeft, behavior: reducedMq.matches ? 'auto' : 'smooth' }); return; }
+    case 'qrFull': showQr(d.link, d.code); return;
     case 'dim': store.set(`${KEY}.dim`, $html.dataset.dim === '1' ? '0' : '1'); applyDim(); render(); return;
     case 'start': if (el.classList.contains('disabled')) { toast('Not ready to start yet.'); return; } send({ type: 'start' }); return;
     case 'nominate': if (await askConfirm(`Nominate ${nameOf(S.view, d.id)} as Chancellor?`)) send({ type: 'nominate', id: d.id }); return;
-    case 'vote': send({ type: 'vote', aye: d.v === '1' }); return;
-    case 'discard': if (await askConfirm('Discard this policy?')) send({ type: 'discard', i: +d.v }); return;
-    case 'enact': if (await askConfirm('Enact this policy?')) send({ type: 'enact', i: +d.v }); return;
+    case 'vote': haptic(20); send({ type: 'vote', aye: d.v === '1' }); return;
+    case 'discard': if (await askConfirm('Discard this policy?')) { haptic(20); send({ type: 'discard', i: +d.v }); } return;
+    case 'enact': if (await askConfirm('Enact this policy?')) { S.ui.enactIdx = +d.v; haptic([20, 40, 20]); send({ type: 'enact', i: +d.v }); } return;
     case 'veto': send({ type: 'veto' }); return;
     case 'vetoReply': send({ type: 'vetoReply', accept: d.v === '1' }); return;
     case 'hostEnact': if (await askConfirm(`A ${d.v === 'R' ? 'Reform' : 'Decree'} was enacted?`)) send({ type: 'hostEnact', policy: d.v }); return;

@@ -85,7 +85,14 @@ function home() {
       <section class="path c-blue"><h2 class="path-title">Join</h2>
         <div class="join-row"><label class="field"><span>Room code</span><input class="code-input" data-i="joinCode" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="go" placeholder="ABCDEF" value="${esc(S.ui.draft.joinCode || '')}"></label>
         <button type="button" class="btn ghost" data-a="goJoin">Join</button></div></section>
-      <p class="home-faq"><a class="path-link" href="#/rules">How to play</a><a class="path-link" href="#/faq">FAQ</a></p>
+      <a class="side" href="#/faq"><span><b>Rules &amp; FAQ</b><small>Roles, powers, house rules and edge cases.</small></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
+      <h2 class="path-title how-title">How to play</h2>
+      <ol class="how">
+        <li><h3>Roles</h3><p>Everyone gets a secret role. Most are Loyalists; the rest are the Syndicate, and one of them is the Boss.</p></li>
+        <li><h3>Vote</h3><p>Each round the Speaker nominates a Chancellor. A strict majority of Aye votes elects them; a tie fails.</p></li>
+        <li><h3>Pass</h3><p>The Speaker passes two policies to the Chancellor, who enacts one. Some Decrees give a power.</p></li>
+        <li><h3>Win</h3><p>Loyalists win with five Reforms or by executing the Boss. The Syndicate win with six Decrees, or by electing the Boss after three Decrees.</p></li>
+      </ol>
     </div>
     <p class="credits">Same table as <a href="https://mafia-app.hatethespurs.workers.dev">Mafia Night</a> and <a href="https://quest-night.hatethespurs.workers.dev">Quest Night</a>. Torch, chain, mask and every board icon drawn for The Gilded Chamber. Interface icons from <a href="https://phosphoricons.com" target="_blank" rel="noopener">Phosphor</a> (MIT). Font: Rubik (SIL OFL).</p>
     <div class="sticky-act"><button type="button" class="btn big" data-a="host">Open a chamber</button></div>

@@ -3,7 +3,7 @@
 // - Navigations: network-first, falling back to the cached app shell.
 // - /api/* and /ws/* never touch the cache.
 // VERSION is a content hash of every precached file, so it changes whenever a file does.
-const VERSION = 'council-1792780001';
+const VERSION = 'council-f0be5f97fe';
 const PREFIX = 'council-';
 const CACHE = PREFIX + VERSION;
 
@@ -24,7 +24,6 @@ const PRECACHE = [
   '/fonts/rubik-var.woff2',
   '/fonts/special-elite-400.woff2',
   '/fx.css',
-  '/motion.css',
   '/icons/apple-touch-icon.png',
   '/icons/favicon-32.png',
   '/icons/favicon.svg',
@@ -39,6 +38,7 @@ const PRECACHE = [
   '/js/fx.js',
   '/js/phone.js',
   '/js/print.js',
+  '/js/print_data.js',
   '/js/qr.js',
   '/js/room.js',
   '/js/rules.js',
@@ -47,10 +47,12 @@ const PRECACHE = [
   '/js/tilt.js',
   '/js/ui_icons.js',
   '/manifest.webmanifest',
+  '/motion.css',
   '/print.css',
   '/print.html',
   '/print/gilded-chamber-card-guide.pdf',
   '/print/gilded-chamber-cards.pdf',
+  '/print/gilded-chamber-designed-cards.pdf',
   '/pwa-install.js',
   '/styles.css',
   '/transit.css',

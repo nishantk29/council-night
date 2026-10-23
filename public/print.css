@@ -14,6 +14,7 @@ body{margin:0;font:400 11pt/1.4 "Alegreya Sans",sans-serif;color:#1F1B16;backgro
 @media print{.noprint{display:none}}
 .sheet{max-width:190mm;margin:0 auto;padding:4mm 0}
 .sheet.cardpage{padding:0}
+@media screen{.sheet{padding-left:16px;padding-right:16px}}
 h1{font:400 30pt/1.1 Limelight,serif;margin:0 0 2mm;color:#1F1B16}
 h2{font:400 17pt/1.2 "Poiret One",Limelight,serif;-webkit-text-stroke:.3pt #1F1B16;letter-spacing:.05em;margin:6mm 0 2mm;color:#1F1B16;border-bottom:3pt double #B23A1A;padding-bottom:1mm}
 h3{font:800 11pt "Big Shoulders Display",sans-serif;letter-spacing:.04em;text-transform:uppercase;margin:3mm 0 1mm}
@@ -24,6 +25,12 @@ th{background:#F1E9D6}
 .red{color:#B23A1A;font-weight:700}.blk{color:#111;font-weight:700}
 .script li{font:italic 11pt/1.45 Alegreya,serif}
 .break{break-before:page}
+/* the two card sets on the landing (print.js chooser) */
+.choose{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:4mm;margin:4mm 0 2mm}
+.choose a{display:grid;gap:1.5mm;padding:4mm;background:#F1E9D6;border:0.6pt solid #b5a888;border-radius:1mm;color:#1F1B16;text-decoration:none}
+.choose b{font:800 13pt/1.1 "Big Shoulders Display",sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#B23A1A}
+.choose span{font-size:10.5pt;color:#5a5245}
+.choose a:focus-visible{outline:2px solid #B23A1A;outline-offset:2px}
 .cards{display:grid;grid-template-columns:repeat(3,63mm);grid-auto-rows:88mm;gap:0;justify-content:center}
 .c{position:relative;width:63mm;height:88mm;padding:4mm;border:0.3pt dashed #999;break-inside:avoid}
 .ci{position:relative;height:100%;border-radius:2mm;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5mm 3mm 4mm;text-align:center;color:var(--ink);background:var(--bg);border:1.4mm solid var(--edge);outline:0.4mm solid var(--line);outline-offset:-2.2mm}
@@ -47,5 +54,7 @@ th{background:#F1E9D6}
 .dg svg{width:100%;max-width:190px;height:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
 .dg figcaption{font-size:11pt}
 .dsheet{display:none}
+/* the plain text sheets are 3 × 63 mm wide: scale them down to fit a phone screen (print is unchanged) */
+@media screen and (max-width:760px){.cards{zoom:.46}}
 .dprint{padding:0;border:0.3pt dashed #999;overflow:hidden}.dprint svg{display:block;width:100%;height:100%}
-@media print{.dsheet{display:block}.dgal{grid-template-columns:repeat(4,1fr)}}
+@media print{.dsheet{display:block}.dgal{grid-template-columns:repeat(4,1fr);gap:4mm}.dg svg{max-width:112px}}

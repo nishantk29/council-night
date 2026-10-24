@@ -20,7 +20,7 @@ function css() {
 .pwa-bar span{flex:1}.pwa-bar strong{font-weight:600}.pwa-bar small{display:block;font-size:13px;opacity:.75}
 .pwa-bar button{font:inherit;min-height:44px;min-width:44px;padding:0 14px;border-radius:8px;border:0;cursor:pointer}
 .pwa-bar .pwa-go{background:var(--pwa-accent,#f5c542);color:#111}.pwa-bar .pwa-x{background:transparent;color:inherit;border:1px solid rgba(255,255,255,.3)}
-@media(prefers-reduced-motion:reduce){.pwa-bar{--pwa-dy:0px}}`;
+@media(prefers-reduced-motion:reduce){.pwa-bar{--pwa-dy:0px;transition:none}}`;
   document.head.append(s);
 }
 

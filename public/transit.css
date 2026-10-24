@@ -2,11 +2,10 @@
    A dark page. Every section is a bold full-colour rounded card in the game's palette, stacked like a route list:
    orange panels, a blue Loyalist board, a deep red Syndicate board. Heavy Rubik titles, simple SVG badges, big numbers,
    and the main action as a full-width pill fixed at the bottom.
-   Motion rules: only transform and opacity ever move. The card tilt and lift is driven by js/tilt.js (pointer and device
-   tilt, rAF only, nothing runs while idle). There are no blur layers here: Liquid Glass lives in fx.css and is used only
-   for pop-outs and overlays. Reduced motion (html[data-fxlite]) gets flat cards.
+   Motion rules: only transform and opacity ever move, only on a press or a real state change; no tilt, no blur layers.
+   Pop-outs and overlays live in fx.css. Reduced motion (html[data-fxlite]) gets flat cards.
    Colours come from the tokens in styles.css, which scripts/contrast.mjs checks in both normal and low-light mode. */
-:root{--pop:cubic-bezier(.34,1.56,.64,1);--card-shadow:none;
+:root{--card-shadow:none;
   --sun:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 220'%3E%3Cg fill='%23000' opacity='.1'%3E%3Cpath d='M320 0L120-40 190-60zM320 0L-20 40V100zM320 0L-20 150V210zM320 0L60 260 150 280zM320 0L250 260 340 260z'/%3E%3C/g%3E%3Cpath d='M268 22l10 14-10 14-10-14z' fill='%23000' opacity='.16'/%3E%3C/svg%3E");
   --diamond:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l8 10-8 10L4 12z' fill='%23E2B04A'/%3E%3C/svg%3E")}
 
@@ -20,7 +19,7 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 .narration{font-style:normal;font-size:var(--fs-md);font-weight:600}
 .num{font-family:var(--font-display);font-weight:900;font-variant-numeric:tabular-nums}
 .room-code{font-weight:900;font-size:clamp(3.4rem,18vw,6rem);letter-spacing:.06em;line-height:.95;color:var(--candle)}
-.block-title,.path-title,.sub{font-family:var(--font-display);font-weight:900;font-size:clamp(1.4rem,5.4vw,1.8rem);letter-spacing:-.02em;line-height:1.05;text-transform:none;-webkit-text-stroke:0}
+.block-title,.path-title,.sub{font-family:var(--font-display);font-weight:900;font-size:clamp(1.6rem,7vw,2.1rem);letter-spacing:-.02em;line-height:1.05;text-transform:none;-webkit-text-stroke:0}
 .sub{font-size:var(--fs-lg);margin-top:var(--s4)}
 .block-title,.path-title{display:flex;align-items:center;gap:12px}
 
@@ -40,7 +39,6 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 .winner h1,.winner .say{color:var(--on-fill)}
 .reveal.a-reform,.reveal.a-cabal{background:var(--fill);--candle:var(--on-fill);--smoke:var(--on-fill);--faint:var(--on-fill);--town:var(--on-fill);--mafia:var(--on-fill);--panel-2:rgba(255,248,236,.16);color:var(--on-fill)}
 .reveal.a-cabal{box-shadow:var(--card-shadow),inset 0 0 0 3px var(--fill),inset 0 0 0 5px rgba(255,248,236,.6)}
-.reveal.is-new{animation:reveal-in 500ms var(--pop) both}
 /* blue Join card on the home page */
 .path.c-blue{--candle:var(--on-fill);--smoke:var(--on-fill);--faint:var(--on-fill);--panel:#244B78;--panel-2:#244B78;--rule:#9CC3F0;--rule-strong:#FFF8EC;--btn:#FFE9C7;--on-btn:#2A0606;--brass:#FFF8EC;--focus:#FFF8EC;
   background:var(--reform-fill);color:var(--on-fill)}
@@ -64,13 +62,13 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 .phase-badge .ui-ico,html[data-phase="night"] .phase-badge .ui-ico{color:var(--ink)}
 .dim-btn{color:var(--candle)}
 .tabbar{background:var(--head);-webkit-backdrop-filter:none;backdrop-filter:none;border-top:1px solid var(--rule);gap:4px}
-.tabbar button{color:var(--smoke);border-radius:var(--r-pill);font-weight:800;transition:transform .35s var(--pop)}
+.tabbar button{color:var(--smoke);border-radius:var(--r-pill);font-weight:800;transition:transform var(--t-press) var(--ease-out)}
 .tabbar button[aria-current="page"]{background:var(--orange);color:var(--ink)}
 .tabbar button:active{transform:scale(.92)}
 
 /* ---------------------------------------------------------------- buttons: pills, springy */
-.btn{min-height:56px;padding:0 26px;border:0;border-radius:var(--r-pill);background:var(--btn);color:var(--on-btn);font-weight:900;font-size:1.1rem;
-  transition:transform .35s var(--pop),background-color var(--t-press)}
+.btn{min-height:56px;padding:0 26px;border:0;border-radius:var(--r-pill);background:var(--btn);color:var(--on-btn);font-weight:800;font-size:1.1rem;
+  transition:transform var(--t-press) var(--ease-out),background-color var(--t-press)}
 .btn:active{transform:scale(.97)}
 .btn.ghost{background:transparent;color:var(--candle);border:2px solid var(--candle);font-weight:800}
 .btn.ghost:active{transform:scale(.96)}
@@ -79,11 +77,11 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 .btn.disabled,.btn[aria-disabled="true"]{background:var(--panel-2);color:var(--faint);border:2px dashed var(--rule-strong);box-shadow:none}
 .btn.big{min-height:64px;font-size:1.25rem}
 .btn.sm{min-height:44px;padding:0 16px;font-size:var(--fs-sm)}
-.icon-btn,.tile-btn,.knight.can-pick{transition:transform .35s var(--pop)}
+.icon-btn,.tile-btn,.knight.can-pick{transition:transform var(--t-press) var(--ease-out)}
 .icon-btn:active{transform:scale(.88)}
 .seg{border:0;background:var(--panel-2)}
 .seg button[aria-pressed="true"],.seg button[aria-selected="true"]{background:var(--btn);color:var(--on-btn)}
-.tool-btn{border-radius:22px;border:0;background:var(--panel-2);font-weight:900;transition:transform .35s var(--pop)}
+.tool-btn{border-radius:22px;border:0;background:var(--panel-2);font-weight:900;transition:transform var(--t-press) var(--ease-out)}
 .tool-btn:active{transform:scale(.95)}
 .tool-btn > .ui-ico{color:var(--ink)}
 .field input,.field select,.field textarea,.search,.code-input,.chat-form input{border-radius:16px;border-width:2px}
@@ -106,7 +104,7 @@ body:has(.sticky-act) #toast{bottom:calc(var(--tabbar-h) + 104px + env(safe-area
 
 /* Aye / Nay and policy choices: solid colour blocks */
 .choice{min-height:128px;border:0;border-radius:var(--r-card);font-weight:900;font-size:clamp(1.4rem,1.1rem + 1.2vw,1.8rem);letter-spacing:-.02em;
-  box-shadow:inset 0 0 0 2px rgba(255,248,236,.5);transition:transform .35s var(--pop)}
+  box-shadow:inset 0 0 0 2px rgba(255,248,236,.5);transition:transform var(--t-press) var(--ease-out)}
 .choice.yes,.choice.reform{background:var(--reform-fill);color:var(--on-fill)}
 .choice.no,.choice.decree{background:var(--cabal-fill);color:var(--on-fill);box-shadow:inset 0 0 0 3px var(--cabal-fill),inset 0 0 0 5px rgba(255,248,236,.6)}
 .choice:active:not([aria-disabled="true"]){transform:scale(.97)}
@@ -142,7 +140,7 @@ body:has(.sticky-act) #toast{bottom:calc(var(--tabbar-h) + 104px + env(safe-area
 .dim-btn .dim-glyph .lamp,.dim-btn[aria-pressed="true"] .dim-glyph .moon{display:none}
 .dim-btn[aria-pressed="true"] .dim-glyph .lamp{display:inline}
 .dim-btn.has-label{width:auto;padding:0 var(--s3);gap:var(--s2);display:inline-flex;align-items:center;font-weight:800;font-size:var(--fs-sm);border-radius:var(--r-pill);background:var(--panel-2)}
-.home-hero{display:grid;justify-items:start;text-align:left;gap:var(--s3);border-radius:20px;background-image:none}
+.home-hero{display:grid;justify-items:start;text-align:left;gap:var(--s3);border-radius:var(--r-card);background-image:none}
 .home-hero .lede{color:var(--ink);font-weight:800;font-size:clamp(1.3rem,5.6vw,1.6rem);line-height:1.2;letter-spacing:-.015em;max-width:none}
 .home-hero .lede-sub{color:var(--ink-2);font-weight:500;font-size:var(--fs-md);max-width:34ch}
 /* the policy pile as a flat bar: 6 Reforms to 11 Decrees, drawn to scale */
@@ -152,23 +150,24 @@ body:has(.sticky-act) #toast{bottom:calc(var(--tabbar-h) + 104px + env(safe-area
 .pile-r{flex:6 1 0;background:var(--reform-fill)}
 .pile-d{flex:11 1 0;background:var(--cabal-fill)}
 .home-paths{max-width:none;gap:var(--s4);display:grid}
-.path{border-radius:20px;padding:var(--s4) var(--s4) var(--s5)}
+.path{border-radius:var(--r-card);padding:var(--s4) var(--s4) var(--s5)}
 .path + .path{border-top:0;margin-top:0}
 .path-title{margin-bottom:var(--s2)}
 .path > .muted{margin-bottom:var(--s3)}
 .join-row{align-items:flex-end}
 .join-row .field input,.join-row .btn{min-height:52px}
-.join-row .btn{min-width:88px;border-radius:16px}
+.join-row .btn{min-width:88px;border-radius:var(--r-pill)}
 .home-faq{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s5);justify-content:flex-start;padding:0 var(--s1)}
 .path-link{display:inline-flex;align-items:center;min-height:48px;padding:0;color:var(--candle);font-weight:800;text-decoration:underline;text-decoration-color:var(--orange);text-decoration-thickness:3px;text-underline-offset:6px}
 .credits{color:var(--smoke);text-align:left;justify-self:start;padding:0 var(--s1)}
 .credits a{color:var(--smoke)}
+/* back to the hub: a quiet 44px target, top-left of the home header */
+.hub-link{display:inline-flex;align-items:center;gap:var(--s1);min-height:44px;min-width:44px;margin-left:calc(-1 * var(--s2));padding:0 var(--s3) 0 var(--s2);border-radius:var(--r-pill);color:var(--smoke);font-weight:700;font-size:var(--fs-sm);text-decoration:none}
+.hub-link svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+@media (hover:hover){.hub-link:hover{color:var(--candle)}}
+.hub-link:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .resume{color:var(--candle)}
 .wrap.join{padding-top:var(--s6)}
-
-/* ---------------------------------------------------------------- spring and tilt hooks (js/tilt.js sets the transform inline) */
-:is(.stage,.reveal,.board,.stat,.winner,.join-code,.path,.home-hero){transform-origin:50% 50%}
-.tilting{will-change:transform}
 
 /* ---------------------------------------------------------------- flat fallback: reduced motion and low-end phones */
 html[data-fxlite]{--card-shadow:0 0 0 0 transparent}

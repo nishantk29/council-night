@@ -22,7 +22,7 @@ function guide() {
     return `<tr><td><b>${n}</b></td><td>${span(ref)} (${ref.length})</td><td>${span(cab)} (${cab.length}) + ${red(MAP.pretender)} Boss</td>
       <td>${span(r.party.filter((c) => /♦/.test(c)))} Loyalist<br>${span(r.party.filter((c) => /♣/.test(c)))} Syndicate</td><td>${POWERS[n].map((p) => (p ? POWER_TEXT[p][0] : '–')).join(' · ')}</td></tr>`;
   }).join('');
-  return `<section class="sheet break" id="key"><h1>Playing-Card Key</h1><p>Play with one regular deck of cards, jokers included. Use this key in <b>Host-only mode</b>, or in <b>Hybrid</b> mode with the pieces you choose to handle at the table. The Host’s phone is the board, the tracker and the moderator. Players without a phone need <b>Host-only mode</b>.</p>
+  return `<section class="sheet break" id="key"><h1>Playing-Card Key</h1><p>Play with one regular deck of cards, jokers included. Use this key in <b>Host-only mode</b>, or in <b>Hybrid</b> mode with the pieces you choose to handle at the table. The Host’s phone is the board and the tracker. Players without a phone need <b>Host-only mode</b>.</p>
   <h2>What Each Card Means</h2>
   <table><tr><th>Piece</th><th>Cards</th></tr>
     <tr><td>Role cards</td><td>Hearts ${span(MAP.reformRoles)} = <b>Loyalist</b> · clubs ${span(MAP.cabalRoles)} = <b>Syndicate</b> · ${red(MAP.pretender)} = <b>the Boss</b></td></tr>

@@ -1,8 +1,9 @@
 // The Gilded Chamber pop-outs: card draws, enactment slams, the Unrest tracker, executions and the victory pop-up.
 // Styles live in fx.css. Rules this file keeps: only transform and opacity are animated; will-change is set while an
 // element animates and removed after; at most ~20 particles per burst, all removed afterwards; nothing runs while idle
-// (the tilt listeners exist only while a card is open); every effect is <= 1.2 s, ignores pointer events and never
-// blocks the game. Only public facts are animated for everyone: a card's face is shown only on its holder's own phone.
+// every overlay is one-shot and <= 0.6 s in total, ignores pointer events and never blocks the game. Nothing is tied to
+// scroll or to a press: no tilt, no shake, no effect on the secret hand.
+// Only public facts are animated for everyone: a card's face is shown only on its holder's own phone.
 import { art, ROLE_ART } from './art.js';
 import { TRACKER_MAX } from './rules.js';
 
@@ -10,7 +11,7 @@ const reduced = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-
 // No core-count check (iPhones report 4 cores): only reduced motion and the host's switch cut effects. The one device
 // downgrade left is blur: phones reporting <=2 GB (navigator.deviceMemory, Android Chrome only) get solid panels.
 const NO_BLUR = (navigator.deviceMemory || 99) <= 2;
-const PARTS = 18;
+const PARTS = 14;
 const TEAM_COLORS = {
   reform: ['#5B8FD0', '#9CC3F0', '#2F5A8A', '#E2B04A'],
   cabal: ['#E8590C', '#FF7A33', '#C2310F', '#E2B04A'],
@@ -54,7 +55,6 @@ export function makeFx({ S, send, esc }) {
       L.t = setTimeout(applyLive, end - now + 30);
     }
   }
-  const shake = (cls = 'fx-shake') => addLive(() => $app.querySelectorAll('.col-main > :not(.sticky-act)'), cls, { dur: 400 });
 
   // ------------------------------------------------------------ particles (own tiny helper, no libraries)
   function burst(host, kind, team, { n = PARTS, x = 50, y = 50, delay = 0 } = {}) {
@@ -63,15 +63,15 @@ export function makeFx({ S, send, esc }) {
       const p = document.createElement('i'); const a = rand(0, Math.PI * 2); const d = rand(90, 210);
       p.className = `fx-p fx-${kind}`;
       p.style.cssText = kind === 'spark'
-        ? `left:${x}%;top:${y}%;--dx:${Math.round(Math.cos(a) * d)}px;--dy:${Math.round(Math.sin(a) * d)}px;--r:${Math.round(rand(-200, 200))}deg;--c:${colors[i % colors.length]};--w:${Math.round(rand(6, 12))}px;--t:${Math.round(rand(520, 760))}ms;--d:${delay + Math.round(rand(0, 80))}ms`
-        : `left:${rand(8, 92).toFixed(1)}%;top:-4%;--dx:${Math.round(rand(-70, 70))}px;--dy:${Math.round(rand(300, 520))}px;--r:${Math.round(rand(360, 800))}deg;--c:${colors[i % colors.length]};--w:${Math.round(rand(7, 12))}px;--t:${Math.round(rand(900, 1150))}ms;--d:${delay + Math.round(rand(0, 140))}ms`;
+        ? `left:${x}%;top:${y}%;--dx:${Math.round(Math.cos(a) * d)}px;--dy:${Math.round(Math.sin(a) * d)}px;--r:${Math.round(rand(-200, 200))}deg;--c:${colors[i % colors.length]};--w:${Math.round(rand(6, 12))}px;--t:${Math.round(rand(280, 380))}ms;--d:${delay + Math.round(rand(0, 80))}ms`
+        : `left:${rand(8, 92).toFixed(1)}%;top:-4%;--dx:${Math.round(rand(-70, 70))}px;--dy:${Math.round(rand(300, 520))}px;--r:${Math.round(rand(360, 800))}deg;--c:${colors[i % colors.length]};--w:${Math.round(rand(7, 12))}px;--t:${Math.round(rand(360, 400))}ms;--d:${delay + Math.round(rand(0, 140))}ms`;
       p.style.willChange = 'transform, opacity'; made.push(p);
     }
     host.append(...made);
-    setTimeout(() => made.forEach((p) => { p.style.willChange = ''; p.remove(); }), 1500 + delay);
+    setTimeout(() => made.forEach((p) => { p.style.willChange = ''; p.remove(); }), 600 + delay);
   }
 
-  // ------------------------------------------------------------ overlay queue (one at a time, each <= 1.2 s)
+  // ------------------------------------------------------------ overlay queue (one at a time, each <= 0.6 s)
   const queue = []; let busy = false;
   function play(kind, data) {
     if (!on() || document.hidden) return;
@@ -83,7 +83,7 @@ export function makeFx({ S, send, esc }) {
     busy = true; const [kind, data] = queue.shift();
     const el = Object.assign(document.createElement('div'), { className: `fx-ov fx-ov-${kind}` });
     el.innerHTML = OVERLAYS[kind](data); $fx.append(el);
-    const ms = RUN[kind]?.(el, data) || 1100;
+    const ms = RUN[kind]?.(el, data) || 600;
     setTimeout(() => { el.remove(); busy = false; pump(); }, ms);
   }
   function clearOverlays() { queue.length = 0; $fx.querySelectorAll('.fx-ov').forEach((e) => e.remove()); busy = false; }
@@ -94,7 +94,7 @@ export function makeFx({ S, send, esc }) {
     slam: ({ policy }) => `<div class="fx-3d ${policy === 'R' ? 'is-reform' : 'is-decree'}">${lines}<div class="fx-slam"><span class="fx-slam-face">${art(policy === 'R' ? 'torch' : 'chain')}<b>${policy === 'R' ? 'Reform' : 'Decree'}</b></span><em class="fx-stamp">Enacted</em></div></div>`,
     // Cards drawn from the pile slide out, face down: only that they were drawn is public.
     deal: ({ count }) => `<div class="fx-3d">${lines}<div class="fx-hand">${Array.from({ length: count }, (_, i) => `<span class="fx-back" style="--i:${i};--o:${i - (count - 1) / 2}">${art('sun')}</span>`).join('')}</div></div>`,
-    // Third failed government: the tracker clicks forward and the table shakes.
+    // Third failed government: the tracker clicks forward.
     unrest: () => `<div class="fx-3d"><div class="fx-pill gl-card"><b>Unrest</b><span class="fx-pips">${[0, 1, 2].map((i) => `<i class="${i < TRACKER_MAX - 1 ? 'on' : 'last'}"></i>`).join('')}</span><b class="fx-3of3">3/3</b></div></div>`,
     // An execution: the table dims and the player's card fades out.
     execute: ({ name, exiled }) => `<div class="fx-scrim"></div><div class="fx-3d"><div class="fx-victim gl-card"><span class="fx-disc">${esc([...name][0] || '?')}</span><b>${esc(name)}</b><small>${exiled ? 'was exiled' : 'was executed'}</small><span class="fx-gone"></span></div></div>`,
@@ -102,23 +102,23 @@ export function makeFx({ S, send, esc }) {
   const RUN = {
     slam(el, { policy }) {
       const team = policy === 'R' ? 'reform' : 'cabal';
-      burst(el, 'spark', team, { delay: 260 }); setTimeout(() => shake(), 280);
-      addLive(() => $app.querySelectorAll(policy === 'R' ? `.board.a-reform .slot.is-reform:nth-child(${S.view.game.reform})` : `.board.a-cabal .slot.is-decree:nth-child(${S.view.game.decree})`), 'fx-slot-slam', { delay: 520, dur: 600 });
-      return 1150;
+      burst(el, 'spark', team, { delay: 80 });
+      addLive(() => $app.querySelectorAll(policy === 'R' ? `.board.a-reform .slot.is-reform:nth-child(${S.view.game.reform})` : `.board.a-cabal .slot.is-decree:nth-child(${S.view.game.decree})`), 'fx-slot-slam', { delay: 240, dur: 360 });
+      return 600;
     },
-    deal() { return 1000; },
-    unrest() { setTimeout(() => shake('fx-shake-big'), 430); return 1050; },
-    execute() { return 1200; },
+    deal() { return 600; },
+    unrest() { return 600; },
+    execute() { return 600; },
   };
 
   // ------------------------------------------------------------ what changed in the public view
   function onView(prev, v) {
-    if (v.phase === 'lobby' || !v.game) { last = {}; handSig = ''; }
+    if (v.phase === 'lobby' || !v.game) { last = {}; }
     if (v.phase !== 'over') closeOver();
     if (!prev?.game || !v.game || !on(v)) return;
     const p = prev.game; const g = v.game;
     const enacted = g.reform + g.decree > p.reform + p.decree;
-    if (g.tracker > p.tracker && g.tracker < TRACKER_MAX) addLive(() => $app.querySelectorAll(`.rejects i:nth-of-type(${g.tracker})`), 'fx-click', { dur: 450 });
+    if (g.tracker > p.tracker && g.tracker < TRACKER_MAX) addLive(() => $app.querySelectorAll(`.rejects i:nth-of-type(${g.tracker})`), 'fx-click', { dur: 300 });
     const third = p.tracker === TRACKER_MAX - 1 && (g.tracker >= TRACKER_MAX || (enacted && g.tracker === 0 && g.lastPolicy && !g.lastPolicy.byGov));
     if (third) play('unrest');
     if (enacted && g.lastPolicy) play('slam', { policy: g.lastPolicy.policy });
@@ -127,27 +127,20 @@ export function makeFx({ S, send, esc }) {
   }
 
   // ------------------------------------------------------------ after every render
-  let last = {}; let handSig = '';
+  let last = {};
   function after() {
     $html.dataset.fx = on() ? 'on' : 'off';
     if (!on()) return;
     for (const el of $app.querySelectorAll('[data-roll]')) { // numbers that roll when they change
       const k = el.dataset.roll; const val = el.textContent;
-      if (k in last && last[k] !== val) addLive(() => $app.querySelectorAll(`[data-roll="${k}"]`), 'fx-roll', { dur: 480 });
+      if (k in last && last[k] !== val) addLive(() => $app.querySelectorAll(`[data-roll="${k}"]`), 'fx-roll', { dur: 300 });
       last[k] = val;
     }
-    const me = S.view?.me; const hand = me?.hand || me?.docket;
-    const sig = hand ? `${S.view.phase}${S.view.game?.leg}${hand.join('')}` : '';
-    if (sig && sig !== handSig) { // the holder's own policy tiles are dealt in, with gold lines sweeping out
-      addLive(() => $app.querySelectorAll('.tiles'), 'fx-gold', { dur: 900 });
-      addLive(() => $app.querySelectorAll('.tiles .tile-btn, .tiles > .tile'), 'fx-deal', { dur: 560, stagger: 110 });
-    }
-    handSig = sig;
     applyLive();
   }
 
   // ------------------------------------------------------------ the victory pop-up
-  let over = null; let tiltOff = null; let prevFocus = null;
+  let over = null; let prevFocus = null;
   const fan = () => { // an art-deco gold fan: alternating gold rays with fine concentric arcs
     const R = 150; const n = 13; let d = '';
     for (let i = 0; i < n; i += 2) { const a0 = Math.PI + (i * Math.PI) / n; const a1 = Math.PI + ((i + 1) * Math.PI) / n; d += `<path d="M160 160L${(160 + R * Math.cos(a0)).toFixed(1)} ${(160 + R * Math.sin(a0)).toFixed(1)}A${R} ${R} 0 0 1 ${(160 + R * Math.cos(a1)).toFixed(1)} ${(160 + R * Math.sin(a1)).toFixed(1)}z"/>`; }
@@ -171,7 +164,6 @@ export function makeFx({ S, send, esc }) {
     const you = ev.you === 'won' ? '<p class="fx-you is-won">You won!</p>' : ev.you === 'lost' ? '<p class="fx-you is-lost">You lost</p>' : '';
     el.innerHTML = `<div class="fx-scrim" data-o="close"></div>
       <div class="fx-pop">${fan()}<div class="fx-card gl-card">
-        <span class="fx-spec"></span>
         <div class="fx-band">${mascot(side)}<h2 id="fx-over-h">${WIN_NAME[side]} win!</h2></div>
         <p class="fx-reason">${esc(ev.text)}</p>${you}
         <div class="fx-roles-wrap">${rolesHtml(v)}</div>
@@ -182,15 +174,14 @@ export function makeFx({ S, send, esc }) {
     el.querySelector('.fx-btns .btn')?.focus({ preventScroll: true });
     document.addEventListener('keydown', onKey);
     if (motion) {
-      burst(el.querySelector('.fx-parts'), 'conf', side, { delay: 250 });
-      tiltOff = enableTilt(el.querySelector('.fx-card'));
+      burst(el.querySelector('.fx-parts'), 'conf', side, { delay: 0 });
       if (navigator.vibrate) try { navigator.vibrate(ev.you === 'won' ? [40, 40, 60] : 30); } catch { /* ignore */ }
     }
   }
   const onKey = (e) => { if (e.key === 'Escape') closeOver(); };
   function closeOver(now = false) {
     if (!over) return;
-    const el = over; over = null; tiltOff?.(); tiltOff = null; document.removeEventListener('keydown', onKey);
+    const el = over; over = null; document.removeEventListener('keydown', onKey);
     if (prevFocus?.isConnected) prevFocus.focus({ preventScroll: true }); prevFocus = null;
     if (now || el.classList.contains('is-static') || !on()) { el.remove(); return; }
     el.classList.add('is-out'); setTimeout(() => el.remove(), 180);
@@ -198,20 +189,9 @@ export function makeFx({ S, send, esc }) {
   // The roles appear once the game is over: if the view with them lands after the pop-up, fill them in.
   function refreshOver(v) { if (over && v.game?.roles) { const w = over.querySelector('.fx-roles-wrap'); if (w && !w.querySelector('.fx-roles')) w.innerHTML = rolesHtml(v); } }
 
-  // Subtle pointer / device tilt: listeners exist only while the card is open, updates are throttled to one per frame.
-  function enableTilt(card) {
-    let raf = 0; let tx = 0; let ty = 0;
-    const apply = () => { raf = 0; card.style.setProperty('--rx', `${(-ty * 7).toFixed(2)}deg`); card.style.setProperty('--ry', `${(tx * 9).toFixed(2)}deg`); card.style.setProperty('--sx', `${(tx * 60).toFixed(1)}px`); card.style.setProperty('--sy', `${(ty * 40).toFixed(1)}px`); };
-    const set = (x, y) => { tx = Math.max(-1, Math.min(1, x)); ty = Math.max(-1, Math.min(1, y)); if (!raf) raf = requestAnimationFrame(apply); };
-    const move = (e) => set((e.clientX / innerWidth - 0.5) * 2, (e.clientY / innerHeight - 0.5) * 2);
-    const tilt = (e) => { if (e.gamma != null && e.beta != null) set(e.gamma / 30, (e.beta - 45) / 30); };
-    addEventListener('pointermove', move, { passive: true }); addEventListener('deviceorientation', tilt, { passive: true });
-    return () => { removeEventListener('pointermove', move); removeEventListener('deviceorientation', tilt); cancelAnimationFrame(raf); };
-  }
-
   return {
     onView(prev, v) { onView(prev, v); refreshOver(v); },
     after, gameOver: showOver,
-    reset() { clearOverlays(); closeOver(true); last = {}; handSig = ''; },
+    reset() { clearOverlays(); closeOver(true); last = {}; },
   };
 }

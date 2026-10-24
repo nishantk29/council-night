@@ -80,7 +80,7 @@ test('the service worker precaches every print file, and VERSION is the content 
   files.sort();
   const h = createHash('sha256');
   for (const r of files) h.update(r + '\0').update(readFileSync(new URL(`../public${r}`, import.meta.url)));
-  assert.equal(sw.match(/const VERSION = '([^']+)'/)[1], `council-${h.digest('hex').slice(0, 10)}`);
+  assert.equal(sw.match(/const VERSION = '([^']+)'/)[1].replace(/^council-/, ''), h.digest('hex').slice(0, 10)); // the shared generator keeps the prefix in PREFIX, not VERSION
 });
 
 test('guide pages use the current mode names, never the old ones', () => {

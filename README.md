@@ -1,10 +1,10 @@
 # The Gilded Chamber
 
 A hidden-role policy game for 5 to 10 players: on phones. Sister app to
-[Mafia Night](https://mafia-app.hatethespurs.workers.dev) and [Quest Night](https://quest-night.hatethespurs.workers.dev):
+[Mafia Night](https://mafia.hatethespurs.com) and [Quest Night](https://avalon.hatethespurs.com):
 same stack, same components, its own game, names, wording and art.
 
-Live: https://council-night.hatethespurs.workers.dev
+Live: https://secrethitler.hatethespurs.com
 
 ## How it plays (the classic rules, unchanged)
 - **Loyalists** (the majority) against **the Syndicate** and their hidden leader, **the Boss**.

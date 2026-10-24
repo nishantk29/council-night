@@ -1,23 +1,15 @@
 /* The Gilded Chamber pop-outs and Liquid Glass (loaded after styles.css and transit.css; behaviour in js/fx.js).
-   Only transform and opacity are ever animated: no layout, no blur radius, no box-shadow changes (shadows are static
-   and layered). 3D is plain CSS 3D transforms. will-change is set by the script only while something animates.
-   Reduced motion (html[data-fxlite]) gets flat 2D pops and solid panels; html[data-noblur] (<=2 GB phones) only loses the blur. */
-:root{--pop:cubic-bezier(.34,1.56,.64,1);--ease-out:cubic-bezier(.2,.7,.1,1)}
+   Only transform and opacity are ever animated: no layout, no blur, no box-shadow changes (shadows are static and layered).
+   Every overlay is one-shot, <= 600 ms in total, and eases with var(--ease-out). will-change is set by the script only while
+   something animates. Reduced motion (html[data-fxlite]) and the Animations switch show no motion at all. No backdrop-filter anywhere. */
 
-/* ================================================================ Liquid Glass */
-/* Glass is only for bottom sheets, pop-outs and overlays (.glass, .gl-card): never page cards or the bottom pill.
-   Base: a solid, almost opaque tinted panel (also the fallback for low-end phones and reduced motion). */
+/* ================================================================ glass panels */
+/* Solid, tinted panels for pop-outs and overlays (.glass, .gl-card): never page cards or the bottom pill. */
 :is(.glass,.gl-card){
   position:relative;color:var(--on-glass);
   background:linear-gradient(140deg,color-mix(in srgb,var(--btn) 14%,transparent),transparent 62%),var(--glass);
   border:1px solid rgba(255,255,255,.35);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 0 0 1px rgba(255,255,255,.12),0 2px 0 rgba(0,0,0,.4),0 14px 28px -14px rgba(0,0,0,.7)}
-@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  html:not([data-fxlite]):not([data-noblur]) :is(.glass,.gl-card){
-    background:linear-gradient(140deg,color-mix(in srgb,var(--btn) 14%,transparent),transparent 62%),color-mix(in srgb,var(--glass) calc(var(--glass-a) * 100%),transparent);
-    -webkit-backdrop-filter:blur(18px) saturate(1.7);backdrop-filter:blur(18px) saturate(1.7)}
-}
-@media (prefers-reduced-motion:reduce){:is(.glass,.gl-card){-webkit-backdrop-filter:none!important;backdrop-filter:none!important}}
 /* the chat feed and the log are long lists: solid, never glass */
 .chat .msgs,.msgs.log{background:var(--panel);border-radius:16px;padding:var(--s2)}
 .chat-form{background:transparent}
@@ -30,132 +22,111 @@
 /* ================================================================ overlay layer */
 #fx{position:fixed;inset:0;z-index:70;pointer-events:none;overflow:hidden}
 .fx-ov{position:absolute;inset:0;display:grid;place-items:center}
-.fx-3d{position:relative;display:grid;place-items:center;perspective:900px}
-html[data-fxlite] .fx-3d{perspective:none}
+.fx-3d{position:relative;display:grid;place-items:center}
+.fx-ov{animation:fx-ov-out 120ms var(--ease-out) 480ms both}
 .is-reform{--fill:var(--reform-fill)} .is-decree{--fill:var(--cabal-fill)}
 
 /* art-deco gold lines that sweep out behind a card */
 .fx-line{position:absolute;left:50%;width:100vw;margin-left:-50vw;height:2px;background:linear-gradient(90deg,transparent,var(--gold) 18%,var(--gold) 82%,transparent);
-  transform:scaleX(0);opacity:0;animation:fx-line 1000ms var(--ease-out) both}
-.fx-line-t{top:-18px} .fx-line-b{bottom:-18px;animation-delay:70ms}
-.fx-diamond{position:absolute;top:-26px;left:50%;width:16px;height:16px;margin-left:-8px;background:var(--gold);transform:rotate(45deg) scale(0);animation:fx-diamond 1000ms var(--pop) 80ms both}
+  transform:scaleX(0);opacity:0;animation:fx-line 480ms var(--ease-out) both}
+.fx-line-t{top:-18px} .fx-line-b{bottom:-18px;animation-delay:60ms}
+.fx-diamond{position:absolute;top:-26px;left:50%;width:16px;height:16px;margin-left:-8px;background:var(--gold);transform:rotate(45deg) scale(0);animation:fx-diamond 360ms var(--ease-out) 60ms both}
 
 /* an enactment slams onto the board */
-.fx-slam{position:relative;display:grid;place-items:center;width:min(44vw,190px);aspect-ratio:3/4;transform-style:preserve-3d;animation:fx-slam 1150ms cubic-bezier(.3,.7,.4,1) both}
+.fx-slam{position:relative;display:grid;place-items:center;width:min(44vw,190px);aspect-ratio:3/4;animation:fx-slam 280ms var(--ease-out) both}
 .fx-slam-face{display:grid;place-items:center;align-content:center;gap:6px;width:100%;height:100%;border-radius:18px;background:var(--fill);color:var(--on-fill);
   font:900 1.5rem/1 var(--font-display);text-transform:uppercase;letter-spacing:.06em;
   box-shadow:inset 0 0 0 4px var(--fill),inset 0 0 0 6px var(--on-fill),inset 0 0 0 8px var(--fill),inset 0 0 0 9px var(--gold),0 2px 0 rgba(26,20,16,.4),0 9px 0 -1px rgba(26,20,16,.3),0 26px 36px -18px rgba(26,20,16,.7)}
 .fx-slam-face .ico{width:52%;height:auto;aspect-ratio:1}
 .fx-stamp{position:absolute;left:50%;bottom:12%;padding:2px 12px;border:3px solid var(--on-fill);border-radius:8px;background:var(--fill);color:var(--on-fill);
-  font:900 1rem/1.3 var(--font-display);letter-spacing:.14em;text-transform:uppercase;font-style:normal;transform:translateX(-50%) rotate(-9deg) scale(0);animation:fx-stamp 1150ms var(--pop) 250ms both}
+  font:900 1rem/1.3 var(--font-display);letter-spacing:.14em;text-transform:uppercase;font-style:normal;transform:translateX(-50%) rotate(-9deg) scale(0);animation:fx-stamp 280ms var(--ease-out) 160ms both}
 
 /* cards drawn from the pile slide out, face down */
 .fx-hand{position:relative;width:260px;height:150px}
 .fx-back{position:absolute;left:50%;top:0;display:grid;place-items:center;width:88px;margin-left:-44px;aspect-ratio:3/4;border-radius:12px;color:var(--gold);
   background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(226,176,74,.2) 0 7.5deg,transparent 7.5deg 15deg),radial-gradient(circle,#3A2410,#140A03);
   box-shadow:inset 0 0 0 3px #140A03,inset 0 0 0 4.5px var(--gold),0 2px 0 rgba(26,20,16,.4),0 14px 22px -12px rgba(26,20,16,.7);
-  animation:fx-draw 1000ms cubic-bezier(.3,.9,.3,1) calc(var(--i) * 90ms) both}
+  animation:fx-draw 320ms var(--ease-out) calc(var(--i) * 50ms) both}
 .fx-back .ico{width:55%;height:auto;aspect-ratio:1}
 
 /* the third failed government: the tracker clicks forward */
-.fx-pill{display:flex;align-items:center;gap:14px;padding:14px 26px;border-radius:var(--r-pill);animation:fx-pop 1050ms both}
+.fx-pill{display:flex;align-items:center;gap:14px;padding:14px 26px;border-radius:var(--r-pill);animation:fx-pop 280ms var(--ease-out) both}
 .fx-pill b{font:900 1.3rem/1 var(--font-display);text-transform:uppercase;letter-spacing:.08em}
 .fx-pill .fx-3of3{font-size:2.4rem}
 .fx-pips{display:flex;gap:8px}
 .fx-pips i{position:relative;width:26px;height:26px;border-radius:50%;border:3px solid var(--candle)}
 .fx-pips i.on{background:var(--cabal-fill)}
-.fx-pips i.last::after{content:"";position:absolute;inset:-3px;border-radius:50%;background:var(--cabal-fill);transform:scale(0);animation:fx-click 450ms var(--pop) 420ms both}
+.fx-pips i.last::after{content:"";position:absolute;inset:-3px;border-radius:50%;background:var(--cabal-fill);transform:scale(0);animation:fx-click 280ms var(--ease-out) 240ms both}
 
 /* an execution: the table dims, the player's card fades out */
-.fx-scrim{position:absolute;inset:0;background:rgba(12,5,0,.66);animation:fx-dim 1200ms ease both}
-.fx-victim{position:relative;display:grid;justify-items:center;gap:4px;padding:22px 34px;border-radius:26px;overflow:hidden;animation:fx-victim 1200ms var(--pop) both}
+.fx-scrim{position:absolute;inset:0;background:rgba(12,5,0,.6);animation:fx-scrim-in 220ms var(--ease-out) both}
+.fx-victim{position:relative;display:grid;justify-items:center;gap:4px;padding:22px 34px;border-radius:26px;overflow:hidden;animation:fx-victim 300ms var(--ease-out) both}
 .fx-victim b{font:900 1.6rem/1.1 var(--font-display);text-transform:uppercase;letter-spacing:.05em}
 .fx-victim small{font-weight:700;font-size:1rem}
 .fx-disc{display:grid;place-items:center;width:68px;aspect-ratio:1;border-radius:50%;background:var(--cabal-fill);color:var(--on-fill);border:3px solid var(--candle);font:900 2rem/1 var(--font-display)}
-.fx-gone{position:absolute;inset:0;background:rgba(26,20,16,.6);opacity:0;animation:fx-gone 1200ms linear both}
+.fx-gone{position:absolute;inset:0;background:rgba(26,20,16,.6);opacity:0;animation:fx-gone 280ms var(--ease-out) 280ms both}
 
 /* ================================================================ effects on the page */
 [data-roll]{display:inline-block}
-.fx-roll{animation:fx-roll 480ms var(--pop) both}
-.fx-click{animation:fx-click 450ms var(--pop) both}
-.fx-slot-slam{animation:fx-slot-slam 600ms var(--pop) both}
-.fx-shake{animation:fx-shake 380ms cubic-bezier(.36,.07,.19,.97) both}
-.fx-shake-big{animation:fx-shake-big 420ms cubic-bezier(.36,.07,.19,.97) both}
-.tiles{position:relative;perspective:700px}
-.fx-deal{animation:fx-tile-in 560ms var(--ease-out) both}
-.fx-gold::before,.fx-gold::after{content:"";position:absolute;left:-4%;right:-4%;height:2px;background:linear-gradient(90deg,transparent,var(--gold) 20%,var(--gold) 80%,transparent);
-  transform:scaleX(0);opacity:0;animation:fx-line 900ms var(--ease-out) both}
-.fx-gold::before{top:-10px} .fx-gold::after{bottom:-10px;animation-delay:80ms}
+.fx-roll{animation:fx-roll 300ms var(--ease-out) both}
+.fx-click{animation:fx-click 300ms var(--ease-out) both}
+.fx-slot-slam{animation:fx-slot-slam 360ms var(--ease-out) both}
+.tiles{position:relative}
 
 /* ================================================================ particles */
 .fx-p{position:absolute;width:var(--w);height:var(--w);background:var(--c);border-radius:2px;opacity:0;pointer-events:none}
-.fx-spark{border-radius:50% 0 50% 0;animation:fx-fly var(--t) cubic-bezier(.1,.7,.25,1) var(--d) both,fx-fade var(--t) linear var(--d) both}
-.fx-conf{height:calc(var(--w) * 1.6);animation:fx-fall var(--t) cubic-bezier(.3,.2,.5,1) var(--d) both,fx-fade var(--t) linear var(--d) both}
+.fx-spark{border-radius:50% 0 50% 0;animation:fx-fly var(--t) var(--ease-out) var(--d) both,fx-fade var(--t) linear var(--d) both}
+.fx-conf{height:calc(var(--w) * 1.6);animation:fx-fall var(--t) var(--ease-out) var(--d) both,fx-fade var(--t) linear var(--d) both}
 
 /* ================================================================ the victory pop-up */
-.fx-over{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;overflow:auto;overscroll-behavior:contain}
-.fx-over .fx-scrim{position:fixed;animation:fx-scrim-in 220ms ease both;pointer-events:auto}
-.fx-pop{position:relative;width:min(100%,420px);margin:auto;animation:fx-spring 900ms cubic-bezier(.2,.8,.2,1) both}
-html[data-fxlite] .fx-pop{animation-name:fx-spring-flat}
-.fx-card{overflow:hidden;border-radius:28px;padding:0 0 18px;transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transform-origin:50% 50%}
-.fx-card > :not(.fx-spec){position:relative}
-/* the specular highlight slides with the tilt */
-.fx-spec{position:absolute;left:-30%;top:-40%;width:90%;aspect-ratio:1;pointer-events:none;opacity:.55;background:radial-gradient(closest-side,rgba(255,255,255,.85),transparent);transform:translate(var(--sx,0px),var(--sy,0px))}
-.fx-fan{position:absolute;left:50%;bottom:calc(100% - 46px);width:min(135%,560px);transform:translateX(-50%);transform-origin:50% 100%;pointer-events:none;animation:fx-fan 900ms var(--pop) 120ms both}
+.fx-over{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;overflow-x:clip;overflow-y:auto;overscroll-behavior:none;touch-action:pan-y}
+.fx-over .fx-scrim{position:fixed;background:rgba(12,5,0,.6);animation:fx-scrim-in var(--t-open) var(--ease-out) both;pointer-events:auto}
+.fx-pop{position:relative;width:min(100%,420px);margin:auto;animation:fx-spring 360ms var(--ease-out) both}
+.fx-card{overflow:hidden;border-radius:var(--r-card);padding:0 0 18px}
+.fx-fan{position:absolute;left:50%;bottom:calc(100% - 46px);width:min(135%,560px);transform:translateX(-50%);transform-origin:50% 100%;pointer-events:none;animation:fx-fan 360ms var(--ease-out) 80ms both}
 .fx-band{display:grid;justify-items:center;gap:4px;padding:18px 16px 14px;background:var(--fill);color:var(--on-fill);text-align:center}
 .fx-band h2{font:900 clamp(2rem,8vw,2.8rem)/1 var(--font-display);text-transform:uppercase;letter-spacing:.03em}
-.fx-mascot{width:84px;height:84px;animation:fx-hop 800ms var(--pop) 450ms both}
+.fx-mascot{width:84px;height:84px;animation:fx-hop 300ms var(--ease-out) 120ms both}
 .fx-reason{padding:14px 18px 0;text-align:center;font:800 1.15rem/1.3 var(--font-ui)}
-.fx-you{padding:6px 18px 0;text-align:center;font:900 2.4rem/1.1 var(--font-display);text-transform:uppercase;letter-spacing:.04em;animation:fx-stamp-in 700ms var(--pop) 550ms both}
+.fx-you{padding:6px 18px 0;text-align:center;font:900 2.4rem/1.1 var(--font-display);text-transform:uppercase;letter-spacing:.04em;animation:fx-stamp-in 300ms var(--ease-out) 160ms both}
 .fx-you.is-won{color:var(--gold-ink)}
 .fx-you.is-lost{color:var(--on-glass)}
 .fx-roles-wrap{max-height:30vh;overflow:auto;padding:10px 16px 0}
 .fx-turn{text-align:center;font-weight:700}
 .fx-roles{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:0;padding:0;list-style:none}
-.fx-roles li{display:flex;align-items:center;gap:8px;min-width:0;padding:6px 10px;border-radius:14px;background:var(--fill);color:var(--on-fill);animation:fx-flip 420ms var(--pop) calc(900ms + var(--i) * 70ms) both}
+.fx-roles li{display:flex;align-items:center;gap:8px;min-width:0;padding:6px 10px;border-radius:14px;background:var(--fill);color:var(--on-fill);animation:fx-fade 240ms var(--ease-out) calc(120ms + var(--i) * 24ms) both}
 .fx-roles .ico{width:26px;height:26px;flex:none}
 .fx-roles span{display:grid;min-width:0;line-height:1.15}
 .fx-roles b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fx-roles small{font-size:.8rem;font-weight:600}
 .fx-btns{display:grid;gap:8px;padding:14px 16px 0}
 .fx-parts{position:fixed;inset:0;pointer-events:none;overflow:hidden}
-.fx-over.is-out{animation:fx-fade-out 180ms ease both}
+.fx-over.is-out{animation:fx-fade-out 180ms var(--ease-out) both}
 .fx-over.is-static *,.fx-over.is-static{animation:none!important}
 
 /* ================================================================ keyframes (transform and opacity only) */
-@keyframes fx-line{0%{transform:scaleX(0);opacity:0}25%{opacity:1}70%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1);opacity:0}}
-@keyframes fx-diamond{0%{transform:rotate(45deg) scale(0);opacity:1}30%{transform:rotate(45deg) scale(1.4)}45%{transform:rotate(45deg) scale(1)}80%{transform:rotate(45deg) scale(1);opacity:1}100%{transform:rotate(45deg) scale(.6);opacity:0}}
-@keyframes fx-slam{0%{transform:translateZ(380px) rotateX(38deg) scale(1.9);opacity:0}20%{transform:translateZ(0) rotateX(-7deg) scale(.9);opacity:1}30%{transform:rotateX(4deg) scale(1.06)}40%{transform:none}78%{transform:none;opacity:1}100%{transform:translateY(-14px) scale(.9);opacity:0}}
-@keyframes fx-stamp{0%,18%{transform:translateX(-50%) rotate(-9deg) scale(0);opacity:0}32%{transform:translateX(-50%) rotate(-9deg) scale(1.35);opacity:1}42%{transform:translateX(-50%) rotate(-9deg) scale(.94)}52%{transform:translateX(-50%) rotate(-9deg) scale(1)}78%{opacity:1}100%{transform:translateX(-50%) rotate(-9deg) scale(1);opacity:0}}
-@keyframes fx-draw{0%{transform:translate(0,-150px) rotate(0) scale(.55);opacity:0}30%{transform:translate(calc(var(--o) * 104px),10px) rotate(calc(var(--o) * 9deg)) scale(1.06);opacity:1}42%{transform:translate(calc(var(--o) * 96px),0) rotate(calc(var(--o) * 8deg)) scale(1)}75%{transform:translate(calc(var(--o) * 96px),0) rotate(calc(var(--o) * 8deg)) scale(1);opacity:1}100%{transform:translate(calc(var(--o) * 140px),70px) rotate(calc(var(--o) * 14deg)) scale(.9);opacity:0}}
-@keyframes fx-pop{0%{transform:scale(.4);opacity:0}22%{transform:scale(1.14);opacity:1}38%{transform:scale(.96)}50%{transform:scale(1)}85%{transform:scale(1);opacity:1}100%{transform:scale(.96);opacity:0}}
-@keyframes fx-click{0%{transform:scale(2.2);opacity:0}45%{transform:scale(.8);opacity:1}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
-@keyframes fx-dim{0%{opacity:0}18%{opacity:1}72%{opacity:1}100%{opacity:0}}
-@keyframes fx-victim{0%{transform:scale(.7);opacity:0}18%{transform:scale(1.05);opacity:1}28%{transform:scale(1)}58%{transform:scale(1);opacity:1}100%{transform:scale(.93);opacity:0}}
-@keyframes fx-gone{0%,35%{opacity:0}75%{opacity:1}100%{opacity:1}}
-@keyframes fx-roll{0%{transform:translateY(70%) scale(.7);opacity:0}60%{transform:translateY(-10%) scale(1.2);opacity:1}100%{transform:none;opacity:1}}
-@keyframes fx-slot-slam{0%{transform:translateY(-30px) scale(2.2);opacity:0}45%{transform:scale(.9);opacity:1}70%{transform:scale(1.08)}100%{transform:none;opacity:1}}
-@keyframes fx-shake{0%,100%{transform:translate3d(0,0,0)}15%{transform:translate3d(-5px,2px,0)}30%{transform:translate3d(5px,-2px,0)}45%{transform:translate3d(-4px,1px,0)}60%{transform:translate3d(3px,-1px,0)}80%{transform:translate3d(-1px,0,0)}}
-@keyframes fx-shake-big{0%,100%{transform:translate3d(0,0,0)}12%{transform:translate3d(-9px,3px,0)}27%{transform:translate3d(9px,-3px,0)}42%{transform:translate3d(-7px,2px,0)}57%{transform:translate3d(5px,-1px,0)}75%{transform:translate3d(-2px,1px,0)}}
-@keyframes fx-tile-in{0%{transform:translateY(-70px) rotateX(55deg) scale(.7);opacity:0}60%{transform:translateY(6px) rotateX(-6deg) scale(1.05);opacity:1}100%{transform:none;opacity:1}}
+@keyframes fx-ov-out{to{opacity:0}}
+@keyframes fx-line{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
+@keyframes fx-diamond{from{transform:rotate(45deg) scale(0);opacity:0}to{transform:rotate(45deg) scale(1);opacity:1}}
+@keyframes fx-slam{from{transform:scale(1.3);opacity:0}to{transform:none;opacity:1}}
+@keyframes fx-stamp{from{transform:translateX(-50%) rotate(-9deg) scale(1.4);opacity:0}to{transform:translateX(-50%) rotate(-9deg);opacity:1}}
+@keyframes fx-draw{from{transform:translate(0,-60px) scale(.7);opacity:0}to{transform:translate(calc(var(--o) * 72px),0) rotate(calc(var(--o) * 8deg));opacity:1}}
+@keyframes fx-pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+@keyframes fx-click{from{transform:scale(1.6);opacity:0}to{transform:none;opacity:1}}
+@keyframes fx-victim{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+@keyframes fx-gone{from{opacity:0}to{opacity:1}}
+@keyframes fx-roll{from{transform:translateY(40%);opacity:0}to{transform:none;opacity:1}}
+@keyframes fx-slot-slam{from{transform:scale(1.5);opacity:0}to{transform:none;opacity:1}}
 @keyframes fx-fly{from{transform:translate(-50%,-50%) scale(.3) rotate(0)}to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1) rotate(var(--r))}}
 @keyframes fx-fall{from{transform:translate(0,0) rotate(0)}to{transform:translate(var(--dx),var(--dy)) rotate(var(--r))}}
-@keyframes fx-fade{0%{opacity:0}6%{opacity:1}68%{opacity:1}100%{opacity:0}}
+@keyframes fx-fade{0%{opacity:0}10%{opacity:1}70%{opacity:1}100%{opacity:0}}
 @keyframes fx-scrim-in{from{opacity:0}to{opacity:1}}
 @keyframes fx-fade-out{from{opacity:1}to{opacity:0}}
-@keyframes fx-spring{0%{transform:perspective(900px) translateY(60px) rotateX(55deg) scale(.5);opacity:0}35%{transform:perspective(900px) translateY(-16px) rotateX(-8deg) scale(1.1);opacity:1}55%{transform:perspective(900px) rotateX(4deg) scale(.97)}75%{transform:perspective(900px) scale(1.02)}100%{transform:none;opacity:1}}
-@keyframes fx-spring-flat{0%{transform:scale(.5);opacity:0}40%{transform:scale(1.08);opacity:1}65%{transform:scale(.97)}100%{transform:none;opacity:1}}
-@keyframes fx-fan{0%{transform:translateX(-50%) scale(.3);opacity:0}60%{transform:translateX(-50%) scale(1.08);opacity:1}100%{transform:translateX(-50%) scale(1);opacity:1}}
-@keyframes fx-hop{0%{transform:translateY(24px) scale(.5) rotate(-12deg);opacity:0}40%{transform:translateY(-14px) scale(1.1) rotate(8deg);opacity:1}65%{transform:translateY(2px) rotate(-4deg)}100%{transform:none;opacity:1}}
-@keyframes fx-stamp-in{0%{transform:scale(2.4) rotate(-8deg);opacity:0}45%{transform:scale(.92) rotate(-3deg);opacity:1}70%{transform:scale(1.05) rotate(-3deg)}100%{transform:rotate(-2deg);opacity:1}}
-@keyframes fx-flip{0%{transform:perspective(500px) rotateX(90deg);opacity:0}100%{transform:none;opacity:1}}
+@keyframes fx-spring{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fx-fan{from{transform:translateX(-50%) scale(.8);opacity:0}to{transform:translateX(-50%);opacity:1}}
+@keyframes fx-hop{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fx-stamp-in{from{transform:scale(1.25) rotate(-2deg);opacity:0}to{transform:rotate(-2deg);opacity:1}}
 
-/* flat 2D pops for low-end phones */
-html[data-fxlite] .fx-slam{animation-name:fx-slam-flat}
-html[data-fxlite] .fx-deal{animation-name:fx-tile-flat}
-html[data-fxlite] .fx-roles li{animation-name:fx-fade-out;animation-direction:reverse}
-@keyframes fx-slam-flat{0%{transform:scale(1.7);opacity:0}22%{transform:scale(.95);opacity:1}34%{transform:none}78%{opacity:1}100%{transform:scale(.92);opacity:0}}
-@keyframes fx-tile-flat{0%{transform:translateY(-30px) scale(.8);opacity:0}100%{transform:none;opacity:1}}
-
-/* reduced motion: the script skips every effect; the pop-up (information) shows statically */
-@media (prefers-reduced-motion:reduce){.fx-over *,.fx-over{animation:none!important}.fx-deal,.fx-roll,.fx-click,.fx-slot-slam,.fx-shake,.fx-shake-big,.fx-gold::before,.fx-gold::after{animation:none!important}}
+/* Reduced motion and the Animations switch: nothing moves (the script also skips the overlays). */
+@media (prefers-reduced-motion:reduce){#fx *,#fx,.fx-over *,.fx-over,.fx-roll,.fx-click,.fx-slot-slam{animation:none!important}}
+html[data-fxlite] :is(#fx,#fx *,.fx-over,.fx-over *,.fx-roll,.fx-click,.fx-slot-slam){animation:none!important}

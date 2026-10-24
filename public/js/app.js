@@ -7,7 +7,6 @@ import { cardArt, ROLE_CARD, PARTY_CARD, POLICY_CARD } from './card_art.js';
 import { ROLES, TEAMS, POWERS, POWER_TEXT, roleList, MIN_PLAYERS, MAX_PLAYERS, REFORM_TO_WIN, DECREE_TO_WIN, VETO_AT, PRETENDER_DANGER, TRACKER_MAX, startingDeck } from './rules.js';
 import { makeTable, askConfirm, faqPage, wireFaqSearch } from './table_ui.js';
 import { makeFx } from './fx.js';
-import { makeTilt } from './tilt.js';
 import { qrSvg } from './qr.js';
 import { toggleFullscreen, revealAfterRelease, TAP_REVEAL_MS, wantsWake, screenKey, motionOk, makeWake, haptic } from './phone.js';
 import { FAQ } from './faq.js';
@@ -38,19 +37,18 @@ applyDim();
 let pending = false; let lastKey = null;
 const reducedMq = matchMedia('(prefers-reduced-motion: reduce)');
 const wake = makeWake();
-// A new screen or step (not every live update) is wrapped in a View Transition where the browser has them.
+// A new screen or step (not every live update) fades in once (opacity only, class removed on animationend).
 // Same-screen updates paint directly, so nothing animates twice. Honours reduced motion and the Animations switch.
 function render() {
   const a = document.activeElement;
   if (a && $app.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'checkbox' && a.type !== 'radio') { pending = true; return; }
   pending = false;
   const key = screenKey(S.mode, S.view); const changed = lastKey !== null && key !== lastKey; lastKey = key;
-  if (changed && typeof document.startViewTransition === 'function' && !document.hidden && motionOk(S.view, reducedMq.matches)) {
-    let ran = false; const run = () => { ran = true; paint(); };
-    const vt = document.startViewTransition(run);
-    setTimeout(() => { if (!ran) run(); }, 600); // a tab that isn't producing frames must still get its screen
-    vt.ready.catch(() => {}); vt.finished.catch(() => {}); vt.updateCallbackDone.catch(() => {});
-  } else paint();
+  paint();
+  if (changed && !document.hidden && motionOk(S.view, reducedMq.matches)) {
+    $app.classList.add('screen-in');
+    $app.addEventListener('animationend', () => $app.classList.remove('screen-in'), { once: true });
+  }
 }
 function paint() {
   const y = window.scrollY;
@@ -58,7 +56,7 @@ function paint() {
   $html.dataset.screen = S.mode === 'screen' ? '1' : '';
   $html.classList.toggle('fx-off', S.view?.anim === false); // the host's Animations switch: card flips are skipped too
   $app.innerHTML = screen();
-  S.ui.fresh = {}; S.ui.flip = false;
+  S.ui.fresh = {};
   window.scrollTo(0, y);
   for (const el of $app.querySelectorAll('[data-scroll]')) el.scrollTop = el.scrollHeight;
   fx.after();
@@ -67,7 +65,6 @@ function paint() {
 document.addEventListener('focusout', () => { if (pending) setTimeout(render, 50); });
 const T = makeTable({ S, send, esc, ui, toast, render });
 const fx = makeFx({ S, send, esc });
-makeTilt({ enabled: () => S.view?.anim !== false });
 
 function screen() {
   if (S.fatal) return `<main class="wrap"><div class="empty">${ui('warning')}<h1 class="phase-title">${esc(S.fatal)}</h1><a class="btn" href="#/">Go Home</a></div></main>`;
@@ -90,10 +87,12 @@ const carousel = (cls, label, slides) => `<div class="car" role="group" aria-rol
   <div class="car-dots">${slides.map((_, i) => `<button type="button" class="car-dot${i ? '' : ' on'}" data-a="slide" data-i="${i}" aria-label="Go to ${i + 1} of ${slides.length}"></button>`).join('')}</div></div>`;
 const dimBtn = (label = '') => `<button type="button" class="icon-btn dim-btn${label ? ' has-label' : ''}" data-a="dim" aria-pressed="${$html.dataset.dim === '1'}" aria-label="Low-light mode" title="Low-light mode"><svg class="dim-glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path class="moon" d="M20 15.5A9 9 0 0 1 8.5 4a9 9 0 1 0 11.5 11.5z"/><g class="lamp"><circle cx="12" cy="12" r="5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" fill="none"/></g></svg>${label}</button>`;
 
+const hubLink = '<a class="hub-link" href="https://gamenight.hatethespurs.com/"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg>All Games</a>';
 function home() {
   const mine = Object.keys(localStorage).filter((k) => k.startsWith(`${KEY}.player.`)).map((k) => k.slice(KEY.length + 8));
   return `<main class="wrap home">
-    <header class="home-head"><div class="home-top"><p class="home-meta">5–10 players · One phone each</p>${dimBtn('Low Light')}</div>
+    <header class="home-head"><div class="home-top">${hubLink}${dimBtn('Low Light')}</div>
+      <p class="home-meta">5–10 players · One phone each</p>
       <h1 class="wordmark">The Gilded Chamber</h1></header>
     <section class="home-hero"><p class="lede">The Loyalists hold the majority, but the Syndicate sits among them, and one of them is the Boss.</p>
       <p class="lede-sub">Elect governments, pass policies, and unmask the Boss before they take power.</p>
@@ -109,13 +108,13 @@ function home() {
         <button type="button" class="btn ghost" data-a="goJoin">Join Room</button></div></section>
       <a class="side" href="#/faq"><span><b>Rules &amp; FAQ</b><small>Roles, powers, house rules and edge cases.</small></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
       <h2 class="path-title how-title">How to Play</h2>
-      ${carousel('how', 'How to Play, 4 steps', [
+      <ol class="how" aria-label="How to Play, 4 steps">${[
         '<h3>Roles</h3><p>Everyone gets a secret role. Most are Loyalists; the rest are the Syndicate, and one of them is the Boss.</p>',
         '<h3>Vote</h3><p>Each round the Speaker nominates a Chancellor. A strict majority of Aye votes elects them; a tie fails.</p>',
         '<h3>Pass</h3><p>The Speaker passes two policies to the Chancellor, who enacts one. Some Decrees give a power.</p>',
-        '<h3>Win</h3><p>Loyalists win with five Reforms or by executing the Boss. The Syndicate win with six Decrees, or by electing the Boss after three Decrees.</p>'])}
+        '<h3>Win</h3><p>Loyalists win with five Reforms or by executing the Boss. The Syndicate win with six Decrees, or by electing the Boss after three Decrees.</p>'].map((x) => `<li>${x}</li>`).join('')}</ol>
     </div>
-    <p class="credits">Same table as <a href="https://mafia-app.hatethespurs.workers.dev">Mafia Night</a> and <a href="https://quest-night.hatethespurs.workers.dev">Quest Night</a>. Torch, chain, mask and every board icon drawn for The Gilded Chamber. Interface icons from <a href="https://phosphoricons.com" target="_blank" rel="noopener">Phosphor</a> (MIT). Font: Rubik (SIL OFL).</p>
+    <p class="credits"><a href="https://gamenight.hatethespurs.com/">All Games</a>. Same table as <a href="https://mafia.hatethespurs.com">Mafia Night</a> and <a href="https://avalon.hatethespurs.com">Quest Night</a>. Torch, chain, mask and every board icon drawn for The Gilded Chamber. Interface icons from <a href="https://phosphoricons.com" target="_blank" rel="noopener">Phosphor</a> (MIT). Font: Rubik (SIL OFL).</p>
     <div class="sticky-act"><button type="button" class="btn big" data-a="host">Open Chamber</button></div>
   </main>`;
 }
@@ -339,9 +338,9 @@ const secretTiles = (k, items, build) => isOpen(k)
 const holdState = { key: null, t0: 0 }; const hideT = {};
 function setOpen(k, on) {
   if (isOpen(k) === on) return;
-  S.ui.open[k] = on; S.ui.flip = k === 'role'; clearTimeout(hideT[k]); render();
+  S.ui.open[k] = on; clearTimeout(hideT[k]); render();
 }
-function closeAll() { for (const k of Object.keys(S.ui.open)) { clearTimeout(hideT[k]); S.ui.open[k] = false; } if (S.view) { S.ui.flip = false; render(); } }
+function closeAll() { for (const k of Object.keys(S.ui.open)) { clearTimeout(hideT[k]); S.ui.open[k] = false; } if (S.view) render(); }
 function holdEnd(cancelled) {
   const k = holdState.key; if (!k) return;
   holdState.key = null; S.ui.noClickUntil = Date.now() + 450;
@@ -353,10 +352,8 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) close
 addEventListener('pagehide', () => { for (const k of Object.keys(S.ui.open)) S.ui.open[k] = false; });
 document.addEventListener('contextmenu', (e) => { if (e.target.closest?.('.hold')) e.preventDefault(); });
 
-// Designed policy card (app mode). `extra` 'flip' gives the short 3D turn-over (off for reduced motion / the fx-off switch).
-const tile = (p, extra = '', name = '') => `<span class="dc ${extra}"${name ? ` style="view-transition-name:${name}"` : ''}>${cardArt(POLICY_CARD[p])}</span>`;
-// Flip only when the cards on screen changed (the page re-renders on every update; an unchanged hand must not re-turn).
-const flipOnce = (key) => { const f = S.ui.flipKey !== key; S.ui.flipKey = key; return f ? 'flip' : ''; };
+// Designed policy card (app mode). `extra` 'flip' gives the short 3D turn-over (off for reduced motion / the fx-off switch); only given to cards that are public, never to a secret hand.
+const tile = (p, extra = '') => `<span class="dc ${extra}">${cardArt(POLICY_CARD[p])}</span>`;
 const mini = (kind, extra = '') => `<span class="mini ${extra}">${cardArt(kind)}</span>`;
 const placards = (sp, ch) => `<div class="placards"><figure>${mini('speaker')}<figcaption>${sp}</figcaption></figure><figure>${mini('chancellor')}<figcaption>${ch}</figcaption></figure></div>`;
 function stage(v) {
@@ -411,11 +408,11 @@ function stage(v) {
         <div class="choice-pair"><button class="choice ballot reform" data-a="hostEnact" data-v="R" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree" data-a="hostEnact" data-v="D" aria-label="Decree">${cardArt('decree')}</button></div>
         ${g.vetoOn ? '<button class="btn ghost" data-a="hostVeto">Confirm Veto</button>' : ''}</section>`;
     }
-    const hand = me.hand || []; const hf = flipOnce(`h${g.leg}${hand.join('')}`);
+    const hand = me.hand || [];
     if (g.leg === 'speaker' && g.speaker === me.id) return `<section class="stage"><h1 class="phase-title">Discard One</h1>${say(`Tap the policy to <b>discard</b>. The other two go to ${C2}. Nobody else sees these.`)}
-      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn" data-a="discard" data-v="${i}" aria-label="Discard this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p, hf)}</button>`)}</section>`;
+      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn" data-a="discard" data-v="${i}" aria-label="Discard this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`)}</section>`;
     if (g.leg === 'chancellor' && g.nominee === me.id) return `<section class="stage"><h1 class="phase-title">Enact One</h1>${say('Tap the policy to <b>enact</b>. The other is discarded face down.')}
-      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn" data-a="enact" data-v="${i}" aria-label="Enact this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p, hf, S.ui.enactIdx === i ? 'enacted-policy' : '')}</button>`)}
+      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn" data-a="enact" data-v="${i}" aria-label="Enact this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`)}
       ${g.vetoOn && !g.vetoRefused ? '<button class="btn ghost" data-a="veto">Propose Veto</button>' : g.vetoRefused ? '<p class="muted">The Speaker refused the veto. You must enact one.</p>' : ''}</section>`;
     if (g.leg === 'veto' && g.speaker === me.id) return `<section class="stage"><h1 class="phase-title">Veto?</h1>${say(`${C2} wants to veto this agenda. If you agree, both policies are discarded and Unrest moves one step.`)}
       <div class="choice-pair"><button class="choice yes" data-a="vetoReply" data-v="1">${art('aye')}Agree</button><button class="choice no" data-a="vetoReply" data-v="0">${art('nay')}Refuse</button></div></section>`;
@@ -427,7 +424,7 @@ function stage(v) {
     const pw = g.power; const [t, d] = POWER_TEXT[pw];
     const mine = g.speaker === me.id; const forS = !mine && host && isPhys(v, g.speaker);
     if (pw === 'peek') {
-      if (mine && me.docket) return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say('The top three policies, in order. Only you see this. Tell the table whatever you like.')}${secretTiles('docket', me.docket, (p) => tile(p, flipOnce(`d${me.docket.join('')}`)))}</section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
+      if (mine && me.docket) return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say('The top three policies, in order. Only you see this. Tell the table whatever you like.')}${secretTiles('docket', me.docket, (p) => tile(p))}</section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
       if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say(`${mine ? 'Look' : `${S2}, look`} at the top three policies of the draw pile without changing their order, then put them back.`)}</section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
       return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say(`${S2} looks at the top three policies.`)}</section>`;
     }
@@ -455,7 +452,7 @@ function lastReveals(v) {
   const lv = g.lastVote; const lp = g.lastPolicy;
   if (lp && ['nominate', 'power', 'over'].includes(v.phase) && !(lv && !lv.passed && g.history.length && g.history.at(-1) === lv && v.phase === 'nominate' && g.tracker)) {
     out.push(`<section class="reveal ${lp.policy === 'R' ? 'a-reform' : 'a-cabal'} ${S.ui.fresh.policy ? 'is-new' : ''}"><h2 class="reveal-h ${lp.policy === 'R' ? 'ok' : 'bad'}">${lp.policy === 'R' ? 'A Reform' : 'A Decree'} is enacted</h2>
-      <div class="flips">${tile(lp.policy, 'flip', 'enacted-policy')}</div><p class="muted center">${lp.byGov ? `By ${esc(nameOf(v, lp.speaker))} and ${esc(nameOf(v, lp.chancellor))}.` : 'Turned over by the Unrest.'}</p></section>`);
+      <div class="flips">${tile(lp.policy, S.ui.fresh.policy ? 'flip' : '')}</div><p class="muted center">${lp.byGov ? `By ${esc(nameOf(v, lp.speaker))} and ${esc(nameOf(v, lp.chancellor))}.` : 'Turned over by the Unrest.'}</p></section>`);
   }
   if (lv && ['nominate', 'legislate', 'check', 'over', 'chaos'].includes(v.phase) && (v.phase !== 'nominate' || !lv.passed)) {
     const delay = v.house.revealDelay && S.ui.fresh.vote ? v.house.revealDelay : 0;
@@ -478,7 +475,7 @@ function cardView(v) {
   const hint = { pretender: v.game.n <= 6 ? '' : 'You don’t know who the Syndicate are. They know you.', reformer: 'You know nothing. Watch the votes and the policies.' }[r.id] || '';
   // Closed: no role-specific markup at all (same neutral class, same back face), so the screen is identical for every player.
   const card = `<button type="button" class="rcard-tap hold ${open ? '' : 'is-hidden'}" data-a="reveal" data-k="role" aria-pressed="${open}" aria-label="${open ? 'Hide your role' : 'Reveal your role. Press and hold, or tap to peek.'}">
-    <div class="rcard ${open ? `a-${r.side}` : 'a-hidden'} ${S.ui.flip ? (open ? 'is-flipping' : 'is-unflipping') : ''}" data-face="${open ? 'front' : 'back'}" style="view-transition-name:role-card"><div class="rcard-inner">
+    <div class="rcard ${open ? `a-${r.side}` : 'a-hidden'}" data-face="${open ? 'front' : 'back'}"><div class="rcard-inner">
       <div class="rcard-face rcard-front dface">${cardArt(open ? ROLE_CARD[r.id] : 'back')}</div>
       <div class="rcard-face rcard-back dface">${cardArt('back')}</div></div></div>${open ? '' : holdChip}</button>`;
   return `<div class="hand">${card}${open ? `<p class="rcard-blurb center">${esc(r.blurb)}</p>` : ''}${open && (sees || hint || inq || peek) ? `<ul class="sees">${sees}${inq}${peek}</ul>${hint ? `<p class="muted">${hint}</p>` : ''}` : ''}${open ? '' : `<p class="muted center">Hold to look. A quick tap shows it for ${TAP_REVEAL_MS / 1000} seconds.</p>`}</div>`;

@@ -11,7 +11,7 @@
 <link rel="preload" href="/fonts/rubik-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/limelight-400.woff2" as="font" type="font/woff2" crossorigin>
 <style>html{background:#0B0B0D;color-scheme:dark}</style>
-<script>(function(d){var r=/[?&]from=hub(&|$)/.test(location.search);try{r=r||/(^|\.)gamenight\.hatethespurs\.com$/.test(new URL(document.referrer).hostname)}catch(e){}if(r&&!matchMedia('(prefers-reduced-motion:reduce)').matches)d.classList.add('handoff')})(document.documentElement);document.documentElement.classList.add('boot');setTimeout(function(){document.documentElement.classList.remove('boot')},1800)</script>
+<script>(function(d){var r=/[?&]from=hub(&|$)/.test(location.search);try{r=r||/(^|\.)gamenight\.hatethespurs\.com$/.test(new URL(document.referrer).hostname)}catch(e){}if(r&&!matchMedia('(prefers-reduced-motion:reduce)').matches)d.classList.add('handoff')})(document.documentElement);document.documentElement.classList.add('boot');addEventListener('DOMContentLoaded',function(){var s=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-scale'))||1;setTimeout(function(){document.documentElement.classList.remove('boot')},1800*s)})</script>
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/transit.css">
 <link rel="stylesheet" href="/fx.css">
@@ -47,7 +47,7 @@ var hand=document.getElementById('hand'),c=hand.firstChild,t0=performance.now(),
 function done(){d.classList.remove('handoff','go');hand.remove()}
 function go(m){var r=m.getBoundingClientRect(),w=c.offsetWidth,p=112/w,vw=innerWidth,vh=innerHeight;
 var f='translate(-50%,-50%) ',a=f+'scale('+p+')',b='translate(calc(-50% + '+(r.left+r.width/2-vw/2)+'px),calc(-50% + '+(r.top+r.height/2-vh*.45)+'px)) scale('+r.width/w+')';
-d.classList.add('go');var an=c.animate([{transform:a},{transform:b}],{duration:450,easing:E,fill:'forwards'});
+d.classList.add('go');var an=c.animate([{transform:a},{transform:b}],{duration:450*(parseFloat(getComputedStyle(d).getPropertyValue('--dur-scale'))||1),easing:E,fill:'forwards'});
 an.onfinish=function(){requestAnimationFrame(done)};an.oncancel=done}
 function wait(){var m=document.querySelector('#app .logo-mark');
 if(!m){if(performance.now()-t0>2500)return done();return requestAnimationFrame(wait)}

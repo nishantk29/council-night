@@ -345,3 +345,11 @@ test('animation events carry nothing secret: the game-over event and views of ot
   assert.equal(gameOverNone(t.room), null);
 });
 function gameOverNone(room) { return broadcastPlan(room, [{ ws: 1, who: 'screen' }], new Set(), { gameOver: true })[0].msgs.find((m) => m.type === 'gameover') || null; }
+
+test('close: only the host can close the room, and it flags the room for the Worker to wipe', () => {
+  const t = started(5);
+  assert.equal(act(t.room, t.ids[1], { type: 'close' }).error, 'Only the host can do that.');
+  assert.ok(!t.room.closed);
+  must(act(t.room, t.host, { type: 'close' }));
+  assert.equal(t.room.closed, true);
+});

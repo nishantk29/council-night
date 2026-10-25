@@ -49,10 +49,19 @@ export function makeTable(ctx) {
 
   // ------------------------------------------------------------ chat + log
   const stamp = (t) => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  // Log text with the players' names picked out. Chat is left as typed.
+  const LOG_ICON = { game: 'log', tool: 'tools', host: 'crown', claim: 'note', sys: 'log' };
+  function hilite(v, text) {
+    let h = esc(text);
+    const names = [...new Set((v.players || []).map((p) => p.name).filter((n) => n && n.length > 1))].sort((x, y) => y.length - x.length);
+    for (const n of names) h = h.split(esc(n)).join(`\u0001${esc(n)}\u0002`);
+    return h.replace(/\u0001/g, '<b class="pn">').replace(/\u0002/g, '</b>');
+  }
   function entry(v, m, mod) {
-    const lab = KIND_LABEL[m.kind];
-    return `<li class="msg k-${m.kind} ${m.hidden ? 'is-hidden' : ''}">${m.by && (m.kind === 'chat' || m.kind === 'claim') ? `<b class="who">${esc(m.by)}</b>` : ''}${lab ? `<span class="tag">${lab}</span>` : ''}<span class="txt">${esc(m.text)}</span>
-      <time>${stamp(m.t)}</time>${mod && !m.hidden && (m.kind === 'chat' || m.kind === 'claim') ? `<button class="link tiny" data-a="hideMsg" data-n="${m.n}" aria-label="Remove this message">Remove</button>` : ''}</li>`;
+    const lab = KIND_LABEL[m.kind]; const chat = m.kind === 'chat' || m.kind === 'claim';
+    const icon = !chat && LOG_ICON[m.kind] ? `<span class="log-ico" aria-hidden="true">${ui(LOG_ICON[m.kind])}</span>` : '';
+    return `<li class="msg k-${m.kind} ${m.hidden ? 'is-hidden' : ''}">${icon}${m.by && chat ? `<b class="who">${esc(m.by)}</b>` : ''}${lab ? `<span class="tag">${lab}</span>` : ''}<span class="txt">${chat || m.hidden ? esc(m.text) : hilite(v, m.text)}</span>
+      <time>${stamp(m.t)}</time>${mod && !m.hidden && chat ? `<button class="link tiny" data-a="hideMsg" data-n="${m.n}" aria-label="Remove this message">Remove</button>` : ''}</li>`;
   }
   function chatPane(v, screen = false) {
     const msgs = v.log.filter((m) => m.kind === 'chat' || m.kind === 'claim' || m.kind === 'host');
@@ -130,7 +139,9 @@ export function makeTable(ctx) {
       <p class="muted">“Replace” opens a seat mid-game: the next person who joins takes it over with the same secret card. “Make host” hands you off.</p>
       <h3 class="sub">Table screen</h3><p class="muted">Open this on a TV or laptop everyone can see. It never shows anything secret.</p>
       <p><a class="btn ghost" href="#/screen/${esc(v.code)}" target="_blank" rel="noopener">${ui('expand')} Open the table screen</a></p>
-      <p class="muted"><a href="#/faq">FAQ</a></p>
+      <h3 class="sub">Close the room</h3><p class="muted">Ends the table for everyone, deletes the room and frees the code.</p>
+      <p><button type="button" class="btn danger" data-a="closeRoom">Close room</button></p>
+      <p class="muted"><a href="#/faq">Rules &amp; FAQ</a></p>
     </section>`;
   }
 
@@ -166,6 +177,7 @@ export function makeTable(ctx) {
       case 'nudge': case 'mute': send({ type: a, id: d.id }); return true;
       case 'handoff': askConfirm(`Make ${nameOf(S.view, d.id)} the host? You’ll stay at the table as a player.`).then((ok) => ok && send({ type: 'handoff', id: d.id })); return true;
       case 'kick': askConfirm(S.view.phase === 'lobby' ? `Remove ${nameOf(S.view, d.id)}?` : `Open ${nameOf(S.view, d.id)}’s seat? The next person to join takes it over, with the same secret card.`).then((ok) => ok && send({ type: 'kick', id: d.id })); return true;
+      case 'closeRoom': askConfirm('Close this room for everyone? Players will see that the host ended the game, and the code stops working.').then((ok) => ok && send({ type: 'close' })); return true;
       case 'abandon': askConfirm('End this game for everyone and go back to the lobby?').then((ok) => ok && send({ type: 'abandon' })); return true;
       default: return false;
     }

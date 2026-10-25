@@ -9,11 +9,14 @@
 <meta name="application-name" content="The Gilded Chamber">
 <meta name="format-detection" content="telephone=no">
 <link rel="preload" href="/fonts/rubik-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/limelight-400.woff2" as="font" type="font/woff2" crossorigin>
 <style>html{background:#0B0B0D;color-scheme:dark}</style>
+<script>document.documentElement.classList.add('boot');setTimeout(function(){document.documentElement.classList.remove('boot')},1800)</script>
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/transit.css">
 <link rel="stylesheet" href="/fx.css">
 <link rel="stylesheet" href="/motion.css">
+<link rel="stylesheet" href="/redesign.css">
 <!-- pwa:start -->
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#0B0B0D">
@@ -29,6 +32,10 @@
 <!-- pwa:end -->
 </head>
 <body>
+<div class="bg-art" aria-hidden="true">
+  <svg class="bg-sun" viewBox="0 0 800 800" focusable="false"><g class="sun-spin"><g class="sun-rays" fill="none" stroke="#F07A22" stroke-width="9" stroke-linecap="round"><path d="M470.0 400.0L780.0 400.0" /><path d="M467.6 418.1L689.8 477.6" /><path d="M460.6 435.0L729.1 590.0" /><path d="M449.5 449.5L612.1 612.1" /><path d="M435.0 460.6L590.0 729.1" /><path d="M418.1 467.6L477.6 689.8" /><path d="M400.0 470.0L400.0 780.0" /><path d="M381.9 467.6L322.4 689.8" /><path d="M365.0 460.6L210.0 729.1" /><path d="M350.5 449.5L187.9 612.1" /><path d="M339.4 435.0L70.9 590.0" /><path d="M332.4 418.1L110.2 477.6" /><path d="M330.0 400.0L20.0 400.0" /><path d="M332.4 381.9L110.2 322.4" /><path d="M339.4 365.0L70.9 210.0" /><path d="M350.5 350.5L187.9 187.9" /><path d="M365.0 339.4L210.0 70.9" /><path d="M381.9 332.4L322.4 110.2" /><path d="M400.0 330.0L400.0 20.0" /><path d="M418.1 332.4L477.6 110.2" /><path d="M435.0 339.4L590.0 70.9" /><path d="M449.5 350.5L612.1 187.9" /><path d="M460.6 365.0L729.1 210.0" /><path d="M467.6 381.9L689.8 322.4" /></g></g><circle cx="400" cy="400" r="46" fill="#F07A22"/><circle cx="400" cy="400" r="62" fill="none" stroke="#E2B04A" stroke-width="3"/></svg>
+  <svg class="bg-columns" viewBox="0 0 800 300" preserveAspectRatio="xMinYMax slice" focusable="false"><g fill="#E2B04A"><path d="M60 300V70h-22V50h110v20h-22v230zM250 300V110h-18V92h92v18h-18v190zM640 300V90h-20V70h100v20h-20v210z"/></g></svg>
+</div>
 <div id="app"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <noscript>This game needs JavaScript.</noscript>

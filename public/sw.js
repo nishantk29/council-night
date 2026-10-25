@@ -3,7 +3,7 @@
 // - Navigations: network-first, falling back to the cached app shell.
 // - /api/* and /ws/* never touch the cache.
 // VERSION is a content hash of every precached file, so it changes whenever a file does.
-const VERSION = '4de47d6512';
+const VERSION = 'e293154789';
 const PREFIX = 'council-';
 const CACHE = PREFIX + VERSION;
 
@@ -35,6 +35,7 @@ const PRECACHE = [
   '/js/card_art.js',
   '/js/cards.js',
   '/js/faq.js',
+  '/js/flair.js',
   '/js/fx.js',
   '/js/phone.js',
   '/js/print.js',
@@ -53,6 +54,7 @@ const PRECACHE = [
   '/print/gilded-chamber-cards.pdf',
   '/print/gilded-chamber-designed-cards.pdf',
   '/pwa-install.js',
+  '/redesign.css',
   '/styles.css',
   '/transit.css',
 ];

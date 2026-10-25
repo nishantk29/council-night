@@ -1,0 +1,148 @@
+/* The Gilded Chamber redesign layer. Loaded last. Same structure as Mafia Night (actions left, logo and title right on desktop,
+   step transitions, footer), in the Chamber's own orange/ink colours and its own Limelight display type.
+   Motion: transform and opacity only, one easing, no layout shift. Off for reduced motion and html.fx-off. */
+@font-face{font-family:"Limelight";font-weight:400;font-display:swap;src:url(/fonts/limelight-400.woff2) format("woff2")}
+:root{--gc-ease:cubic-bezier(.2,.8,.2,1);--display-deco:"Limelight","Rubik","Rubik Fallback",system-ui,sans-serif;
+  --paper:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
+
+/* ---- type: Limelight (art deco) for the title and headings, Rubik stays for reading */
+.wordmark,.phase-title,.block-title,.path-title{font-family:var(--display-deco);font-weight:400;letter-spacing:.01em;hyphens:none;overflow-wrap:normal;text-wrap:balance}
+.wordmark{line-height:1.04;text-transform:none}
+.home .wordmark{font-size:clamp(2.3rem,10.5vw,4rem)}
+.block-title,.path-title{line-height:1.12}
+.side b,.how h3{hyphens:none}
+
+/* ---- background art: a slowly turning sun and gilded columns, fills the desktop gaps */
+#app{position:relative;z-index:1}
+.bg-art{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:radial-gradient(90% 60% at 85% 0%,rgba(240,122,34,.10),transparent 60%),radial-gradient(70% 50% at 0% 100%,rgba(226,176,74,.06),transparent 60%)}
+.bg-sun{position:absolute;right:-18vmin;top:-14vmin;width:min(90vmin,820px);height:auto;opacity:.16;transform-origin:50% 50%}
+.sun-spin{transform-origin:400px 400px;animation:gc-turn 120s linear infinite}
+.sun-rays{transform-origin:400px 400px}
+.bg-columns{position:absolute;left:0;bottom:0;width:min(100vw,900px);height:min(34vh,300px);opacity:.07}
+@media (max-width:640px){.bg-sun{width:120vw;right:-40vw;top:-18vw;opacity:.14}.bg-columns{opacity:.05}}
+html[data-screen="1"] .bg-art{display:none}
+@keyframes gc-turn{to{transform:rotate(360deg)}}
+/* the rays spiral in once on first load (they start rotated and shrunk, then unwind into place) */
+.boot .sun-rays{animation:gc-spiral 1500ms var(--gc-ease) both}
+@keyframes gc-spiral{from{opacity:0;transform:rotate(-200deg) scale(.35)}to{opacity:1;transform:none}}
+
+/* ---- home: Mafia structure. Back link on top, logo and title, then the actions, suggestions and footer */
+.home-brand{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:var(--s4)}
+.logo-mark{display:grid;place-items:center;width:72px;height:72px;border-radius:20px;background:var(--orange);color:var(--ink);box-shadow:0 10px 24px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.35);transform:rotate(-4deg)}
+.logo-mark .ico,.logo-mark svg{width:48px;height:48px}
+.logo-mark .ico{transform-origin:50% 50%}
+.boot .logo-mark .ico{animation:gc-spiral 1400ms var(--gc-ease) 120ms both}
+.home-nav{display:flex}
+.home-head{padding:0}
+.home-meta{margin:0 0 var(--s1)}
+.wrap.home .btn.big{width:100%;min-height:60px;margin-top:var(--s3);background:var(--go);color:var(--on-go);font-size:1.25rem;box-shadow:none}
+@media (min-width:900px){
+  .wrap.home{max-width:1180px;grid-template-columns:minmax(0,480px) minmax(0,1fr);column-gap:var(--s9,72px);align-items:start}
+  .wrap.home .home-nav{grid-column:1/-1}
+  .wrap.home .home-head{grid-column:2;grid-row:2;align-self:end}
+  .wrap.home .home-hero{grid-column:2;grid-row:3;margin:0}
+  .wrap.home .home-paths{grid-column:1;grid-row:2/span 3}
+  .home .wordmark{font-size:clamp(3rem,5vw,4.8rem)}
+  .home-brand{gap:var(--s5)}
+  .logo-mark{width:92px;height:92px;border-radius:26px}.logo-mark .ico{width:62px;height:62px}
+  .more-games{grid-column:1/-1}.site-foot{grid-column:1/-1}
+}
+/* the bottom action bar is gone from home: the Open Chamber button now sits in the Host card */
+.wrap.home{padding-bottom:var(--s6)}
+.wrap:has(.sticky-act) .sticky-act::before{border-top:0}
+
+/* ---- more games */
+.more-games{display:grid;gap:var(--s3);max-width:100%}
+.more-grid{display:grid;gap:var(--s3);grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.more-card{display:flex;align-items:center;gap:var(--s4);min-height:96px;padding:var(--s4);border-radius:var(--r-card);background:#1B1B22;color:#fff;text-decoration:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),inset 0 1px 0 rgba(255,255,255,.08),0 8px 22px rgba(0,0,0,.35);hyphens:none;overflow-wrap:normal}
+.more-logo{flex:none;display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:var(--tok,#2F6BD6);color:#fff}
+.more-logo svg{width:32px;height:32px}
+.more-mafia{--tok:#8E1620}.more-quest{--tok:#2C3B8F}.more-hub{--tok:#2F6BD6}
+.more-text{display:grid;gap:2px;min-width:0}
+.more-text b{font:800 1.1rem/1.15 var(--font-display);text-wrap:balance}
+.more-text small{font-size:.85rem;line-height:1.35;color:rgba(255,255,255,.78)}
+.more-card:focus-visible{outline:3px solid var(--focus,#fff);outline-offset:3px}
+
+/* ---- footer: game links, then the low-light switch and a quiet Credits expander */
+.site-foot{width:min(100%,46rem);margin-inline:auto;padding-inline:var(--gutter,16px);display:grid;gap:var(--s3);padding-block:var(--s5) var(--s6);margin-top:var(--s4);border-top:1px solid rgba(255,255,255,.12);max-width:100%}
+.site-foot nav{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s5)}
+.site-foot nav a{display:inline-flex;align-items:center;min-height:44px;color:#fff;font-weight:700;text-decoration:none}
+.site-foot nav a[aria-current]{color:var(--brass)}
+@media (hover:hover){.site-foot nav a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:5px}}
+.foot-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s3) var(--s5)}
+.credits-box{color:var(--smoke);font-size:.85rem}
+.credits-box summary{display:inline-flex;align-items:center;min-height:44px;cursor:pointer;color:var(--smoke);font-weight:600}
+.credits-box p{max-width:70ch;line-height:1.55;margin:var(--s2) 0 0}
+.credits-box a{color:inherit}
+.wrap.home .site-foot{width:auto;padding-inline:0;margin-inline:0}
+
+/* ---- cards: tilt with the mouse (gentle on touch), crafted surface, no side stripes anywhere */
+[data-card],.path,.side,.more-card,.stat,.how li,.gal-card,.pile > span{--crx:0deg;--cry:0deg;transform:perspective(900px) rotateX(var(--crx)) rotateY(var(--cry));transition:transform 320ms var(--gc-ease);transform-style:flat;backface-visibility:hidden}
+[data-tilting]{transition:transform 90ms linear!important}
+@media (hover:hover) and (pointer:fine){.more-card:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 14px 30px rgba(0,0,0,.45)}}
+.path,.more-card{position:relative}
+.path::after,.more-card::after{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--paper);background-size:160px;opacity:.06;mix-blend-mode:overlay;pointer-events:none}
+.msg.k-claim,.msg.k-tool,.msg.k-host{box-shadow:none}
+.history li,.history li.ok,.history li.bad{border-left:0;border-radius:10px;background:rgba(255,255,255,.05)}
+.slot small,.gal-card figcaption,.stat,.side small,.how p,.faq-q summary{hyphens:none;overflow-wrap:normal;text-wrap:balance}
+.how p,.side small{text-wrap:pretty}
+.stat,.gal-card{border-radius:14px}
+
+/* ---- FAQ: scannable answers, role entries read as short cards */
+.faq-a{line-height:1.6}
+.faq-a h4{margin:var(--s4) 0 var(--s1);font:800 .78rem/1.2 var(--font-ui,var(--font-display));letter-spacing:.1em;text-transform:uppercase}
+.faq-a h4:first-child{margin-top:var(--s1)}
+.faq-a ul,.faq-a ol{display:grid;gap:var(--s2);padding-left:1.25em;margin:var(--s2) 0}
+.faq-a li{line-height:1.5}
+.faq-a p{margin:var(--s2) 0}
+.faq-group,.faq-q summary{hyphens:none}
+
+/* ---- game log: the header and filter stay put while the entries scroll; entries are spaced and scannable */
+.pane-sec[aria-label="Game log"]{position:relative}
+.pane-sec[aria-label="Game log"] > .block-title,.pane-sec[aria-label="Game log"] > .seg{position:sticky;z-index:3;background:var(--orange)}
+.pane-sec[aria-label="Game log"] > .block-title{top:var(--stk-top,0px);margin:0;padding:var(--s3) 0 var(--s2)}
+.pane-sec[aria-label="Game log"] > .seg{top:calc(var(--stk-top,0px) + 3.2rem);padding-bottom:var(--s2);border-radius:0}
+@media (max-width:1099px){.pane-sec[aria-label="Game log"]{--stk-top:var(--appbar-h,56px)}}
+.msgs.log{gap:var(--s2)}
+.msgs.log > .msg{display:grid;grid-template-columns:24px 1fr auto;align-items:start;gap:var(--s1) var(--s3);padding:var(--s3);line-height:1.5}
+.msgs.log > .msg .log-ico{grid-row:1;grid-column:1;display:grid;place-items:center;width:24px;height:24px;opacity:.85}
+.msgs.log > .msg .log-ico .ui-ico{width:18px;height:18px}
+.msgs.log > .msg .txt{grid-column:2;flex:none}
+.msgs.log > .msg time{grid-column:3;white-space:nowrap}
+.msgs.log > .msg .tag{grid-column:2;justify-self:start}
+.msg .pn{font-weight:800}
+
+/* ---- host close-room */
+.btn.danger{min-height:48px}
+.resume-row{display:flex;align-items:center;gap:var(--s2)}
+.resume-row .resume{flex:1;min-width:0}
+.resume-x{flex:none;display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:inherit;cursor:pointer}
+.resume-x .ui-ico{width:18px;height:18px}
+@media (hover:hover){.resume-x:hover{background:rgba(255,255,255,.26)}}
+.ended{text-align:center;justify-items:center}
+.ended .ico{width:72px;height:72px;color:var(--brass)}
+
+/* ---- page transitions (Mafia's slide, in the Chamber's easing): the old screen slips left, the new one glides in */
+@supports (view-transition-name:none){
+  #app > main.wrap{view-transition-name:step}
+  ::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+  ::view-transition-old(step){animation:gc-step-out 160ms var(--gc-ease) both}
+  ::view-transition-new(step){animation:gc-step-in 380ms var(--gc-ease) both}
+}
+@keyframes gc-step-out{to{opacity:0;transform:translateX(-26px)}}
+@keyframes gc-step-in{from{opacity:0;transform:translateX(40px)}}
+
+/* ---- first-load entrance on the home screen only (html.boot is removed shortly after load) */
+.boot .home-head,.boot .home-hero,.boot .home-paths > *,.boot .more-games{animation:gc-rise 640ms var(--gc-ease) both}
+.boot .home-hero{animation-delay:60ms}.boot .home-paths > :nth-child(1){animation-delay:100ms}.boot .home-paths > :nth-child(2){animation-delay:160ms}.boot .home-paths > :nth-child(n+3){animation-delay:220ms}.boot .more-games{animation-delay:300ms}
+@keyframes gc-rise{from{opacity:0;transform:translateY(18px)}}
+
+/* ---- reduced motion and the Animations switch */
+@media (prefers-reduced-motion:reduce){
+  .sun-spin,.boot .sun-rays,.boot .logo-mark .ico,.boot .home-head,.boot .home-hero,.boot .home-paths > *,.boot .more-games{animation:none!important}
+  [data-card],.path,.side,.more-card,.stat,.how li,.gal-card,.pile > span{transform:none!important;transition:none}
+  ::view-transition-old(step),::view-transition-new(step){animation:none!important}
+}
+.fx-off .sun-spin,.fx-off.boot .sun-rays,.fx-off.boot .logo-mark .ico,.fx-off.boot .home-head,.fx-off.boot .home-hero,.fx-off.boot .home-paths > *,.fx-off.boot .more-games{animation:none!important}
+.fx-off [data-card],.fx-off .path,.fx-off .side,.fx-off .more-card,.fx-off .stat,.fx-off .how li,.fx-off .gal-card,.fx-off .pile > span{transform:none!important}
+.fx-off ::view-transition-old(step),.fx-off ::view-transition-new(step){animation:none!important}

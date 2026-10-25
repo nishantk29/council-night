@@ -5,6 +5,7 @@ import { ui } from './ui_icons.js';
 import { art, ROLE_ART, POWER_ART } from './art.js';
 import { cardArt, ROLE_CARD, PARTY_CARD, POLICY_CARD } from './card_art.js';
 import { ROLES, TEAMS, POWERS, POWER_TEXT, roleList, MIN_PLAYERS, MAX_PLAYERS, REFORM_TO_WIN, DECREE_TO_WIN, VETO_AT, PRETENDER_DANGER, TRACKER_MAX, startingDeck } from './rules.js';
+import { pruneClosedRooms } from './flair.js';
 import { makeTable, askConfirm, faqPage, wireFaqSearch } from './table_ui.js';
 import { makeFx } from './fx.js';
 import { qrSvg } from './qr.js';
@@ -34,23 +35,45 @@ const applyDim = () => { $html.dataset.dim = store.get(`${KEY}.dim`) === '1' ? '
 applyDim();
 
 // ---------------------------------------------------------------- render
-let pending = false; let lastKey = null;
+let pending = false; let lastKey = null; let vtBusy = false;
 const reducedMq = matchMedia('(prefers-reduced-motion: reduce)');
 const wake = makeWake();
 // A new screen or step (not every live update) fades in once (opacity only, class removed on animationend).
 // Same-screen updates paint directly, so nothing animates twice. Honours reduced motion and the Animations switch.
+// A repaint between a tap's pointerdown and the focus it causes would swallow the tap (a text box that "won't focus"),
+// so repaints wait while a finger is down on a text field.
+let fieldDown = false;
+addEventListener('pointerdown', (e) => { if (e.target.closest?.('input,textarea,select,label.field')) fieldDown = true; }, true);
+addEventListener('pointerup', () => { if (!fieldDown) return; setTimeout(() => { fieldDown = false; if (pending) render(); }, 350); }, true);
+addEventListener('pointercancel', () => { fieldDown = false; }, true);
 function render() {
+  if (vtBusy) { pending = true; setTimeout(() => { if (pending) render(); }, 60); return; }
+  if (fieldDown) { pending = true; return; }
   const a = document.activeElement;
   if (a && $app.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'checkbox' && a.type !== 'radio') { pending = true; return; }
   pending = false;
   const key = screenKey(S.mode, S.view); const changed = lastKey !== null && key !== lastKey; lastKey = key;
+  const animate = changed && !document.hidden && motionOk(S.view, reducedMq.matches);
+  // New screens slide in like Mafia Night's: the old one slips left, the new one glides in (transform and opacity only).
+  if (animate && document.startViewTransition && !vtBusy) {
+    vtBusy = true;
+    try {
+      const vt = document.startViewTransition(() => { paint(); });
+      const done = () => { vtBusy = false; };
+      vt.finished.then(done, done);
+      for (const pr of [vt.ready, vt.updateCallbackDone]) pr.catch(() => {});
+      return;
+    } catch { vtBusy = false; }
+  }
   paint();
-  if (changed && !document.hidden && motionOk(S.view, reducedMq.matches)) {
+  if (animate) {
     $app.classList.add('screen-in');
     $app.addEventListener('animationend', () => $app.classList.remove('screen-in'), { once: true });
   }
 }
+const TITLES = { home: 'The Gilded Chamber', rules: 'How to Play | The Gilded Chamber', faq: 'Rules & FAQ | The Gilded Chamber', screen: 'Table Screen | The Gilded Chamber' };
 function paint() {
+  document.title = S.ended ? 'Game ended | The Gilded Chamber' : S.mode === 'play' && S.code ? `Chamber ${S.code} | The Gilded Chamber` : TITLES[S.mode] || 'The Gilded Chamber';
   const y = window.scrollY;
   $html.dataset.phase = S.view?.phase || S.mode;
   $html.dataset.screen = S.mode === 'screen' ? '1' : '';
@@ -61,16 +84,18 @@ function paint() {
   for (const el of $app.querySelectorAll('[data-scroll]')) el.scrollTop = el.scrollHeight;
   fx.after();
   wake(S.mode !== 'home' && wantsWake(S.view));
+  if (S.mode === 'home' && !S.pruned) { S.pruned = true; pruneClosedRooms($app, (c) => { store.del(`${KEY}.player.${c}`); store.del(`${KEY}.host.${c}`); }); }
 }
 document.addEventListener('focusout', () => { if (pending) setTimeout(render, 50); });
 const T = makeTable({ S, send, esc, ui, toast, render });
 const fx = makeFx({ S, send, esc });
 
 function screen() {
+  if (S.ended) return `<main class="wrap"><div class="empty ended">${art('sun')}<h1 class="phase-title">The host ended the game</h1><p class="muted">This chamber is closed and its code no longer works.</p><a class="btn big" href="#/">Back to home</a></div></main>`;
   if (S.fatal) return `<main class="wrap"><div class="empty">${ui('warning')}<h1 class="phase-title">${esc(S.fatal)}</h1><a class="btn" href="#/">Go Home</a></div></main>`;
   if (S.mode === 'home') return home();
-  if (S.mode === 'rules') return rulesPage();
-  if (S.mode === 'faq') return faqPage(FAQ, esc, ui);
+  if (S.mode === 'rules') return rulesPage() + siteFooter();
+  if (S.mode === 'faq') return faqPage(FAQ, esc, ui, 'Rules & FAQ') + siteFooter();
   const banner = !S.conn ? `<div class="banner" role="status">${ui('wifi-off')} Reconnecting to the chamber…</div>` : '';
   const v = S.view;
   if (!v) {
@@ -87,13 +112,27 @@ const carousel = (cls, label, slides) => `<div class="car" role="group" aria-rol
   <div class="car-dots">${slides.map((_, i) => `<button type="button" class="car-dot${i ? '' : ' on'}" data-a="slide" data-i="${i}" aria-label="Go to ${i + 1} of ${slides.length}"></button>`).join('')}</div></div>`;
 const dimBtn = (label = '') => `<button type="button" class="icon-btn dim-btn${label ? ' has-label' : ''}" data-a="dim" aria-pressed="${$html.dataset.dim === '1'}" aria-label="Low-light mode" title="Low-light mode"><svg class="dim-glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path class="moon" d="M20 15.5A9 9 0 0 1 8.5 4a9 9 0 1 0 11.5 11.5z"/><g class="lamp"><circle cx="12" cy="12" r="5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" fill="none"/></g></svg>${label}</button>`;
 
-const hubLink = '<a class="hub-link" href="https://gamenight.hatethespurs.com/"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg>All Games</a>';
+const HUB = 'https://gamenight.hatethespurs.com/';
+const hubLink = `<a class="hub-link" href="${HUB}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg>All Games</a>`;
+const MORE_GAMES = [
+  { cls: 'more-mafia', name: 'Mafia Night', href: 'https://mafia.hatethespurs.com', blurb: 'Secret roles for Mafia and Werewolf, dealt to every phone.',
+    logo: '<svg viewBox="0 0 48 48"><path d="M8 20c4-8 11-10 16-6 5-4 12-2 16 6-3 12-9 19-16 19S11 32 8 20z" fill="currentColor"/><ellipse cx="17" cy="22" rx="4.4" ry="2.6" fill="#1B1410"/><ellipse cx="31" cy="22" rx="4.4" ry="2.6" fill="#1B1410"/></svg>' },
+  { cls: 'more-quest', name: 'Quest Night', href: 'https://avalon.hatethespurs.com', blurb: 'Send parties on quests. Find who sabotaged them.',
+    logo: '<svg viewBox="0 0 48 48"><path d="M8 38l4-20 8 8 4-12 4 12 8-8 4 20z" fill="currentColor"/><rect x="8" y="39" width="32" height="4" rx="1.5" fill="currentColor"/></svg>' },
+];
+const HUB_LOGO = '<svg viewBox="0 0 48 48"><rect x="7" y="7" width="15" height="15" rx="4" fill="currentColor"/><rect x="26" y="7" width="15" height="15" rx="4" fill="currentColor"/><rect x="7" y="26" width="15" height="15" rx="4" fill="currentColor"/><rect x="26" y="26" width="15" height="15" rx="4" fill="currentColor" opacity=".5"/></svg>';
+
+// One footer for every page: the game links, the low-light switch, then the licences tucked behind "Credits".
+function siteFooter() {
+  return `<footer class="site-foot"><nav aria-label="Game Night games"><a href="${HUB}">All Games</a><a href="https://mafia.hatethespurs.com">Mafia Night</a><a href="https://secrethitler.hatethespurs.com" aria-current="page">The Gilded Chamber</a><a href="https://avalon.hatethespurs.com">Quest Night</a></nav>
+    <div class="foot-row">${dimBtn('Low Light')}<details class="credits-box"><summary>Credits</summary><p>Torch, chain, mask, dagger and every board icon drawn for The Gilded Chamber. Interface icons from <a href="https://phosphoricons.com" target="_blank" rel="noopener">Phosphor</a> (MIT). Fonts Rubik, Limelight and Poiret One (SIL OFL 1.1).</p></details></div></footer>`;
+}
 function home() {
   const mine = Object.keys(localStorage).filter((k) => k.startsWith(`${KEY}.player.`)).map((k) => k.slice(KEY.length + 8));
   return `<main class="wrap home">
-    <header class="home-head"><div class="home-top">${hubLink}${dimBtn('Low Light')}</div>
-      <p class="home-meta">5–10 players · One phone each</p>
-      <h1 class="wordmark">The Gilded Chamber</h1></header>
+    <nav class="home-nav" aria-label="Game Night">${hubLink}</nav>
+    <header class="home-head"><div class="home-brand"><span class="logo-mark" aria-hidden="true">${art('sun')}</span>
+      <div><p class="home-meta">5–10 players · One phone each</p><h1 class="wordmark">The Gilded Chamber</h1></div></div></header>
     <section class="home-hero"><p class="lede">The Loyalists hold the majority, but the Syndicate sits among them, and one of them is the Boss.</p>
       <p class="lede-sub">Elect governments, pass policies, and unmask the Boss before they take power.</p>
       <div class="pile" role="img" aria-label="The policy pile holds 6 Reforms and 11 Decrees"><span class="pile-r"><b>6</b>Reforms</span><span class="pile-d"><b>11</b>Decrees</span></div>
@@ -102,7 +141,8 @@ function home() {
       <section class="path"><h2 class="path-title">Host</h2>
         <p class="muted">You can play too, or just run the table. Everyone else joins with a 6-letter code.</p>
         <label class="field"><span>Your name</span><input data-i="hostName" maxlength="20" autocomplete="nickname" enterkeyhint="go" value="${esc(S.ui.draft.hostName || store.get(`${KEY}.name`) || '')}"></label>
-        ${mine.map((c) => `<p class="resume-row"><a class="resume" href="#/play/${esc(c)}">Back to Chamber <b class="code">${esc(c)}</b></a></p>`).join('')}</section>
+        <button type="button" class="btn big" data-a="host">Open Chamber</button>
+        ${mine.map((c) => `<p class="resume-row" data-room="${esc(c)}"><a class="resume" href="#/play/${esc(c)}">Back to Chamber <b class="code">${esc(c)}</b></a><button type="button" class="resume-x" data-a="forgetRoom" data-v="${esc(c)}" aria-label="Forget chamber ${esc(c)} on this phone">${ui('x')}</button></p>`).join('')}</section>
       <section class="path c-blue"><h2 class="path-title">Join</h2>
         <div class="join-row"><label class="field"><span>Room code</span><input class="code-input" data-i="joinCode" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="go" placeholder="ABCDEF" value="${esc(S.ui.draft.joinCode || '')}"></label>
         <button type="button" class="btn ghost" data-a="goJoin">Join Room</button></div></section>
@@ -114,8 +154,10 @@ function home() {
         '<h3>Pass</h3><p>The Speaker passes two policies to the Chancellor, who enacts one. Some Decrees give a power.</p>',
         '<h3>Win</h3><p>Loyalists win with five Reforms or by executing the Boss. The Syndicate win with six Decrees, or by electing the Boss after three Decrees.</p>'].map((x) => `<li>${x}</li>`).join('')}</ol>
     </div>
-    <p class="credits"><a href="https://gamenight.hatethespurs.com/">All Games</a>. Same table as <a href="https://mafia.hatethespurs.com">Mafia Night</a> and <a href="https://avalon.hatethespurs.com">Quest Night</a>. Torch, chain, mask and every board icon drawn for The Gilded Chamber. Interface icons from <a href="https://phosphoricons.com" target="_blank" rel="noopener">Phosphor</a> (MIT). Font: Rubik (SIL OFL).</p>
-    <div class="sticky-act"><button type="button" class="btn big" data-a="host">Open Chamber</button></div>
+    <section class="more-games" aria-labelledby="more-h"><h2 class="block-title" id="more-h">More from Game Night</h2>
+      <div class="more-grid">${MORE_GAMES.map((g) => `<a class="more-card ${g.cls}" data-card href="${g.href}"><span class="more-logo" aria-hidden="true">${g.logo}</span><span class="more-text"><b>${g.name}</b><small>${g.blurb}</small></span></a>`).join('')}
+        <a class="more-card more-hub" data-card href="${HUB}"><span class="more-logo" aria-hidden="true">${HUB_LOGO}</span><span class="more-text"><b>Game Library</b><small>Every game in one place.</small></span></a></div></section>
+    ${siteFooter()}
   </main>`;
 }
 
@@ -587,6 +629,7 @@ function wsTransport(code, asScreen) {
       else if (m.type === 'gameover') fx.gameOver(m);
       else if (m.type === 'error') toast(m.error);
       else if (m.type === 'joined') store.set(`${KEY}.player.${code}`, JSON.stringify({ playerId: m.playerId, token: m.token }));
+      else if (m.type === 'closed') { closed = true; store.del(`${KEY}.player.${code}`); store.del(`${KEY}.host.${code}`); S.ended = true; S.view = null; render(); }
       else if (m.type === 'fatal') { if (m.clear) { store.del(`${KEY}.player.${code}`); S.view = null; toast(m.error); render(); } else { closed = true; S.fatal = m.error; render(); } }
     };
     ws.onclose = () => { if (closed) return; S.conn = false; render(); timer = setTimeout(open, Math.min(8000, 400 * 2 ** tries++)); };
@@ -615,7 +658,7 @@ function onView(v) {
 // ---------------------------------------------------------------- routing
 async function route() {
   fx.reset();
-  S.transport?.close(); S.transport = null; S.view = null; S.fatal = null; S.conn = true; S.ui.open = {};
+  S.transport?.close(); S.transport = null; S.view = null; S.fatal = null; S.ended = false; S.pruned = false; S.conn = true; S.ui.open = {};
   const [kind, arg] = location.hash.replace(/^#\/?/, '').split('/');
   if ((kind === 'play' || kind === 'join' || kind === 'screen') && /^[A-Za-z]{6}$/.test(arg || '')) {
     S.mode = kind === 'screen' ? 'screen' : 'play'; S.code = arg.toUpperCase();
@@ -692,6 +735,7 @@ async function act(a, el) {
       location.hash = `#/play/${r.code}`;
       return;
     }
+    case 'forgetRoom': store.del(`${KEY}.player.${d.v}`); store.del(`${KEY}.host.${d.v}`); el.closest('.resume-row')?.remove(); return;
     case 'goJoin': {
       const c = (S.ui.draft.joinCode || '').trim().toUpperCase();
       if (!/^[A-Z]{6}$/.test(c)) { toast('Room codes are 6 letters.'); return; }

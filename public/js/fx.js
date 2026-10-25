@@ -19,6 +19,8 @@ const TEAM_COLORS = {
 const WIN_NAME = { reform: 'The Loyalists', cabal: 'The Syndicate' };
 const ROLE_LABEL = { reformer: 'Loyalist', cabal: 'Syndicate member', pretender: 'The Boss' };
 const rand = (a, b) => a + Math.random() * (b - a);
+// Animation timings follow the --dur-scale CSS variable (see styles.css), so JS waits match the CSS animations.
+const dur = (ms) => ms * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-scale')) || 1);
 
 export function makeFx({ S, send, esc }) {
   const $html = document.documentElement;
@@ -37,8 +39,8 @@ export function makeFx({ S, send, esc }) {
   // The page re-renders on every update, so an effect on a page element is kept in `live` and re-applied (continuing
   // where it left off) to whatever element now matches, until it ends.
   const live = [];
-  function addLive(find, cls, { delay = 0, dur = 700, stagger = 0 } = {}) {
-    live.push({ find, cls, dur, stagger, start: performance.now() + delay });
+  function addLive(find, cls, { delay = 0, dur: durMs = 700, stagger = 0 } = {}) {
+    live.push({ find, cls, dur: dur(durMs), stagger: dur(stagger), start: performance.now() + dur(delay) });
     applyLive();
   }
   function applyLive() {
@@ -68,7 +70,7 @@ export function makeFx({ S, send, esc }) {
       p.style.willChange = 'transform, opacity'; made.push(p);
     }
     host.append(...made);
-    setTimeout(() => made.forEach((p) => { p.style.willChange = ''; p.remove(); }), 600 + delay);
+    setTimeout(() => made.forEach((p) => { p.style.willChange = ''; p.remove(); }), dur(600 + delay));
   }
 
   // ------------------------------------------------------------ overlay queue (one at a time, each <= 0.6 s)
@@ -84,7 +86,7 @@ export function makeFx({ S, send, esc }) {
     const el = Object.assign(document.createElement('div'), { className: `fx-ov fx-ov-${kind}` });
     el.innerHTML = OVERLAYS[kind](data); $fx.append(el);
     const ms = RUN[kind]?.(el, data) || 600;
-    setTimeout(() => { el.remove(); busy = false; pump(); }, ms);
+    setTimeout(() => { el.remove(); busy = false; pump(); }, dur(ms));
   }
   function clearOverlays() { queue.length = 0; $fx.querySelectorAll('.fx-ov').forEach((e) => e.remove()); busy = false; }
 
@@ -184,7 +186,7 @@ export function makeFx({ S, send, esc }) {
     const el = over; over = null; document.removeEventListener('keydown', onKey);
     if (prevFocus?.isConnected) prevFocus.focus({ preventScroll: true }); prevFocus = null;
     if (now || el.classList.contains('is-static') || !on()) { el.remove(); return; }
-    el.classList.add('is-out'); setTimeout(() => el.remove(), 180);
+    el.classList.add('is-out'); setTimeout(() => el.remove(), dur(180));
   }
   // The roles appear once the game is over: if the view with them lands after the pop-up, fill them in.
   function refreshOver(v) { if (over && v.game?.roles) { const w = over.querySelector('.fx-roles-wrap'); if (w && !w.querySelector('.fx-roles')) w.innerHTML = rolesHtml(v); } }

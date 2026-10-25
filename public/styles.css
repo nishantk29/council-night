@@ -66,7 +66,7 @@
 
   /* motion */
   --ease-out:cubic-bezier(.22,1,.36,1);
-  --t-press:90ms; --t-open:220ms; --t-reveal:360ms;
+  --dur-scale:2; --t-press:calc(90ms * var(--dur-scale)); --t-open:calc(220ms * var(--dur-scale)); --t-reveal:calc(360ms * var(--dur-scale));
 
   /* chrome */
   --appbar-h:56px; --tabbar-h:64px; --dock-h:80px; --table-chrome:140px;
@@ -794,8 +794,8 @@ html.fx-off .confirm-sheet[open],html.fx-off .confirm-sheet[open]::backdrop,html
 /* ---- designed card art (card_art.js): app / Phones mode cards ---- */
 .dcard{display:block;width:100%;height:auto}
 .dc{display:block;width:clamp(92px,26vw,128px);aspect-ratio:63/88;border-radius:6% / 4.3%;box-shadow:0 3px 6px rgba(0,0,0,.35);transition:transform var(--t-press) var(--ease-out)}
-.dc.flip{animation:dc-flip 280ms var(--ease-out) both}
-.tile-btn:nth-child(2) .dc.flip{animation-delay:60ms}.tile-btn:nth-child(3) .dc.flip{animation-delay:120ms}
+.dc.flip{animation:dc-flip calc(280ms * var(--dur-scale)) var(--ease-out) both}
+.tile-btn:nth-child(2) .dc.flip{animation-delay:calc(60ms * var(--dur-scale))}.tile-btn:nth-child(3) .dc.flip{animation-delay:calc(120ms * var(--dur-scale))}
 @keyframes dc-flip{from{transform:perspective(700px) rotateY(-90deg)}to{transform:perspective(700px) rotateY(0)}}
 .tile-btn:active .dc{transform:translateY(2px)}
 @media (hover:hover){.tile-btn:hover .dc{transform:translateY(-3px)}}

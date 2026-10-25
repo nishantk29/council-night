@@ -23,7 +23,7 @@
 html[data-screen="1"] .bg-art{display:none}
 @keyframes gc-turn{to{transform:rotate(360deg)}}
 /* the rays spiral in once on first load (they start rotated and shrunk, then unwind into place) */
-.boot .sun-rays{animation:gc-spiral 1500ms var(--gc-ease) both}
+.boot .sun-rays{animation:gc-spiral calc(1500ms * var(--dur-scale)) var(--gc-ease) both}
 @keyframes gc-spiral{from{opacity:0;transform:rotate(-200deg) scale(.35)}to{opacity:1;transform:none}}
 
 /* ---- home: Mafia structure. Back link on top, logo and title, then the actions, suggestions and footer */
@@ -31,7 +31,7 @@ html[data-screen="1"] .bg-art{display:none}
 .logo-mark{display:grid;place-items:center;width:72px;height:72px;border-radius:20px;background:var(--orange);color:var(--ink);box-shadow:0 10px 24px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.35);transform:rotate(-4deg)}
 .logo-mark .ico,.logo-mark svg{width:48px;height:48px}
 .logo-mark .ico{transform-origin:50% 50%}
-.boot .logo-mark .ico{animation:gc-spiral 1400ms var(--gc-ease) 120ms both}
+.boot .logo-mark .ico{animation:gc-spiral calc(1400ms * var(--dur-scale)) var(--gc-ease) 120ms both}
 .home-nav{display:flex}
 .home-head{padding:0}
 .home-meta{margin:0 0 var(--s1)}
@@ -77,8 +77,8 @@ html[data-screen="1"] .bg-art{display:none}
 .wrap.home .site-foot{width:auto;padding-inline:0;margin-inline:0}
 
 /* ---- cards: tilt with the mouse (gentle on touch), crafted surface, no side stripes anywhere */
-[data-card],.path,.side,.more-card,.stat,.how li,.gal-card,.pile > span{--crx:0deg;--cry:0deg;transform:perspective(900px) rotateX(var(--crx)) rotateY(var(--cry));transition:transform 320ms var(--gc-ease);transform-style:flat;backface-visibility:hidden}
-[data-tilting]{transition:transform 90ms linear!important}
+[data-card],.path,.side,.more-card,.stat,.how li,.gal-card,.pile > span{--crx:0deg;--cry:0deg;transform:perspective(900px) rotateX(var(--crx)) rotateY(var(--cry));transition:transform calc(320ms * var(--dur-scale)) var(--gc-ease);transform-style:flat;backface-visibility:hidden}
+[data-tilting]{transition:transform calc(90ms * var(--dur-scale)) linear!important}
 @media (hover:hover) and (pointer:fine){.more-card:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 14px 30px rgba(0,0,0,.45)}}
 .path,.more-card{position:relative}
 .path::after,.more-card::after{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--paper);background-size:160px;opacity:.06;mix-blend-mode:overlay;pointer-events:none}
@@ -126,15 +126,15 @@ html[data-screen="1"] .bg-art{display:none}
 @supports (view-transition-name:none){
   #app > main.wrap{view-transition-name:step}
   ::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
-  ::view-transition-old(step){animation:gc-step-out 160ms var(--gc-ease) both}
-  ::view-transition-new(step){animation:gc-step-in 380ms var(--gc-ease) both}
+  ::view-transition-old(step){animation:gc-step-out calc(160ms * var(--dur-scale)) var(--gc-ease) both}
+  ::view-transition-new(step){animation:gc-step-in calc(380ms * var(--dur-scale)) var(--gc-ease) both}
 }
 @keyframes gc-step-out{to{opacity:0;transform:translateX(-26px)}}
 @keyframes gc-step-in{from{opacity:0;transform:translateX(40px)}}
 
 /* ---- first-load entrance on the home screen only (html.boot is removed shortly after load) */
-.boot .home-head,.boot .home-hero,.boot .home-paths > *,.boot .more-games{animation:gc-rise 640ms var(--gc-ease) both}
-.boot .home-hero{animation-delay:60ms}.boot .home-paths > :nth-child(1){animation-delay:100ms}.boot .home-paths > :nth-child(2){animation-delay:160ms}.boot .home-paths > :nth-child(n+3){animation-delay:220ms}.boot .more-games{animation-delay:300ms}
+.boot .home-head,.boot .home-hero,.boot .home-paths > *,.boot .more-games{animation:gc-rise calc(640ms * var(--dur-scale)) var(--gc-ease) both}
+.boot .home-hero{animation-delay:calc(60ms * var(--dur-scale))}.boot .home-paths > :nth-child(1){animation-delay:calc(100ms * var(--dur-scale))}.boot .home-paths > :nth-child(2){animation-delay:calc(160ms * var(--dur-scale))}.boot .home-paths > :nth-child(n+3){animation-delay:calc(220ms * var(--dur-scale))}.boot .more-games{animation-delay:calc(300ms * var(--dur-scale))}
 @keyframes gc-rise{from{opacity:0;transform:translateY(18px)}}
 
 /* ---- reduced motion and the Animations switch */
@@ -153,6 +153,6 @@ html.handoff #hand{display:block;position:fixed;inset:0;z-index:99;pointer-event
 #hand .logo-mark{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%) scale(1.5556);will-change:transform}
 @media (min-width:900px){#hand .logo-mark{transform:translate(-50%,-50%) scale(1.2174)}}
 html.handoff #app,html.handoff .bg-art{opacity:0}
-html.handoff.go #app,html.handoff.go .bg-art{opacity:1;transition:opacity 450ms var(--gc-ease)}
+html.handoff.go #app,html.handoff.go .bg-art{opacity:1;transition:opacity calc(450ms * var(--dur-scale)) var(--gc-ease)}
 html.handoff #app .logo-mark{visibility:hidden}
 html.handoff.boot .home-head,html.handoff.boot .home-hero,html.handoff.boot .home-paths > *,html.handoff.boot .more-games,html.handoff.boot .logo-mark .ico{animation:none}

@@ -146,3 +146,13 @@ html[data-screen="1"] .bg-art{display:none}
 .fx-off .sun-spin,.fx-off.boot .sun-rays,.fx-off.boot .logo-mark .ico,.fx-off.boot .home-head,.fx-off.boot .home-hero,.fx-off.boot .home-paths > *,.fx-off.boot .more-games{animation:none!important}
 .fx-off [data-card],.fx-off .path,.fx-off .side,.fx-off .more-card,.fx-off .stat,.fx-off .how li,.fx-off .gal-card,.fx-off .pile > span{transform:none!important}
 .fx-off ::view-transition-old(step),.fx-off ::view-transition-new(step){animation:none!important}
+
+/* ---- hub handoff, game end (html.handoff only; transform/opacity). The overlay logo starts at the pose: centred, 112px tall, centre at 45% of the height. */
+#hand{display:none}
+html.handoff #hand{display:block;position:fixed;inset:0;z-index:99;pointer-events:none}
+#hand .logo-mark{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%) scale(1.5556);will-change:transform}
+@media (min-width:900px){#hand .logo-mark{transform:translate(-50%,-50%) scale(1.2174)}}
+html.handoff #app,html.handoff .bg-art{opacity:0}
+html.handoff.go #app,html.handoff.go .bg-art{opacity:1;transition:opacity 450ms var(--gc-ease)}
+html.handoff #app .logo-mark{visibility:hidden}
+html.handoff.boot .home-head,html.handoff.boot .home-hero,html.handoff.boot .home-paths > *,html.handoff.boot .more-games,html.handoff.boot .logo-mark .ico{animation:none}

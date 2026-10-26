@@ -300,7 +300,7 @@ test('game over: every connected client (each phone, the host, the table screen)
   const plan = broadcastPlan(t.room, sockets, new Set(t.ids), { gameOver: endedNow('legislate', t.room) });
   assert.equal(plan.length, sockets.length - 1, 'every joined socket is in the plan, the one that has not joined is not');
   const events = plan.map((p) => ({ ws: p.ws, ev: p.msgs.filter((m) => m.type === 'gameover') }));
-  for (const { ws, ev } of events) { assert.equal(ev.length, 1, `${ws} gets exactly one game-over event`); assert.equal(ev[0].winner, 'reform'); assert.equal(ev[0].reason, 'reforms'); assert.equal(ev[0].text, '5 Reforms passed'); assert.equal(ev[0].gameNo, 1); }
+  for (const { ws, ev } of events) { assert.equal(ev.length, 1, `${ws} gets exactly one game-over event`); assert.equal(ev[0].winner, 'reform'); assert.equal(ev[0].reason, 'reforms'); assert.equal(ev[0].text, '5 Reforms passed'); assert.equal(ev[0].gameNo, 2); }
   for (const p of plan) assert.equal(p.msgs[0].type, 'view', 'the view (with the roles) arrives before the event');
   for (const [i, id] of t.ids.entries()) {
     const ev = events.find((e) => e.ws === `p${i}`).ev[0];

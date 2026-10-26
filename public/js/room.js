@@ -5,7 +5,16 @@ import { ROLES, SIDES, TEAMS, MIN_PLAYERS, MAX_PLAYERS, REFORM_TO_WIN, DECREE_TO
   POWERS, POWER_TEXT, roleList, startingDeck, shuffle, knowledgeFor, partyOf, eligibleChancellors, electionPasses, HOUSE_DEFAULTS, DEFAULT_SETTINGS } from './rules.js';
 import { newTable, reduceTable, tableView, onPhaseChange, modeProblem, log, byId, seatIds } from './table.js';
 
-export function newRoom(code, hostKey) { return newTable(code, hostKey, DEFAULT_SETTINGS, HOUSE_DEFAULTS); }
+// Open rooms keep the rules they started with: a room without rulesVersion is version 1 (never backfilled). A new
+// room, a fresh deal and Restart all move to the latest. Rule-affecting fixes are gated on (room.rulesVersion || 1) >= 2.
+export const LATEST_RULES_VERSION = 2;
+export const rulesVersion = (room) => room.rulesVersion || 1;
+
+export function newRoom(code, hostKey) {
+  const room = newTable(code, hostKey, DEFAULT_SETTINGS, HOUSE_DEFAULTS);
+  room.rulesVersion = LATEST_RULES_VERSION; room.gameNo = 1;
+  return room;
+}
 
 const ok = (data = {}) => ({ ok: true, data });
 const err = (error) => ({ error });
@@ -33,7 +42,7 @@ function ensureDeck(room, rng, now) {
   else if (g.pile < 3) { g.pile += g.discards; g.discards = 0; g.reshuffles++; g.reshuffleNow = true; log(room, 'game', 'Fewer than three policies left: shuffle the discard pile back into the draw pile.', null, now); }
 }
 
-function startGame(room, rng, now) {
+function startGame(room, rng, now, restart = false) {
   const ids = seatIds(room); const n = ids.length;
   const list = roleList(n); if (list.error) return err(list.error);
   const mp = modeProblem(room); if (mp) return err(mp);
@@ -51,8 +60,14 @@ function startGame(room, rng, now) {
     hand: [], leg: null, vetoRefused: false, power: null, check: null, investigated: [], seen: {}, peek: {}, confirmedNot: [],
     history: [], lastVote: null, lastPolicy: null, ready: {}, winner: null, reason: null,
   };
-  room.phase = 'reveal'; room.undo = []; room.gameNo = (room.gameNo || 0) + 1;
-  log(room, 'game', `New game: ${n} players, ${TEAMS[n][0]} Loyalists, ${TEAMS[n][1]} Syndicate and the Boss.${sd.decree ? ' Rebalanced: one Decree starts on the board.' : ''}`, null, now);
+  room.phase = 'reveal'; room.undo = [];
+  if (restart) { // a clean slate: nothing from the old game survives
+    room.log = []; room.logN = 0; room.timer = null; room.talk = null; room.paused = null; room.poll = null;
+    room.counters = []; room.nudges = {};
+  }
+  room.rulesVersion = LATEST_RULES_VERSION;
+  room.gameNo = (room.gameNo || 1) + 1;
+  log(room, 'game', `${restart ? 'Restarted' : 'New game'}: ${n} players, ${TEAMS[n][0]} Loyalists, ${TEAMS[n][1]} Syndicate and the Boss.${sd.decree ? ' Rebalanced: one Decree starts on the board.' : ''}`, null, now);
   return ok();
 }
 
@@ -130,6 +145,18 @@ function gameReduce(room, actor, msg, rng, now) {
       if (!isHost) return err('Only the host can deal.');
       if (room.phase !== 'lobby') return err('The game has already started.');
       return startGame(room, rng, now);
+    }
+    case 'restart': { // host: a fresh deal for the same table, straight into the reveal
+      if (!isHost) return err('Only the host can restart.');
+      if (room.phase === 'lobby') return err('Nothing to restart yet.');
+      // Same as Play again: seats nobody took over are dropped and late watchers sit in the new deal. If the table
+      // cannot be dealt, everything is put back.
+      const prevPlayers = room.players; const was = prevPlayers.map((p) => p.watch);
+      room.players = prevPlayers.filter((p) => !p.open);
+      for (const p of room.players) p.watch = !!(p.host && room.house.sitOut);
+      const res = startGame(room, rng, now, true);
+      if (res.error) { room.players = prevPlayers; prevPlayers.forEach((p, i) => { p.watch = was[i]; }); } else onPhaseChange(room, now); // a phase timer starts like a fresh deal
+      return res;
     }
     case 'ready': {
       if (room.phase !== 'reveal' || !seated) return err('Not now.');

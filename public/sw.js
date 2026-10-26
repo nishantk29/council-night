@@ -10,6 +10,7 @@ const CACHE = PREFIX + VERSION;
 const SHELL = '/';
 const PRECACHE = [
   '/',
+  '/404.html',
   '/fonts/LICENSE-limelight.txt',
   '/fonts/LICENSE-poiret-one.txt',
   '/fonts/LICENSE-rubik.txt',
@@ -34,6 +35,7 @@ const PRECACHE = [
   '/js/art.js',
   '/js/card_art.js',
   '/js/cards.js',
+  '/js/error-screen.js',
   '/js/faq.js',
   '/js/flair.js',
   '/js/fx.js',

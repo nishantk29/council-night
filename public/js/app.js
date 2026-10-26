@@ -14,6 +14,7 @@ import { FAQ } from './faq.js';
 import { rolesInGame, rolesSeats, rolesSheetBody } from './roles_sheet.js';
 import { setupComposition, houseEffects } from './steppers.js';
 import { openSheet, closeSheets } from './sheets.js';
+import { errorBody, errorButtons, crashHtml, FATAL, ENDED } from './error-screen.js';
 
 const $app = document.getElementById('app');
 const $toast = document.getElementById('toast');
@@ -81,7 +82,7 @@ function paint() {
   $html.dataset.phase = S.view?.phase || S.mode;
   $html.dataset.screen = S.mode === 'screen' ? '1' : '';
   $html.classList.toggle('fx-off', S.view?.anim === false); // the host's Animations switch: card flips are skipped too
-  $app.innerHTML = screen();
+  try { $app.innerHTML = screen(); } catch (e) { console.error(e); crash(); return; }
   S.ui.fresh = {};
   window.scrollTo(0, y);
   for (const el of $app.querySelectorAll('[data-scroll]')) el.scrollTop = el.scrollHeight;
@@ -93,13 +94,22 @@ document.addEventListener('focusout', () => { if (pending) setTimeout(render, 50
 const T = makeTable({ S, send, esc, ui, toast, render });
 const fx = makeFx({ S, send, esc });
 
+// The one client error screen: title + short line + the two home buttons. Fixed words only, never raw error text.
+const errorScreen = ({ title, line, icon = 'warning' }) => errorBody({ title, line, icon: icon === 'sun' ? art('sun') : ui(icon, 'is-big') });
+function crash() {
+  try { $html.dataset.phase = 'home'; $app.innerHTML = crashHtml(); } catch { /* nothing more to do */ }
+}
+const nothingShown = () => !$app.querySelector('main,.layout,.appbar');
+addEventListener('error', () => { if (nothingShown()) crash(); });
+addEventListener('unhandledrejection', () => { if (nothingShown()) crash(); });
+
 function screen() {
-  if (S.ended) return `<main class="wrap"><div class="empty ended">${art('sun')}<h1 class="phase-title">The host ended the game</h1><p class="muted">This chamber is closed and its code no longer works.</p><a class="btn big" href="#/">Back to home</a></div></main>`;
-  if (S.fatal) return `<main class="wrap"><div class="empty">${ui('warning')}<h1 class="phase-title">${esc(S.fatal)}</h1><a class="btn" href="#/">Go Home</a></div></main>`;
+  if (S.ended) return errorScreen({ ...ENDED.host, icon: 'sun' });
+  if (S.fatal) return errorScreen(S.fatal);
   if (S.mode === 'home') return home();
   if (S.mode === 'rules') return rulesPage() + siteFooter();
   if (S.mode === 'faq') return faqPage(FAQ, esc, ui, 'Rules & FAQ') + siteFooter();
-  const banner = !S.conn ? `<div class="banner" role="status">${ui('wifi-off')} Reconnecting to the chamber…</div>` : '';
+  const banner = !S.conn ? `<div class="banner${S.connLong ? ' banner-lost' : ''}" role="status">${ui('wifi-off')} Reconnecting to the chamber…${S.connLong ? errorButtons() : ''}</div>` : '';
   const v = S.view;
   if (!v) {
     if (S.mode === 'screen' || store.get(`${KEY}.player.${S.code}`) || S.pendingJoin) return banner + `<main class="wrap"><div class="empty">${art('table')}<p>Opening the chamber doors…</p></div></main>`;
@@ -626,11 +636,11 @@ function showQr(link, code) {
 
 // ---------------------------------------------------------------- transport
 function wsTransport(code, asScreen) {
-  let ws; let closed = false; let tries = 0; let timer;
+  let ws; let closed = false; let tries = 0; let timer; let longTimer;
   const creds = () => { try { return JSON.parse(store.get(`${KEY}.player.${code}`) || 'null'); } catch { return null; } };
   const open = () => {
     ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/${code}`);
-    ws.onopen = () => { tries = 0; S.conn = true; const c = creds();
+    ws.onopen = () => { tries = 0; S.conn = true; S.connLong = false; clearTimeout(longTimer); longTimer = null; const c = creds();
       if (asScreen) ws.send(JSON.stringify({ type: 'hello', screen: true }));
       else if (c) ws.send(JSON.stringify({ type: 'hello', ...c }));
       else if (S.pendingJoin) { ws.send(JSON.stringify({ type: 'hello', join: S.pendingJoin, hostKey: store.get(`${KEY}.host.${code}`) || undefined })); S.pendingJoin = null; }
@@ -642,14 +652,14 @@ function wsTransport(code, asScreen) {
       else if (m.type === 'error') toast(m.error);
       else if (m.type === 'joined') store.set(`${KEY}.player.${code}`, JSON.stringify({ playerId: m.playerId, token: m.token }));
       else if (m.type === 'closed') { closed = true; store.del(`${KEY}.player.${code}`); store.del(`${KEY}.host.${code}`); S.ended = true; S.view = null; render(); }
-      else if (m.type === 'fatal') { if (m.clear) { store.del(`${KEY}.player.${code}`); S.view = null; toast(m.error); render(); } else { closed = true; S.fatal = m.error; render(); } }
+      else if (m.type === 'fatal') { if (m.clear) { store.del(`${KEY}.player.${code}`); S.view = null; toast(m.error); render(); } else { closed = true; S.fatal = /expired/i.test(m.error) ? FATAL.gone : FATAL.closed; render(); } }
     };
-    ws.onclose = () => { if (closed) return; S.conn = false; render(); timer = setTimeout(open, Math.min(8000, 400 * 2 ** tries++)); };
+    ws.onclose = () => { if (closed) return; S.conn = false; if (!longTimer) longTimer = setTimeout(() => { if (!S.conn && !closed) { S.connLong = true; render(); } }, 20000); render(); timer = setTimeout(open, Math.min(8000, 400 * 2 ** tries++)); };
   };
   open();
   return {
     send: (a) => { if (ws?.readyState === 1) ws.send(JSON.stringify(a)); else toast('Not connected to the room yet. Wait a moment and try again.'); },
-    close: () => { closed = true; clearTimeout(timer); ws?.close(); },
+    close: () => { closed = true; clearTimeout(timer); clearTimeout(longTimer); ws?.close(); },
   };
 }
 
@@ -690,12 +700,12 @@ function onView(v) {
 // ---------------------------------------------------------------- routing
 async function route() {
   fx.reset();
-  S.transport?.close(); S.transport = null; S.view = null; S.fatal = null; S.ended = false; S.pruned = false; S.conn = true; S.ui.open = {};
+  S.transport?.close(); S.transport = null; S.view = null; S.fatal = null; S.ended = false; S.pruned = false; S.conn = true; S.connLong = false; S.ui.open = {};
   const [kind, arg] = location.hash.replace(/^#\/?/, '').split('/');
   if ((kind === 'play' || kind === 'join' || kind === 'screen') && /^[A-Za-z]{6}$/.test(arg || '')) {
     S.mode = kind === 'screen' ? 'screen' : 'play'; S.code = arg.toUpperCase();
     const ex = await fetch(`/api/room/${S.code}`).then((r) => r.ok).catch(() => false);
-    if (!ex) { store.del(`${KEY}.player.${S.code}`); S.fatal = `There’s no table with the code ${S.code}. Check the letters and try again.`; }
+    if (!ex) { store.del(`${KEY}.player.${S.code}`); S.fatal = FATAL.noRoom(S.code); }
     else {
       S.pendingJoin = sessionStorage.getItem(`${KEY}.pendingJoin`);
       sessionStorage.removeItem(`${KEY}.pendingJoin`);

@@ -45,11 +45,10 @@ function expectedSees(id, roles, n) {
   if (roles[id] === 'pretender' && n <= 6) return others.filter((x) => roles[x] === 'cabal').map((x) => ({ id: x, tag: 'cabal' }));
   return [];
 }
-// The host's skip: accepted everywhere, except that the three steps added in rulesVersion 2 (the unrest tile, the Boss check,
-// physical legislation) refuse it in an older room.
+// The host's skip: accepted everywhere except the three facts at the table (Fennel ruling 5): the unrest tile, the Boss
+// check and physical legislation refuse it in every rulesVersion.
 function skipOk(room) {
   const g = room.game; if (!g || room.phase === 'over') return false;
-  if (rulesVersion(room) >= 2) return true;
   return !(room.phase === 'chaos' || room.phase === 'check' || (room.phase === 'legislate' && !g.cardsApp));
 }
 

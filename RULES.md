@@ -41,7 +41,7 @@ All in `test/audit-v2.test.js`. No fix changed play, so none is gated on `rulesV
 | Moderator roles go only to a sit-out Host, never to a late watcher who claims host. | all | `audit: moderator roles only for a sit-out host` |
 | An idle Speaker's skipped power stays lost (FAQ says so). | all | `audit: an idle Speaker’s skipped power stays lost (and the FAQ says so)` |
 | Exiled players do not count toward the five-or-fewer term-limit exception. | all | `audit: exiled players do not count toward the five-or-fewer term-limit exception` |
-| Physical chaos: skip is refused with a clear "enter the policy that was turned up" message. | all | `audit: physical table, third failure: no skip, the host enters the tile` |
+| Physical chaos: skip is refused with a clear "enter the policy that was turned up" message. The same holds for a physical Chancellor tile and the Boss question (ruling 5; host-no-dead-end "ruling 5" test). | all | `audit: physical table, third failure: no skip, the host enters the tile` |
 | Confirmed, no change: team sizes, deck and reshuffle, rotation, tracker, Boss win timing, six Decrees / five Reforms, execution, veto, powers, Snap election, chaos, ties and guards, restart in every phase, pause, kicked seats, claimHost, close, skip, leaks, reveal length. | all | the other `audit:` tests in `test/audit-v2.test.js` |
 
 ## How to add a rule

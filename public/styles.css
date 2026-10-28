@@ -853,3 +853,8 @@ html.fx-off .dc.flip,html[data-fxlite] .dc.flip{animation:none}
 .knight.is-picked .knight-disc{background:var(--card);color:var(--card-ink);border-color:var(--card);box-shadow:0 0 0 3px rgba(244,233,211,.25), 0 0 18px rgba(244,233,211,.35)}
 .choice.is-picked,.tile-btn.is-picked{box-shadow:0 0 0 3px var(--focus, #E0AE52);transform:translateY(-2px)}
 @media (prefers-reduced-motion:reduce){.choice.is-picked,.tile-btn.is-picked{transform:none}}
+
+/* The deal opens to the face-down card: on short phones it fits between the app bar and the I'm Ready bar, so nobody
+   has to scroll to find it (Nishant 2026-10-28). The card stays hidden; only its size changes. */
+.reveal-stage .rcard{width:min(100%, 360px, calc((100svh - var(--reveal-reserve, 19rem)) * 63 / 88))}
+@media (max-height:700px){.reveal-stage{gap:var(--s2)}.reveal-stage .phase-title{font-size:var(--fs-xl)}.reveal-stage>.say{display:none}}

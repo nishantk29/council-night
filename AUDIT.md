@@ -56,9 +56,7 @@ driven only through hostNav).
 
 | Area | Finding | Fix | rulesVersion |
 |---|---|---|---|
-| Unrest tile (physical) | Host had no skip when the tile could not be entered; `skip` was refused. | v2: skip enacts a random policy, weighted by the tiles not yet on the board, logged as a host skip. | 2+ only (v1 keeps the refusal; Host can still enter the tile, Restart works) |
-| Physical session | An idle Chancellor with physical tiles had no skip (only app hands did). | v2: skip enacts a random policy (discards +2). | 2+ only |
-| Boss question | `check` (Chancellor after 3 Decrees, or after an execution) had no skip. | v2: skip answers "No" and logs it. | 2+ only |
+| Unrest tile, physical session, Boss question | An earlier v4 draft let the Host skip these with a random policy or an automatic "No". That contradicts Fennel ruling 5 (2026-10-25: a fact at the table is entered, never skipped), and an automatic "No" could hide a Boss win. | Reverted before release: `skip` refuses all three with a clear message; hostNav shows a greyed button naming the missing entry and no skip chip. The draft never shipped. | all (host-no-dead-end "ruling 5", red on the draft) |
 | Views | The view did not carry `rulesVersion`, so a client could not tell which skips exist. | `rulesVersion` added to player and screen views (display only). | all |
 | Existing skips | Vote (nay), nominate (pass gavel), app-hand discard/enact (random), veto (refuse), power (lost) already worked and are reused unchanged. | none | all |
 | Snap election | A Pass-the-Gavel skip can hand the gavel back to the same player who was just snap-chosen (rotation resumes at the left of the original Speaker). Legal, so the test judges progress by the log, not the Speaker. | none | n/a |

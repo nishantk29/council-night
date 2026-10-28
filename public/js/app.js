@@ -51,6 +51,8 @@ let fieldDown = false;
 addEventListener('pointerdown', (e) => { if (e.target.closest?.('input,textarea,select,label.field')) fieldDown = true; }, true);
 addEventListener('pointerup', () => { if (!fieldDown) return; setTimeout(() => { fieldDown = false; if (pending) render(); }, 350); }, true);
 addEventListener('pointercancel', () => { fieldDown = false; }, true);
+let toTop = false;
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; // hash routes must not restore an old offset
 function render() {
   if (vtBusy) { pending = true; setTimeout(() => { if (pending) render(); }, 60); return; }
   if (fieldDown) { pending = true; return; }
@@ -58,6 +60,7 @@ function render() {
   if (a && $app.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'checkbox' && a.type !== 'radio') { pending = true; return; }
   pending = false;
   const key = screenKey(S.mode, S.view); const changed = lastKey !== null && key !== lastKey; lastKey = key;
+  if (changed) toTop = true; // a new screen (the deal, a new phase) opens at the top, so a face-down card is in view
   const animate = changed && !document.hidden && motionOk(S.view, reducedMq.matches);
   // New screens slide in like Mafia Night's: the old one slips left, the new one glides in (transform and opacity only).
   if (animate && document.startViewTransition && !vtBusy) {
@@ -85,7 +88,8 @@ function paint() {
   $html.classList.toggle('fx-off', S.view?.anim === false); // the host's Animations switch: card flips are skipped too
   try { $app.innerHTML = screen(); } catch (e) { console.error(e); crash(); return; }
   S.ui.fresh = {};
-  window.scrollTo(0, y);
+  // Same screen: keep the reader's place. New screen: start at the top (Nishant 2026-10-28: "open to the top", card still hidden).
+  window.scrollTo(0, toTop ? 0 : y); toTop = false;
   for (const el of $app.querySelectorAll('[data-scroll]')) el.scrollTop = el.scrollHeight;
   fx.after();
   wake(S.mode !== 'home' && wantsWake(S.view));
@@ -443,7 +447,7 @@ function stage(v) {
     if (!g.appRoles || !me.role) return `<section class="stage"><h1 class="phase-title">Secret Roles</h1>${say(g.appRoles ? 'The players are reading their roles.' : 'Everyone checks their own role. The host reads the eyes-closed script from the Host tab.')}</section>
       ${host ? '<div class="sticky-act"><button class="btn big" data-a="skipReveal">Begin Game</button></div>' : ''}`;
     const ready = g.ready.includes(me.id);
-    return `<section class="stage"><h1 class="phase-title">Your Secret Role</h1>
+    return `<section class="stage reveal-stage"><h1 class="phase-title">Your Secret Role</h1>
       ${say('Shield your screen. Hold the card to look, then let go to hide it again.')}
       ${cardView(v)}
       ${ready ? '<p class="muted center">Waiting for the others…</p>' : ''}

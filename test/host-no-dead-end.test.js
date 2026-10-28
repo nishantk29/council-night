@@ -79,8 +79,8 @@ function playGame(g) {
     assert.equal(nav.disabled, !nav.send, 'disabled exactly when there is nothing to send');
     assert.equal(nav.disabled, !!nav.missing, 'disabled exactly while something is missing');
     if (!nav.disabled) { assert.equal(nav.skip, null, 'an enabled step needs no skip'); sendNav(nav); continue; }
-    const exempt = version === 1 && ((phase === 'chaos') || (phase === 'check') || (phase === 'legislate' && !gm.cardsApp));
-    if (exempt) { stats.v1Exempt++; assert.equal(nav.skip, null, 'v1 has no skip here'); } else assert.ok(nav.skip, `game ${g} v${version} ${phase}: disabled "${nav.label}" has no skip`);
+    const exempt = (phase === 'chaos') || (phase === 'check') || (phase === 'legislate' && !gm.cardsApp); // facts at the table (ruling 5)
+    if (exempt) { stats.v1Exempt++; assert.equal(nav.skip, null, 'a fact at the table has no skip'); } else assert.ok(nav.skip, `game ${g} v${version} ${phase}: disabled "${nav.label}" has no skip`);
     if (!exempt && turn()) { useSkip(nav); continue; }
     const mineSpeaker = gm.speaker === hostId;
 
@@ -205,18 +205,19 @@ test('host flow never dead-ends: steps with nothing to choose are enabled right 
   assert.equal(pn.disabled, false); assert.deepEqual(pn.send, { type: 'peekDone' });
 });
 
-test('host flow never dead-ends: the Boss question and the physical tiles have a skip from rulesVersion 2 only', () => {
+test('host flow never dead-ends: the Boss question and the physical tiles are entered, never skipped (ruling 5), in every rulesVersion', () => {
   const base = { kind: 'player', phase: 'check', rulesVersion: 2, mode: { play: 'physical' }, players: [{ id: 'a', host: true }], me: { id: 'a', host: true },
     game: { speaker: 'a', alive: ['a'], exiled: [], ineligible: [], voted: [], check: { kind: 'chancellor', id: 'a' }, cardsApp: false, investigated: [] } };
-  for (const phase of ['check', 'chaos', 'legislate']) {
-    const v2 = hostNav({ ...base, phase }, {}); const v1 = hostNav({ ...base, phase, rulesVersion: 1 }, {});
-    assert.equal(v2.disabled, true); assert.ok(v2.skip, `${phase} v2 skip`); assert.equal(v1.disabled, true); assert.equal(v1.skip, null, `${phase} v1 has none`);
+  for (const phase of ['check', 'chaos', 'legislate']) for (const rulesVersion of [1, 2]) {
+    const nav = hostNav({ ...base, phase, rulesVersion }, {});
+    assert.equal(nav.disabled, true); assert.equal(nav.skip, null, `${phase} v${rulesVersion} has no skip`);
   }
-  assert.equal(hostNav(base, {}).skip.label, 'Answer No');
+  assert.equal(hostNav({ ...base, phase: 'check' }, { answer: false }).disabled, false, 'answering is the way on');
+  assert.equal(hostNav({ ...base, phase: 'chaos' }, { policy: 'D' }).disabled, false, 'entering the tile is the way on');
   assert.equal(hostNav({ ...base, me: { id: 'b' } }, {}), null, 'a player who is not the Host has nothing to answer');
 });
 
-test('host flow never dead-ends: the skips the room takes from rulesVersion 2 (random Unrest tile, random physical enact, "No" to the Boss question)', () => {
+test('ruling 5: the room refuses a skip of the Unrest tile, a physical enact and the Boss question, in every rulesVersion', () => {
   const mk = (version) => {
     const rng = lcg(31); const room = newRoom('HOSTNV', 'hk');
     const ids = Array.from({ length: 5 }, (_, i) => reduce(room, {}, { type: 'join', name: `P${i}`, hostKey: i ? undefined : 'hk' }, rng).data.playerId);
@@ -230,14 +231,12 @@ test('host flow never dead-ends: the skips the room takes from rulesVersion 2 (r
   for (const version of [1, 2]) {
     const { room, H, rng } = mk(version);
     room.phase = 'chaos'; room.game.tracker = 3;
-    const r = reduce(room, H, { type: 'skip' }, rng);
-    if (version === 1) assert.match(r.error, /can’t be skipped/); else { assert.ok(r.ok); assert.equal(room.game.reform + room.game.decree, 1); assert.equal(room.phase, 'nominate'); }
+    assert.match(reduce(room, H, { type: 'skip' }, rng).error, /can’t be skipped/); assert.equal(room.game.reform + room.game.decree, 0);
     const m = mk(version); m.room.phase = 'legislate'; m.room.game.leg = 'speaker';
-    const r2 = reduce(m.room, m.H, { type: 'skip' }, m.rng);
-    if (version === 1) assert.ok(r2.error); else { assert.ok(r2.ok); assert.equal(m.room.game.reform + m.room.game.decree, 1); assert.equal(m.room.game.discards, 2); }
+    assert.match(reduce(m.room, m.H, { type: 'skip' }, m.rng).error, /can’t be skipped/); assert.equal(m.room.game.reform + m.room.game.decree, 0);
     const k = mk(version); k.room.phase = 'check'; k.room.game.check = { kind: 'chancellor', id: k.room.game.order[1] };
-    const r3 = reduce(k.room, k.H, { type: 'skip' }, k.rng);
-    if (version === 1) assert.ok(r3.error); else { assert.ok(r3.ok); assert.equal(k.room.phase, 'legislate'); assert.ok(k.room.game.confirmedNot.includes(k.room.game.order[1])); }
+    assert.match(reduce(k.room, k.H, { type: 'skip' }, k.rng).error, /can’t be skipped/); assert.equal(k.room.phase, 'check');
+    assert.ok(!k.room.game.confirmedNot.includes(k.room.game.order[1]), 'no made-up "No"');
   }
 });
 

@@ -293,19 +293,11 @@ function gameReduce(room, actor, msg, rng, now) {
         log(room, 'host', `The host skipped ${nm(room, g.nominee)}: a random policy was enacted.`, null, now);
         enactPolicy(room, pol, true, rng, now); return ok();
       }
-      if (room.phase === 'chaos') {
-        if (rulesVersion(room) < 2) return err('Enter the policy that was turned up. It can’t be skipped.');
-        const pol = randomPolicy(room, rng); log(room, 'host', `The host skipped the Unrest tile: a random ${PNAME[pol]} was enacted, drawn by the server.`, null, now);
-        enactPolicy(room, pol, false, rng, now); return ok();
-      }
-      if (room.phase === 'legislate' && !g.cardsApp && rulesVersion(room) >= 2) { // physical tiles: the server picks what the Chancellor "turned up", weighted by what is left
-        const pol = randomPolicy(room, rng); log(room, 'host', `The host skipped ${nm(room, g.nominee)}: a random ${PNAME[pol]} was enacted, drawn by the server.`, null, now);
-        g.discards += 2; enactPolicy(room, pol, true, rng, now); return ok();
-      }
-      if (room.phase === 'check' && rulesVersion(room) >= 2) { // the neutral answer: "no"
-        log(room, 'host', 'The host answered the question for the table: no.', null, now);
-        return gameReduce(room, actor, { type: 'check', yes: false }, rng, now);
-      }
+      // Facts at the table are entered, never skipped (Fennel ruling 5, 2026-10-25): the Unrest tile, the tile a
+      // Chancellor turned up, and the answer to the Boss question. The Host can always enter them, so nothing is stuck.
+      if (room.phase === 'chaos') return err('Enter the policy that was turned up. It can’t be skipped.');
+      if (room.phase === 'legislate' && !g.cardsApp) return err('Enter the policy the Chancellor turned up. It can’t be skipped.');
+      if (room.phase === 'check') return err('Answer the question for the table. It can’t be skipped.');
       if (room.phase === 'power') { log(room, 'host', 'The host skipped the power.', null, now); nextSpeaker(room); return ok(); }
       return err('Nothing to skip now.');
     }
@@ -329,12 +321,6 @@ function gameReduce(room, actor, msg, rng, now) {
     }
     default: return err('Unknown action.');
   }
-}
-// A policy for a skipped physical step: the odds follow the tiles not yet on the board (the discards are unknown to the app).
-function randomPolicy(room, rng) {
-  const g = room.game; const sd = startingDeck(g.n, room.house.rebalance);
-  const r = Math.max(0, sd.deck.filter((x) => x === 'R').length - g.reform); const d = Math.max(0, sd.deck.filter((x) => x === 'D').length - (g.decree - sd.decree));
-  return r + d > 0 && rng() * (r + d) < r ? 'R' : 'D';
 }
 function nextSpeakerFirst(room) { // the first Speaker is the one chosen at the deal
   const g = room.game; g.speaker = g.order[g.rot]; room.phase = 'nominate';

@@ -56,7 +56,7 @@ Live: https://secrethitler.hatethespurs.com
 > The GitHub Actions files live in `docs/github-workflows/`: the box’s GitHub login has no `workflow` scope.
 
 ## Credits
-Original game in the hidden-role policy family; names, wording and art are its own. Fonts: Limelight, Poiret One, Big Shoulders
+Original game in the hidden-role policy family; names, wording and art are its own. Fonts: Big Shoulders
 Display, Alegreya and Alegreya Sans (SIL OFL 1.1), Special Elite (Apache 2.0). Interface icons: Phosphor (MIT).
 
 ## Look

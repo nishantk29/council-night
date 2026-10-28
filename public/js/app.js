@@ -125,7 +125,7 @@ const HUB_LOGO = '<svg viewBox="0 0 48 48"><rect x="7" y="7" width="15" height="
 // One footer for every page: the game links, the low-light switch, then the licences tucked behind "Credits".
 function siteFooter() {
   return `<footer class="site-foot"><nav aria-label="Game Night games"><a href="${HUB}">All Games</a><a href="https://mafia.hatethespurs.com">Mafia Night</a><a href="https://secrethitler.hatethespurs.com" aria-current="page">The Gilded Chamber</a><a href="https://avalon.hatethespurs.com">Quest Night</a></nav>
-    <div class="foot-row">${dimBtn('Low Light')}<details class="credits-box"><summary>Credits</summary><p>Torch, chain, mask, dagger and every board icon drawn for The Gilded Chamber. Interface icons from <a href="https://phosphoricons.com" target="_blank" rel="noopener">Phosphor</a> (MIT). Fonts Rubik, Limelight and Poiret One (SIL OFL 1.1).</p></details></div></footer>`;
+    <div class="foot-row">${dimBtn('Low Light')}<details class="credits-box"><summary>Credits</summary><p>Torch, chain, mask, dagger and every board icon drawn for The Gilded Chamber. Interface icons from <a href="https://phosphoricons.com" target="_blank" rel="noopener">Phosphor</a> (MIT). Fonts Rubik and Big Shoulders Display (SIL OFL 1.1).</p></details></div></footer>`;
 }
 function home() {
   const mine = Object.keys(localStorage).filter((k) => k.startsWith(`${KEY}.player.`)).map((k) => k.slice(KEY.length + 8));

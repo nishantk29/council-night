@@ -51,3 +51,7 @@ All in `test/audit-v2.test.js`. No fix changed play, so none is gated on `rulesV
 3. Add a named test, and a `describe('house rule: <the line>')` in `test/rules-gate.test.js` that cites it (or checks it directly), plus one test showing the previous version is unchanged.
 4. Add a row to this file with the exact test names and the "since" version; keep the FAQ in sync if players can see the rule (`faq-drift`).
 5. Run make-pwa (or `node scripts/stamp-sw.mjs public`), then `node scripts/build-deploy.mjs <out>`: it runs every test first and refuses to write the deploy file until all pass. There is no bypass.
+
+## Shared game-rules kit (test/kit/game-invariants.mjs)
+
+`test/kit/game-invariants.mjs` is the shared invariant kit, copied unchanged from `/workspace/code-team/shared/invariants/`. The Gilded adapter is `test/game-invariants.test.js` (phone mode, table sizes 5 to 10, rebalance and exile on and off). It checks four properties: no step can block, game over stays final, no leaks (a view does not change when hidden roles are shuffled among the players who may not know them), and no Undo after game over. All four pass with no todo. The kit is not named `*.test.js`, so the gate does not run it on its own. Physical and hybrid modes are covered by `test/sim-invariants.test.js` (seeded whole games under invariant oracles).

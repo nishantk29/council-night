@@ -63,7 +63,7 @@ There is no bypass. It also refuses a stale `public/sw.js` VERSION (re-stamp wit
 Every house rule and the test that guards it is listed in `RULES.md`.
 
 ## Credits
-Original game in the hidden-role policy family; names, wording and art are its own. Fonts: Limelight, Poiret One, Big Shoulders
+Original game in the hidden-role policy family; names, wording and art are its own. Fonts: Big Shoulders
 Display, Alegreya and Alegreya Sans (SIL OFL 1.1), Special Elite (Apache 2.0). Interface icons: Phosphor (MIT).
 
 ## Look

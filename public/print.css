@@ -1,6 +1,4 @@
 @font-face{font-family:"Rubik";src:url(/fonts/rubik-var.woff2) format("woff2");font-weight:500 900}
-@font-face{font-family:"Limelight";font-weight:400;src:url(/fonts/limelight-400.woff2) format("woff2")}
-@font-face{font-family:"Poiret One";font-weight:400;src:url(/fonts/poiret-one-400.woff2) format("woff2")}
 @font-face{font-family:"Big Shoulders Display";font-weight:100 900;src:url(/fonts/big-shoulders-display-var.woff2) format("woff2")}
 @font-face{font-family:"Alegreya Sans";font-weight:400;src:url(/fonts/alegreya-sans-400.woff2) format("woff2")}
 @font-face{font-family:"Alegreya Sans";font-weight:700;src:url(/fonts/alegreya-sans-700.woff2) format("woff2")}
@@ -15,8 +13,8 @@ body{margin:0;font:400 11pt/1.4 "Alegreya Sans",sans-serif;color:#1F1B16;backgro
 .sheet{max-width:190mm;margin:0 auto;padding:4mm 0}
 .sheet.cardpage{padding:0}
 @media screen{.sheet{padding-left:16px;padding-right:16px}}
-h1{font:400 30pt/1.1 Limelight,serif;margin:0 0 2mm;color:#1F1B16}
-h2{font:400 17pt/1.2 "Poiret One",Limelight,serif;-webkit-text-stroke:.3pt #1F1B16;letter-spacing:.05em;margin:6mm 0 2mm;color:#1F1B16;border-bottom:3pt double #B23A1A;padding-bottom:1mm}
+h1{font:800 30pt/1.05 "Big Shoulders Display",sans-serif;margin:0 0 2mm;color:#1F1B16}
+h2{font:700 17pt/1.2 "Big Shoulders Display",sans-serif;letter-spacing:.04em;margin:6mm 0 2mm;color:#1F1B16;border-bottom:3pt double #B23A1A;padding-bottom:1mm}
 h3{font:800 11pt "Big Shoulders Display",sans-serif;letter-spacing:.04em;text-transform:uppercase;margin:3mm 0 1mm}
 p,li{margin:0 0 1.5mm}
 table{width:100%;border-collapse:collapse;font-size:10pt;margin:1mm 0 2mm}
@@ -46,7 +44,7 @@ th{background:#F1E9D6}
 .ci .side{font:400 7.5pt "Special Elite",monospace;letter-spacing:.18em}
 .back .ci{--bg:#1F1B16;--edge:#000;--ink:#ECE1C8;--line:#C4421F;justify-content:center;gap:4mm}
 .back .ci .ico{color:#C4421F;width:34mm;height:34mm}
-.back .ci b{font:400 13pt Limelight,serif;text-transform:none}
+.back .ci b{font:800 13pt "Big Shoulders Display",sans-serif;text-transform:none}
 .note{font-size:9pt;color:#5a5245}
 /* designed card gallery (card_art.js) */
 .dgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:4mm}

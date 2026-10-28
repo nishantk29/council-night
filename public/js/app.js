@@ -212,7 +212,7 @@ const PHASE = { lobby: ['Gathering', 'table'], reveal: ['Secret Roles', 'cards']
 function appbar(v) {
   const [label, icon] = PHASE[v.phase] || ['', 'game'];
   return `<header class="appbar"><a class="appbar-mark" href="#/" aria-label="Home">${art('torch')}</a>
-    <div class="appbar-title">Chamber <span class="code">${esc(v.code)}</span></div>
+    <div class="appbar-title"><span class="ab-word">Chamber </span><span class="code">${esc(v.code)}</span></div>
     ${T.timerChip(v)}${dimBtn()}<span class="phase-badge">${ui(icon)}${label}</span></header>`;
 }
 

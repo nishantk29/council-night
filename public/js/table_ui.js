@@ -97,7 +97,7 @@ export function makeTable(ctx) {
           <div class="dice-row"><button class="icon-btn" data-a="dCount" data-v="-1" aria-label="Fewer dice">${ui('minus')}</button><b>${d.count}</b><button class="icon-btn" data-a="dCount" data-v="1" aria-label="More dice">${ui('plus')}</button>
           <span class="seg mini">${[6, 20].map((s) => `<button type="button" data-a="dSides" data-v="${s}" aria-pressed="${d.sides === s}">d${s}</button>`).join('')}</span></div>
           <button type="button" class="btn" data-a="dice">Roll ${d.count}d${d.sides}</button></div>
-        <button type="button" class="tool-btn" data-a="pickPlayer">${ui('pick')}<span>Pick a random player</span></button>
+        <button type="button" class="tool-btn" data-a="pickPlayer">${ui('pick')}<span>Random player</span></button>
         <div class="tool-btn as-box">${ui('eye-off')}<span>Private (only you see)</span><div class="btn-row"><button class="btn ghost" data-a="privCoin">Coin</button><button class="btn ghost" data-a="privDice">${d.count}d${d.sides}</button></div>${priv ? `<p class="priv-out" role="status">${esc(priv)}</p>` : ''}</div>
       </div>
       ${host ? `<h3 class="sub">Timers</h3>

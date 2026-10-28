@@ -35,13 +35,13 @@ test('Play again: late watchers are seated and unclaimed open seats are dropped'
   assert.equal(t.room.players.length, 5); // 4 original + Late
 });
 
-test('every game-over carries a fresh counter, even after undo (pop-up key)', () => {
+test('every game-over carries a fresh counter, even after a restart (pop-up key)', () => {
   const t = lobby(5); start(t); reformWin(t);
   assert.equal(t.room.phase, 'over');
   const first = gameOverEvent(t.room, t.host).over;
-  must(act(t.room, t.host, { type: 'undo' }));
-  assert.notEqual(t.room.phase, 'over');
-  must(act(t.room, t.room.game.nominee, { type: 'enact', i: 0 })); // the Chancellor enacts again
+  assert.ok(act(t.room, t.host, { type: 'undo' }).error, 'undo cannot un-end a finished game');
+  must(act(t.room, t.host, { type: 'restart' })); must(act(t.room, t.host, { type: 'skipReveal' }));
+  reformWin(t);
   assert.equal(t.room.phase, 'over');
   assert.ok(gameOverEvent(t.room, t.host).over > first);
 });

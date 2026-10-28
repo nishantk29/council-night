@@ -90,13 +90,14 @@ export function makeTable(ctx) {
     const priv = S.ui.private;
     return `<section class="pane-sec" aria-label="Table Tools"><h2 class="block-title">Table Tools</h2>
       <p class="muted">Results go to everyone and into the log, drawn by the server so nobody can fudge them. Private rolls stay on this phone.</p>
+      ${v.phase !== 'lobby' ? '<div class="btn-row"><button type="button" class="btn ghost" data-a="roles">Roles in this game</button></div>' : ''}
       <div class="tool-grid">
         <button type="button" class="tool-btn" data-a="coin">${ui('coin')}<span>Flip a coin</span></button>
         <div class="tool-btn as-box">${ui('dice')}<span>Roll</span>
           <div class="dice-row"><button class="icon-btn" data-a="dCount" data-v="-1" aria-label="Fewer dice">${ui('minus')}</button><b>${d.count}</b><button class="icon-btn" data-a="dCount" data-v="1" aria-label="More dice">${ui('plus')}</button>
           <span class="seg mini">${[6, 20].map((s) => `<button type="button" data-a="dSides" data-v="${s}" aria-pressed="${d.sides === s}">d${s}</button>`).join('')}</span></div>
           <button type="button" class="btn" data-a="dice">Roll ${d.count}d${d.sides}</button></div>
-        <button type="button" class="tool-btn" data-a="pickPlayer">${ui('pick')}<span>Pick a random player</span></button>
+        <button type="button" class="tool-btn" data-a="pickPlayer">${ui('pick')}<span>Random player</span></button>
         <div class="tool-btn as-box">${ui('eye-off')}<span>Private (only you see)</span><div class="btn-row"><button class="btn ghost" data-a="privCoin">Coin</button><button class="btn ghost" data-a="privDice">${d.count}d${d.sides}</button></div>${priv ? `<p class="priv-out" role="status">${esc(priv)}</p>` : ''}</div>
       </div>
       ${host ? `<h3 class="sub">Timers</h3>
@@ -132,6 +133,7 @@ export function makeTable(ctx) {
     return `<section class="pane-sec dash" aria-label="Host dashboard"><h2 class="block-title">Host dashboard</h2>
       ${playing ? `<div class="btn-row wrap">${v.paused ? `<button class="btn" data-a="resume">${ui('play')} Resume</button>` : `<button class="btn ghost" data-a="pause">${ui('pause')} Pause</button>`}
         <button class="btn ghost ${v.canUndo ? '' : 'disabled'}" data-a="undo">${ui('reset')} Undo last step</button>
+        <button class="btn ghost" data-a="restartAsk">Restart game…</button>
         <button class="btn ghost" data-a="abandon">End game</button></div>` : ''}
       ${gameControls || ''}
       ${script ? `<h3 class="sub">Host Script</h3><div class="script">${script}</div>` : ''}

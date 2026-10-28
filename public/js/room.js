@@ -5,7 +5,16 @@ import { ROLES, SIDES, TEAMS, MIN_PLAYERS, MAX_PLAYERS, REFORM_TO_WIN, DECREE_TO
   POWERS, POWER_TEXT, roleList, startingDeck, shuffle, knowledgeFor, partyOf, eligibleChancellors, electionPasses, HOUSE_DEFAULTS, DEFAULT_SETTINGS } from './rules.js';
 import { newTable, reduceTable, tableView, onPhaseChange, modeProblem, log, byId, seatIds } from './table.js';
 
-export function newRoom(code, hostKey) { return newTable(code, hostKey, DEFAULT_SETTINGS, HOUSE_DEFAULTS); }
+// Open rooms keep the rules they started with: a room without rulesVersion is version 1 (never backfilled). A new
+// room, a fresh deal and Restart all move to the latest. Rule-affecting fixes are gated on (room.rulesVersion || 1) >= 2.
+export const LATEST_RULES_VERSION = 2;
+export const rulesVersion = (room) => room.rulesVersion || 1;
+
+export function newRoom(code, hostKey) {
+  const room = newTable(code, hostKey, DEFAULT_SETTINGS, HOUSE_DEFAULTS);
+  room.rulesVersion = LATEST_RULES_VERSION; room.gameNo = 1;
+  return room;
+}
 
 const ok = (data = {}) => ({ ok: true, data });
 const err = (error) => ({ error });
@@ -21,7 +30,7 @@ const PNAME = { R: 'Reform', D: 'Decree' };
 export const WIN_TEXT = { reforms: '5 Reforms passed', decrees: '6 Decrees passed', pretender: 'The Boss was elected Chancellor', executed: 'The Boss was removed' };
 
 function finish(room, winner, reason, now) {
-  const g = room.game; g.winner = winner; g.reason = reason; room.phase = 'over'; room.overN = (room.overN || 0) + 1;
+  const g = room.game; g.winner = winner; g.reason = reason; room.phase = 'over'; room.overN = (room.overN || 0) + 1; room.undo = []; room.undoBarrier = false; // every role is public now: nothing can be un-ended
   log(room, 'game', winner === 'reform' ? 'The Loyalists win.' : 'The Syndicate wins.', null, now);
 }
 
@@ -33,7 +42,7 @@ function ensureDeck(room, rng, now) {
   else if (g.pile < 3) { g.pile += g.discards; g.discards = 0; g.reshuffles++; g.reshuffleNow = true; log(room, 'game', 'Fewer than three policies left: shuffle the discard pile back into the draw pile.', null, now); }
 }
 
-function startGame(room, rng, now) {
+function startGame(room, rng, now, restart = false) {
   const ids = seatIds(room); const n = ids.length;
   const list = roleList(n); if (list.error) return err(list.error);
   const mp = modeProblem(room); if (mp) return err(mp);
@@ -51,8 +60,14 @@ function startGame(room, rng, now) {
     hand: [], leg: null, vetoRefused: false, power: null, check: null, investigated: [], seen: {}, peek: {}, confirmedNot: [],
     history: [], lastVote: null, lastPolicy: null, ready: {}, winner: null, reason: null,
   };
-  room.phase = 'reveal'; room.undo = []; room.gameNo = (room.gameNo || 0) + 1;
-  log(room, 'game', `New game: ${n} players, ${TEAMS[n][0]} Loyalists, ${TEAMS[n][1]} Syndicate and the Boss.${sd.decree ? ' Rebalanced: one Decree starts on the board.' : ''}`, null, now);
+  room.phase = 'reveal'; room.undo = []; room.undoBarrier = false;
+  if (restart) { // a clean slate: nothing from the old game survives
+    room.log = []; room.logN = 0; room.timer = null; room.talk = null; room.paused = null; room.poll = null;
+    room.counters = []; room.nudges = {};
+  }
+  room.rulesVersion = LATEST_RULES_VERSION;
+  room.gameNo = (room.gameNo || 1) + 1;
+  log(room, 'game', `${restart ? 'Restarted' : 'New game'}: ${n} players, ${TEAMS[n][0]} Loyalists, ${TEAMS[n][1]} Syndicate and the Boss.${sd.decree ? ' Rebalanced: one Decree starts on the board.' : ''}`, null, now);
   return ok();
 }
 
@@ -130,6 +145,18 @@ function gameReduce(room, actor, msg, rng, now) {
       if (!isHost) return err('Only the host can deal.');
       if (room.phase !== 'lobby') return err('The game has already started.');
       return startGame(room, rng, now);
+    }
+    case 'restart': { // host: a fresh deal for the same table, straight into the reveal
+      if (!isHost) return err('Only the host can restart.');
+      if (room.phase === 'lobby') return err('Nothing to restart yet.');
+      // Same as Play again: seats nobody took over are dropped and late watchers sit in the new deal. If the table
+      // cannot be dealt, everything is put back.
+      const prevPlayers = room.players; const was = prevPlayers.map((p) => p.watch);
+      room.players = prevPlayers.filter((p) => !p.open);
+      for (const p of room.players) p.watch = !!(p.host && room.house.sitOut);
+      const res = startGame(room, rng, now, true);
+      if (res.error) { room.players = prevPlayers; prevPlayers.forEach((p, i) => { p.watch = was[i]; }); } else onPhaseChange(room, now); // a phase timer starts like a fresh deal
+      return res;
     }
     case 'ready': {
       if (room.phase !== 'reveal' || !seated) return err('Not now.');
@@ -266,6 +293,11 @@ function gameReduce(room, actor, msg, rng, now) {
         log(room, 'host', `The host skipped ${nm(room, g.nominee)}: a random policy was enacted.`, null, now);
         enactPolicy(room, pol, true, rng, now); return ok();
       }
+      // Facts at the table are entered, never skipped (Fennel ruling 5, 2026-10-25): the Unrest tile, the tile a
+      // Chancellor turned up, and the answer to the Boss question. The Host can always enter them, so nothing is stuck.
+      if (room.phase === 'chaos') return err('Enter the policy that was turned up. It can’t be skipped.');
+      if (room.phase === 'legislate' && !g.cardsApp) return err('Enter the policy the Chancellor turned up. It can’t be skipped.');
+      if (room.phase === 'check') return err('Answer the question for the table. It can’t be skipped.');
       if (room.phase === 'power') { log(room, 'host', 'The host skipped the power.', null, now); nextSpeaker(room); return ok(); }
       return err('Nothing to skip now.');
     }
@@ -274,11 +306,11 @@ function gameReduce(room, actor, msg, rng, now) {
       room.anim = !!msg.on; return ok();
     }
     case 'again': case 'abandon': {
-      if (!isHost && !(msg.type === 'again' && room.phase === 'over' && me)) return err('Only the host can do that.');
+      if (!isHost) return err(msg.type === 'again' ? 'Waiting for the host to start the next game.' : 'Only the host can do that.');
       if (msg.type === 'again' && room.phase !== 'over') return err('Finish this game first.');
       room.players = room.players.filter((p) => !p.open); // seats nobody took over
       for (const p of room.players) p.watch = p.host ? !!room.house.sitOut : false; // late watchers sit in the next deal
-      room.game = null; room.phase = 'lobby'; room.undo = []; room.timer = null; room.talk = null; room.paused = null;
+      room.game = null; room.phase = 'lobby'; room.undo = []; room.undoBarrier = false; room.timer = null; room.talk = null; room.paused = null;
       if (msg.type === 'abandon') log(room, 'host', 'The host ended the game.', null, now);
       return ok();
     }
@@ -294,16 +326,34 @@ function nextSpeakerFirst(room) { // the first Speaker is the one chosen at the 
   const g = room.game; g.speaker = g.order[g.rot]; room.phase = 'nominate';
 }
 
+const SECRET_STEPS = new Set(['discard', 'enact', 'peekDone']);
+function secretStep(room, msg) {
+  const g = room.game; if (!g) return false;
+  if (SECRET_STEPS.has(msg.type)) return true;
+  if (msg.type === 'power') return g.power === 'investigate';
+  return msg.type === 'skip' && room.phase === 'legislate' && g.cardsApp; // a random pick from a hand someone has seen
+}
+
 export function reduce(room, actor, msg, rng = Math.random, now = Date.now()) {
   if (!msg || typeof msg.type !== 'string') return err('Bad message.');
   const before = room.phase;
+  if (msg.type === 'undo' && actor.playerId && byId(room, actor.playerId)?.host) {
+    if (room.phase === 'over') return err('Can’t undo once the game is over.');
+    if (!room.undo.length && room.undoBarrier) return err('Can\'t undo past a secret look');
+  }
   const t = reduceTable(room, actor, msg, rng, now, HOOKS);
   if (t) { if (msg.type === 'undo' && t.ok) onPhaseChange(room, now); return t; }
   if (room.paused && GAME.has(msg.type)) return err('The game is paused.');
   if (GAME.has(msg.type) && !room.game) return err('No game is running.');
   const snap = room.game && UNDOABLE.has(msg.type) ? JSON.stringify({ game: room.game, phase: room.phase }) : null;
+  const sawSecret = secretStep(room, msg); // a step that shows a secret (a hand, the docket, an Inquiry) can't be taken back
   const res = gameReduce(room, actor, msg, rng, now);
-  if (res.ok && snap) { room.undo.push(snap); if (room.undo.length > 12) room.undo.shift(); }
+  if (res.ok && snap) {
+    const g = room.game;
+    if (room.phase === 'over') { room.undo = []; room.undoBarrier = false; }
+    else if (sawSecret) { room.undo = []; room.undoBarrier = true; }
+    else { room.undo.push(snap); if (room.undo.length > 12) room.undo.shift(); }
+  }
   if (res.ok && room.phase !== before) onPhaseChange(room, now);
   return res;
 }
@@ -337,7 +387,7 @@ function endReveal(room, view) {
 }
 
 export function viewForPlayer(room, playerId, connected = new Set()) {
-  const view = { kind: 'player', ...tableView(room, playerId, connected), game: publicGame(room), anim: room.anim !== false };
+  const view = { kind: 'player', ...tableView(room, playerId, connected), game: publicGame(room), anim: room.anim !== false, rulesVersion: rulesVersion(room) };
   const me = byId(room, playerId); const g = room.game;
   if (g && me && g.order.includes(me.id)) {
     if (g.roles) { view.me.role = roleView(g.roles[me.id]); view.me.sees = knowledgeFor(me.id, g.roles, g.n); }
@@ -351,13 +401,13 @@ export function viewForPlayer(room, playerId, connected = new Set()) {
     }
     if (room.phase === 'power' && g.power === 'peek' && me.id === g.speaker && g.cardsApp) view.me.docket = g.deck.slice(0, 3);
   }
-  if (g && me?.host && me.watch && g.roles) view.moderator = { roles: Object.fromEntries(g.order.map((id) => [id, roleView(g.roles[id])])) };
+  if (g && me?.host && me.watch && room.house.sitOut && g.roles) view.moderator = { roles: Object.fromEntries(g.order.map((id) => [id, roleView(g.roles[id])])) };
   endReveal(room, view);
   return view;
 }
 
 export function viewForScreen(room, connected = new Set()) {
-  const view = { kind: 'screen', ...tableView(room, null, connected), game: publicGame(room), anim: room.anim !== false };
+  const view = { kind: 'screen', ...tableView(room, null, connected), game: publicGame(room), anim: room.anim !== false, rulesVersion: rulesVersion(room) };
   endReveal(room, view);
   return view;
 }

@@ -1,5 +1,6 @@
 // Cloudflare Worker: serves the API + WebSocket entry points. Static files come from Workers Static Assets.
 import { DurableObject } from 'cloudflare:workers';
+import { errorResponse } from './error-page.js';
 import { newRoom, reduce, broadcastPlan, endedNow, socketsToDrop } from '../public/js/room.js';
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // no I/O look-alikes
@@ -11,39 +12,49 @@ const randCode = () => {
   return [...b].map((x) => CODE_CHARS[x % CODE_CHARS.length]).join('');
 };
 const randKey = () => [...crypto.getRandomValues(new Uint8Array(16))].map((x) => x.toString(16).padStart(2, '0')).join('');
+const wantsHtml = (r) => (r.headers.get('accept') || '').includes('text/html');
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
-
-    if (url.pathname === '/api/create' && request.method === 'POST') {
-      for (let i = 0; i < 5; i++) {
-        const code = randCode();
-        const stub = env.ROOM.get(env.ROOM.idFromName(code));
-        const res = await stub.fetch('https://room/init', { method: 'POST', body: JSON.stringify({ code, hostKey: randKey() }) });
-        if (res.status === 200) return json(await res.json());
-      }
-      return json({ error: 'Could not create a room. Try again.' }, 503);
+    try { return await route(request, env); } catch (e) {
+      console.error('worker error:', e?.message || e);
+      return new URL(request.url).pathname.startsWith('/api/') && !wantsHtml(request) ? json({ error: 'Something went wrong. Try again.' }, 500) : errorResponse(500);
     }
-
-    const exists = url.pathname.match(/^\/api\/room\/([A-Z]{6})$/);
-    if (exists) {
-      const stub = env.ROOM.get(env.ROOM.idFromName(exists[1]));
-      const res = await stub.fetch('https://room/exists');
-      return json({ exists: res.status === 200 }, res.status === 200 ? 200 : 404);
-    }
-
-    const ws = url.pathname.match(/^\/ws\/([A-Za-z]{6})$/);
-    if (ws) {
-      if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected websocket', { status: 426 });
-      const stub = env.ROOM.get(env.ROOM.idFromName(ws[1].toUpperCase()));
-      return stub.fetch(request);
-    }
-
-    return env.ASSETS ? env.ASSETS.fetch(request) : new Response('Not found', { status: 404 });
   },
 };
+
+async function route(request, env) {
+  const url = new URL(request.url);
+
+  if (url.pathname === '/api/create' && request.method === 'POST') {
+    for (let i = 0; i < 5; i++) {
+      const code = randCode();
+      const stub = env.ROOM.get(env.ROOM.idFromName(code));
+      const res = await stub.fetch('https://room/init', { method: 'POST', body: JSON.stringify({ code, hostKey: randKey() }) });
+      if (res.status === 200) return json(await res.json());
+    }
+    return json({ error: 'Could not create a room. Try again.' }, 503);
+  }
+
+  const exists = url.pathname.match(/^\/api\/room\/([A-Z]{6})$/);
+  if (exists) {
+    const stub = env.ROOM.get(env.ROOM.idFromName(exists[1]));
+    const res = await stub.fetch('https://room/exists');
+    return json({ exists: res.status === 200 }, res.status === 200 ? 200 : 404);
+  }
+
+  const ws = url.pathname.match(/^\/ws\/([A-Za-z]{6})$/);
+  if (ws) {
+    if (request.headers.get('Upgrade') !== 'websocket') return errorResponse(426);
+    const stub = env.ROOM.get(env.ROOM.idFromName(ws[1].toUpperCase()));
+    return stub.fetch(request);
+  }
+
+  if (url.pathname.startsWith('/api/')) return wantsHtml(request) ? errorResponse(404) : json({ error: 'Not found' }, 404);
+  const res = env.ASSETS ? await env.ASSETS.fetch(request) : null;
+  return res && res.status !== 404 ? res : errorResponse(404);
+}
 
 export class Room extends DurableObject {
   constructor(ctx, env) {

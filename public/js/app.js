@@ -11,6 +11,11 @@ import { makeFx } from './fx.js';
 import { qrSvg } from './qr.js';
 import { toggleFullscreen, revealAfterRelease, TAP_REVEAL_MS, wantsWake, screenKey, motionOk, makeWake, haptic } from './phone.js';
 import { FAQ } from './faq.js';
+import { rolesInGame, rolesSeats, rolesSheetBody } from './roles_sheet.js';
+import { setupComposition, houseEffects } from './steppers.js';
+import { openSheet, closeSheets } from './sheets.js';
+import { hostNav } from './host-nav.js';
+import { errorBody, errorButtons, crashHtml, FATAL, ENDED } from './error-screen.js';
 
 const $app = document.getElementById('app');
 const $toast = document.getElementById('toast');
@@ -46,6 +51,8 @@ let fieldDown = false;
 addEventListener('pointerdown', (e) => { if (e.target.closest?.('input,textarea,select,label.field')) fieldDown = true; }, true);
 addEventListener('pointerup', () => { if (!fieldDown) return; setTimeout(() => { fieldDown = false; if (pending) render(); }, 350); }, true);
 addEventListener('pointercancel', () => { fieldDown = false; }, true);
+let toTop = false;
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; // hash routes must not restore an old offset
 function render() {
   if (vtBusy) { pending = true; setTimeout(() => { if (pending) render(); }, 60); return; }
   if (fieldDown) { pending = true; return; }
@@ -53,6 +60,7 @@ function render() {
   if (a && $app.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'checkbox' && a.type !== 'radio') { pending = true; return; }
   pending = false;
   const key = screenKey(S.mode, S.view); const changed = lastKey !== null && key !== lastKey; lastKey = key;
+  if (changed) toTop = true; // a new screen (the deal, a new phase) opens at the top, so a face-down card is in view
   const animate = changed && !document.hidden && motionOk(S.view, reducedMq.matches);
   // New screens slide in like Mafia Night's: the old one slips left, the new one glides in (transform and opacity only).
   if (animate && document.startViewTransition && !vtBusy) {
@@ -78,9 +86,10 @@ function paint() {
   $html.dataset.phase = S.view?.phase || S.mode;
   $html.dataset.screen = S.mode === 'screen' ? '1' : '';
   $html.classList.toggle('fx-off', S.view?.anim === false); // the host's Animations switch: card flips are skipped too
-  $app.innerHTML = screen();
+  try { $app.innerHTML = screen(); } catch (e) { console.error(e); crash(); return; }
   S.ui.fresh = {};
-  window.scrollTo(0, y);
+  // Same screen: keep the reader's place. New screen: start at the top (Nishant 2026-10-28: "open to the top", card still hidden).
+  window.scrollTo(0, toTop ? 0 : y); toTop = false;
   for (const el of $app.querySelectorAll('[data-scroll]')) el.scrollTop = el.scrollHeight;
   fx.after();
   wake(S.mode !== 'home' && wantsWake(S.view));
@@ -90,13 +99,22 @@ document.addEventListener('focusout', () => { if (pending) setTimeout(render, 50
 const T = makeTable({ S, send, esc, ui, toast, render });
 const fx = makeFx({ S, send, esc });
 
+// The one client error screen: title + short line + the two home buttons. Fixed words only, never raw error text.
+const errorScreen = ({ title, line, icon = 'warning' }) => errorBody({ title, line, icon: icon === 'sun' ? art('sun') : ui(icon, 'is-big') });
+function crash() {
+  try { $html.dataset.phase = 'home'; $app.innerHTML = crashHtml(); } catch { /* nothing more to do */ }
+}
+const nothingShown = () => !$app.querySelector('main,.layout,.appbar');
+addEventListener('error', () => { if (nothingShown()) crash(); });
+addEventListener('unhandledrejection', () => { if (nothingShown()) crash(); });
+
 function screen() {
-  if (S.ended) return `<main class="wrap"><div class="empty ended">${art('sun')}<h1 class="phase-title">The host ended the game</h1><p class="muted">This chamber is closed and its code no longer works.</p><a class="btn big" href="#/">Back to home</a></div></main>`;
-  if (S.fatal) return `<main class="wrap"><div class="empty">${ui('warning')}<h1 class="phase-title">${esc(S.fatal)}</h1><a class="btn" href="#/">Go Home</a></div></main>`;
+  if (S.ended) return errorScreen({ ...ENDED.host, icon: 'sun' });
+  if (S.fatal) return errorScreen(S.fatal);
   if (S.mode === 'home') return home();
   if (S.mode === 'rules') return rulesPage() + siteFooter();
   if (S.mode === 'faq') return faqPage(FAQ, esc, ui, 'Rules & FAQ') + siteFooter();
-  const banner = !S.conn ? `<div class="banner" role="status">${ui('wifi-off')} Reconnecting to the chamber…</div>` : '';
+  const banner = !S.conn ? `<div class="banner${S.connLong ? ' banner-lost' : ''}" role="status">${ui('wifi-off')} Reconnecting… Your seat and role are kept.${S.connLong ? errorButtons() : ''}</div>` : '';
   const v = S.view;
   if (!v) {
     if (S.mode === 'screen' || store.get(`${KEY}.player.${S.code}`) || S.pendingJoin) return banner + `<main class="wrap"><div class="empty">${art('table')}<p>Opening the chamber doors…</p></div></main>`;
@@ -198,7 +216,7 @@ const PHASE = { lobby: ['Gathering', 'table'], reveal: ['Secret Roles', 'cards']
 function appbar(v) {
   const [label, icon] = PHASE[v.phase] || ['', 'game'];
   return `<header class="appbar"><a class="appbar-mark" href="#/" aria-label="Home">${art('torch')}</a>
-    <div class="appbar-title">Chamber <span class="code">${esc(v.code)}</span></div>
+    <div class="appbar-title"><span class="ab-word">Chamber </span><span class="code">${esc(v.code)}</span></div>
     ${T.timerChip(v)}${dimBtn()}<span class="phase-badge">${ui(icon)}${label}</span></header>`;
 }
 
@@ -222,7 +240,8 @@ function layout(v) {
 function gameMain(v) {
   if (v.me?.watch && !v.me.host) return [board(v), roundTable(v), `<section class="stage"><p class="say">You are watching this game. You’ll see what the whole table sees.</p></section>`, lastReveals(v)].join('');
   // When it's this player's move, the action comes first so it's on screen without scrolling (phones).
-  return (myMove(v) ? [stage(v), board(v), roundTable(v), lastReveals(v), myCardBlock(v)] : [board(v), roundTable(v), stage(v), lastReveals(v), myCardBlock(v)]).join('');
+  const stg = stage(v) + dock(v);
+  return (myMove(v) ? [stg, board(v), roundTable(v), lastReveals(v), myCardBlock(v)] : [board(v), roundTable(v), stg, lastReveals(v), myCardBlock(v)]).join('');
 }
 function myMove(v) {
   const g = v.game; const me = v.me; if (!g || !me) return false;
@@ -248,10 +267,8 @@ const HOUSE = [
 function lobby(v) {
   const me = v.me; const seatedP = v.players.filter((p) => !p.watch); const n = seatedP.length; const host = me.host;
   const link = `${location.origin}/#/play/${v.code}`;
-  const list = roleList(Math.max(5, Math.min(10, n)));
-  const status = n < MIN_PLAYERS ? `<p class="note is-warn">${ui('info')} ${MIN_PLAYERS - n} more to start (5–10 players).</p>`
-    : n > MAX_PLAYERS ? `<p class="note is-warn">${ui('warning')} At most ${MAX_PLAYERS} players.</p>`
-      : `<p class="note">${ui('check')} ${TEAMS[n][0]} Loyalists, ${TEAMS[n][1]} Syndicate and the Boss. Powers: ${powerRow(n)}.</p>`;
+  const comp = setupComposition(n);
+  const status = comp.error ? `<p class="note is-warn" role="alert">${ui(n > MAX_PLAYERS ? 'warning' : 'info')} ${esc(comp.error)}</p>` : `<p class="note">${ui('check')} ${esc(comp.summary)}.</p>`;
   const seats = v.players.map((p, i) => `<li><span class="n">${p.watch ? '–' : i + 1}</span><span class="dot ${p.online || p.phoneless ? 'on' : ''}" title="${p.phoneless ? 'No phone' : p.online ? 'Connected' : 'Not connected'}"></span>
       <span class="who">${esc(p.name)}${p.host ? ' <small class="muted">Host</small>' : ''}${p.watch ? ' <small class="muted">Sitting Out</small>' : ''}${p.phoneless ? ' <small class="muted">No Phone</small>' : ''}${p.id === me.id ? ' <small class="muted">You</small>' : ''}</span>
       ${host ? `<button class="icon-btn" data-a="move" data-id="${p.id}" data-dir="up" aria-label="Move ${esc(p.name)} up" ${i === 0 ? 'disabled' : ''}>${ui('caret-down', 'flip-up')}</button>
@@ -260,7 +277,8 @@ function lobby(v) {
   const m = v.mode;
   const modes = MODES.map(([k, t, d]) => `<label class="toggle radio ${m.play === k ? 'is-on' : ''}"><input type="radio" name="play" data-a="modeSet" data-k="play" value="${k}" ${m.play === k ? 'checked' : ''} ${host ? '' : 'disabled'}><span><b>${t}</b><span class="muted">${d}</span></span></label>`).join('');
   const pieces = m.play === 'hybrid' ? `<div class="pieces">${Object.entries(PIECE_TEXT).map(([k, [t]]) => `<div class="piece"><span>${t}</span><span class="seg mini">${['app', 'physical'].map((x) => `<button type="button" data-a="piece" data-k="${k}" data-v="${x}" aria-pressed="${m[k] === x}" ${host ? '' : 'disabled'}>${x === 'app' ? 'In the app' : 'At the table'}</button>`).join('')}</span></div>`).join('')}</div>` : '';
-  const house = HOUSE.map(([k, t, d]) => `<label class="toggle ${v.house[k] ? 'is-on' : ''}"><input type="checkbox" data-a="houseSet" data-k="${k}" ${v.house[k] ? 'checked' : ''} ${host ? '' : 'disabled'}><span><b>${t}</b><span class="muted">${d}</span></span></label>`).join('');
+  const fx = Object.fromEntries(houseEffects(n, v.house).map((h) => [h.key, h.effect]));
+  const house = HOUSE.map(([k, t, d]) => `<label class="toggle ${v.house[k] ? 'is-on' : ''}"><input type="checkbox" data-a="houseSet" data-k="${k}" ${v.house[k] ? 'checked' : ''} ${host ? '' : 'disabled'}><span><b>${t}</b><span class="muted">${fx[k] ? esc(fx[k]) : d}</span></span></label>`).join('');
   const sel = (k, opts2) => `<select data-a="houseSel" data-k="${k}" ${host ? '' : 'disabled'}>${opts2.map(([val, l]) => `<option value="${val}" ${String(v.house[k]) === String(val) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
   return `<section class="join-code"><p class="muted">Room code</p><p class="room-code">${esc(v.code)}</p>
       <button type="button" class="qr-tap" data-a="qrFull" data-link="${esc(link)}" data-code="${esc(v.code)}" aria-label="Show the join QR code full screen">${qrSvg(link, `QR code to join room ${v.code}`)}<span>Scan to join. Tap for full screen.</span></button>
@@ -270,9 +288,11 @@ function lobby(v) {
       <p class="muted"><a href="#/rules">How to Play</a> · <a href="#/faq">FAQ</a></p></section>
     <section class="stage"><h2 class="block-title">At the Table (${n})</h2>
       <p class="muted">Seat order is the order the Speaker role travels. ${host ? 'Match it to how you are sitting.' : ''}</p>
-      <ul class="seat-list">${seats}</ul>${status}${n >= 5 && n <= 10 ? balanceTips(n, v.house) : ''}
+      <ul class="seat-list">${seats}</ul>${status}
       ${host ? `<div class="add-seat"><label class="field"><span>Add a seat without a phone</span><input data-i="seatName" maxlength="20" placeholder="Name" enterkeyhint="done" value="${esc(S.ui.draft.seatName || '')}"></label><button class="btn ghost" data-a="addSeat">Add</button></div>
       <div class="btn-row"><button class="btn ghost" data-a="shuffleSeats">${ui('shuffle')} Shuffle Seats</button></div>` : ''}</section>
+    <section class="stage"><h2 class="block-title">The Setup</h2>${compositionHtml(comp)}${n >= 5 && n <= 10 ? balanceTips(n, v.house) : ''}
+      <div class="btn-row"><button type="button" class="btn ghost" data-a="roles">Roles in this game</button></div></section>
     <section class="stage"><h2 class="block-title">How You’re Playing</h2><div class="settings">${modes}</div>${pieces}
       ${m.play !== 'phone' ? `<p class="muted">Anything handled at the table is entered by the host, who never sees a secret.</p>` : ''}</section>
     <section class="stage"><h2 class="block-title">House Rules</h2><p class="muted">All off unless the host turns them on. Otherwise the rules are exactly the classic game.</p>
@@ -280,8 +300,16 @@ function lobby(v) {
       <label class="toggle"><span><b>Phase Timer</b><span class="muted">A countdown starts each phase. Nothing happens at zero; the host decides.</span></span>${sel('turnTimer', [[0, 'Off'], [60, '1 min'], [90, '1:30'], [120, '2 min'], [180, '3 min'], [300, '5 min']])}</label>
       <label class="toggle"><span><b>Vote Reveal Delay</b><span class="muted">A short drumroll before the votes are shown.</span></span>${sel('revealDelay', [[0, 'Off'], [3, '3 sec'], [5, '5 sec']])}</label>
       <label class="toggle"><span><b>First Speaker</b><span class="muted">Who holds the gavel first.</span></span>${sel('firstLeader', [['random', 'Random'], ['host', 'The host']])}</label></div></section>
-    ${host ? `<div class="sticky-act"><button class="btn big ${n < 5 || n > 10 || list.error ? 'disabled' : ''}" data-a="start">${m.roles === 'app' ? 'Deal Roles' : 'Start Game'}</button></div>`
+    ${host ? `<div class="sticky-act">${comp.error ? `<p class="note is-warn start-why">${esc(comp.error)}</p>` : ''}<button class="btn big ${comp.ok ? '' : 'disabled'}" data-a="start" ${comp.ok ? '' : `aria-disabled="true" data-why="${esc(comp.error)}"`}>${m.roles === 'app' ? 'Deal Roles' : 'Start Game'}</button></div>`
     : '<div class="empty">Waiting for the host to start…</div>'}`;
+}
+
+// The composition, in the stepper look but read-only: Gilded's teams are fixed by table size.
+function compositionHtml(c) {
+  const row = (r) => `<div class="step-row is-fill a-${r.side}"><span class="rs-ico">${art(r.icon)}</span><span class="step-text"><b>${esc(r.label)}</b><small>${esc(r.blurb)}</small></span>
+      <span class="step-ctl"><button type="button" class="icon-btn" disabled aria-label="${esc(r.label)}: ${esc(c.reason)}">${ui('minus')}</button><b data-roll="comp-${r.id}">${r.count}</b><button type="button" class="icon-btn" disabled aria-label="${esc(r.label)}: ${esc(c.reason)}">${ui('plus')}</button></span></div>`;
+  return `<p class="muted">${esc(c.summary)}.</p><div class="steppers">${c.rows.map(row).join('')}</div>
+    <p class="step-why" role="note">Powers when a Decree passes: ${c.powers.map((p) => `<span class="pw-chip">${p.slot} ${esc(p.label)}</span>`).join(' ')}</p>`;
 }
 
 function balanceTips(n, house) {
@@ -316,8 +344,9 @@ function board(v) {
 
 function marksFor(v) {
   const g = v.game; const m = {};
-  for (const k of v.me?.sees || []) m[k.id] = k.tag === 'pretender' ? ['is-cabal', art('mask'), 'The Boss'] : ['is-cabal', art('chain'), 'Syndicate'];
-  for (const k of v.me?.inquiries || []) m[k.id] = k.party === 'cabal' ? ['is-cabal', art('lens'), 'Inquiry: Syndicate'] : ['is-reform', art('lens'), 'Inquiry: Loyalist'];
+  const looking = isOpen('role'); // what you know shows only while the role card is open, like the role itself
+  for (const k of looking ? v.me?.sees || [] : []) m[k.id] = k.tag === 'pretender' ? ['is-cabal', art('mask'), 'The Boss'] : ['is-cabal', art('chain'), 'Syndicate'];
+  for (const k of looking ? v.me?.inquiries || [] : []) m[k.id] = k.party === 'cabal' ? ['is-cabal', art('lens'), 'Inquiry: Syndicate'] : ['is-reform', art('lens'), 'Inquiry: Loyalist'];
   if (v.moderator) for (const [id, r] of Object.entries(v.moderator.roles)) m[id] = [r.side === 'cabal' ? 'is-cabal' : 'is-reform', art(ROLE_ART[r.id]), r.name];
   for (const id of g.confirmedNot) if (!m[id]) m[id] = ['is-done', ui('check'), 'Not the Boss'];
   if (v.phase === 'vote') for (const id of g.voted) m[id] = ['is-done', ui('check'), 'Has voted'];
@@ -346,13 +375,14 @@ function roundTable(v) {
     const out = g.dead.includes(p.id); const exiled = g.exiled.includes(p.id);
     const can = tgt && tgt.ok(p.id);
     const yes = tgt?.act === 'tallyToggle' && S.ui.tally[p.id];
+    const picked = (tgt?.act === 'nominate' && S.ui.nominee === p.id) || (tgt?.act === 'power' && S.ui.target === p.id);
     const mk = tgt?.act === 'tallyToggle' && can ? (yes ? ['is-reform', art('aye'), 'Aye'] : ['is-cabal', art('nay'), 'Nay']) : marks[p.id];
     const sp = g.speaker === p.id && v.phase !== 'over'; const ch = g.nominee === p.id && ['vote', 'legislate', 'check'].includes(v.phase);
     const limited = g.ineligible.includes(p.id) && p.id !== g.speaker && !out;
     const tag = can ? 'button' : 'div';
     const label = `${p.name}${sp ? ', Speaker' : ''}${ch ? ', Chancellor nominee' : ''}${out ? (exiled ? ', exiled' : ', executed') : ''}${limited ? ', term-limited' : ''}${mk ? `, ${mk[2]}` : ''}`;
-    return `<${tag} class="knight ${p.id === v.me?.id ? 'is-me' : ''} ${ch ? 'on-team' : ''} ${can ? 'can-pick' : ''} ${out ? 'is-out' : ''} ${p.online || p.phoneless ? '' : 'is-off'}" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%"
-      ${can ? `type="button" data-a="${tgt.act}" data-id="${p.id}" aria-pressed="${!!yes}"` : ''} aria-label="${esc(label)}">
+    return `<${tag} class="knight ${p.id === v.me?.id ? 'is-me' : ''} ${ch ? 'on-team' : ''} ${can ? 'can-pick' : ''} ${picked ? 'is-picked' : ''} ${out ? 'is-out' : ''} ${p.online || p.phoneless ? '' : 'is-off'}" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%"
+      ${can ? `type="button" data-a="${tgt.act}" data-id="${p.id}" aria-pressed="${!!(yes || picked)}"` : ''} aria-label="${esc(label)}">
       <span class="knight-disc">${out ? art(exiled ? 'nay' : 'dagger') : initial(p.name)}${sp ? `<span class="knight-crown" title="Speaker">${art('speaker')}</span>` : ''}${ch ? `<span class="knight-lantern" title="Chancellor">${art('seal')}</span>` : ''}${mk ? `<span class="knight-mark ${mk[0]}" title="${esc(mk[2])}">${mk[1]}</span>` : ''}</span>
       <span class="knight-name">${esc(p.name)}${limited ? ' <small class="term">term limit</small>' : ''}</span></${tag}>`;
   }).join('');
@@ -398,6 +428,16 @@ document.addEventListener('contextmenu', (e) => { if (e.target.closest?.('.hold'
 const tile = (p, extra = '') => `<span class="dc ${extra}">${cardArt(POLICY_CARD[p])}</span>`;
 const mini = (kind, extra = '') => `<span class="mini ${extra}">${cardArt(kind)}</span>`;
 const placards = (sp, ch) => `<div class="placards"><figure>${mini('speaker')}<figcaption>${sp}</figcaption></figure><figure>${mini('chancellor')}<figcaption>${ch}</figcaption></figure></div>`;
+// The big button at the bottom of a phone that has to choose for the table: greyed while a choice is missing (the label
+// names it), and for the Host a skip chip that takes the neutral way on. All of it comes from host-nav.js.
+const pickUi = () => ({ nominee: S.ui.nominee, target: S.ui.target, tally: S.ui.tally, card: S.ui.card, policy: S.ui.policy, answer: S.ui.answer, veto: S.ui.veto });
+const clearPicks = () => { for (const k of ['nominee', 'target', 'card', 'policy', 'answer', 'veto']) S.ui[k] = null; S.ui.tally = {}; };
+function dock(v) {
+  if (v.phase === 'reveal' || !v.game || !v.me) return '';
+  const nav = hostNav(v, pickUi()); if (!nav) return '';
+  return `<div class="sticky-act dock"><button type="button" class="btn big" data-a="dockSend" ${nav.disabled ? 'aria-disabled="true"' : ''}>${esc(nav.label)}</button>
+    ${nav.skip ? `<button type="button" class="btn ghost dock-skip" data-a="dockSkip">${esc(nav.skip.label)}</button>` : ''}</div>`;
+}
 function stage(v) {
   const g = v.game; const me = v.me; const host = me.host;
   const say = (t) => `<p class="say">${t}</p>`;
@@ -407,7 +447,7 @@ function stage(v) {
     if (!g.appRoles || !me.role) return `<section class="stage"><h1 class="phase-title">Secret Roles</h1>${say(g.appRoles ? 'The players are reading their roles.' : 'Everyone checks their own role. The host reads the eyes-closed script from the Host tab.')}</section>
       ${host ? '<div class="sticky-act"><button class="btn big" data-a="skipReveal">Begin Game</button></div>' : ''}`;
     const ready = g.ready.includes(me.id);
-    return `<section class="stage"><h1 class="phase-title">Your Secret Role</h1>
+    return `<section class="stage reveal-stage"><h1 class="phase-title">Your Secret Role</h1>
       ${say('Shield your screen. Hold the card to look, then let go to hide it again.')}
       ${cardView(v)}
       ${ready ? '<p class="muted center">Waiting for the others…</p>' : ''}
@@ -426,9 +466,7 @@ function stage(v) {
     const nVoters = g.alive.length + g.exiled.length;
     if (v.mode.votes === 'physical') {
       if (!host) return `<section class="stage">${head}<p class="note">${ui('hand')} Vote at the table. On three, everyone shows Aye or Nay.</p></section>`;
-      const yes = Object.values(S.ui.tally).filter(Boolean).length;
-      return `<section class="stage">${head}<p class="note">${ui('hand')} Tap everyone who voted <b>Aye</b> at the table above, then confirm.</p></section>
-        <div class="sticky-act"><button class="btn big" data-a="tallySend">Confirm: ${yes} Aye, ${nVoters - yes} Nay</button></div>`;
+      return `<section class="stage">${head}<p class="note">${ui('hand')} Tap everyone who voted <b>Aye</b> at the table above, then confirm.</p></section>`;
     }
     if (me.watch || me.out && !g.exiled.includes(me.id)) return `<section class="stage">${head}</section>`;
     const voted = 'vote' in me;
@@ -440,34 +478,34 @@ function stage(v) {
     const c = g.check;
     const q = c.kind === 'chancellor' ? `Three Decrees are down. ${esc(nameOf(v, c.id))}, are you the Boss? Answer truthfully: say “Yes” only if you are; otherwise say “No”.` : `${esc(nameOf(v, c.id))} is ${v.house.exile ? 'exiled' : 'executed'}. Were they the Boss? Only say whether they were.`;
     return `<section class="stage"><h1 class="phase-title">The Question</h1>${say(q)}
-      ${host ? `<div class="choice-pair"><button class="choice no" data-a="check" data-v="1">Yes, the Boss</button><button class="choice yes" data-a="check" data-v="0">No</button></div>` : ''}</section>`;
+      ${host ? `<div class="choice-pair"><button class="choice no ${S.ui.answer === true ? 'is-picked' : ''}" data-a="pickAnswer" data-v="1" aria-pressed="${S.ui.answer === true}">Yes, the Boss</button><button class="choice yes ${S.ui.answer === false ? 'is-picked' : ''}" data-a="pickAnswer" data-v="0" aria-pressed="${S.ui.answer === false}">No</button></div>` : ''}</section>`;
   }
   if (v.phase === 'legislate') {
     if (!g.cardsApp) {
       const head = `<h1 class="phase-title">The Session</h1>${say(`${S2} draws the top three policies, discards one face down and passes two to ${C2}, who enacts one. No talking.`)}`;
       if (!host) return `<section class="stage">${head}</section>`;
       return `<section class="stage">${head}<p class="note">Which policy did ${C2} turn face up?</p>
-        <div class="choice-pair"><button class="choice ballot reform" data-a="hostEnact" data-v="R" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree" data-a="hostEnact" data-v="D" aria-label="Decree">${cardArt('decree')}</button></div>
+        <div class="choice-pair"><button class="choice ballot reform ${S.ui.policy === 'R' ? 'is-picked' : ''}" data-a="pickPolicy" data-v="R" aria-pressed="${S.ui.policy === 'R'}" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree ${S.ui.policy === 'D' ? 'is-picked' : ''}" data-a="pickPolicy" data-v="D" aria-pressed="${S.ui.policy === 'D'}" aria-label="Decree">${cardArt('decree')}</button></div>
         ${g.vetoOn ? '<button class="btn ghost" data-a="hostVeto">Confirm Veto</button>' : ''}</section>`;
     }
     const hand = me.hand || [];
     if (g.leg === 'speaker' && g.speaker === me.id) return `<section class="stage"><h1 class="phase-title">Discard One</h1>${say(`Tap the policy to <b>discard</b>. The other two go to ${C2}. Nobody else sees these.`)}
-      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn" data-a="discard" data-v="${i}" aria-label="Discard this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`)}</section>`;
+      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn ${S.ui.card === i ? 'is-picked' : ''}" data-a="pickCard" data-v="${i}" aria-pressed="${S.ui.card === i}" aria-label="Discard this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`)}</section>`;
     if (g.leg === 'chancellor' && g.nominee === me.id) return `<section class="stage"><h1 class="phase-title">Enact One</h1>${say('Tap the policy to <b>enact</b>. The other is discarded face down.')}
-      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn" data-a="enact" data-v="${i}" aria-label="Enact this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`)}
+      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn ${S.ui.card === i ? 'is-picked' : ''}" data-a="pickCard" data-v="${i}" aria-pressed="${S.ui.card === i}" aria-label="Enact this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`)}
       ${g.vetoOn && !g.vetoRefused ? '<button class="btn ghost" data-a="veto">Propose Veto</button>' : g.vetoRefused ? '<p class="muted">The Speaker refused the veto. You must enact one.</p>' : ''}</section>`;
     if (g.leg === 'veto' && g.speaker === me.id) return `<section class="stage"><h1 class="phase-title">Veto?</h1>${say(`${C2} wants to veto this agenda. If you agree, both policies are discarded and Unrest moves one step.`)}
-      <div class="choice-pair"><button class="choice yes" data-a="vetoReply" data-v="1">${art('aye')}Agree</button><button class="choice no" data-a="vetoReply" data-v="0">${art('nay')}Refuse</button></div></section>`;
+      <div class="choice-pair"><button class="choice yes ${S.ui.veto === true ? 'is-picked' : ''}" data-a="pickVeto" data-v="1" aria-pressed="${S.ui.veto === true}">${art('aye')}Agree</button><button class="choice no ${S.ui.veto === false ? 'is-picked' : ''}" data-a="pickVeto" data-v="0" aria-pressed="${S.ui.veto === false}">${art('nay')}Refuse</button></div></section>`;
     return `<section class="stage"><h1 class="phase-title">In Session</h1>${say(g.leg === 'speaker' ? `${S2} is choosing a policy to discard.` : g.leg === 'veto' ? `${C2} proposed a veto. ${S2} decides.` : `${C2} is choosing a policy to enact.`)}</section>`;
   }
   if (v.phase === 'chaos') return `<section class="stage"><h1 class="phase-title">Unrest</h1>${say('Three failed governments. Turn over the top policy of the draw pile and place it on the board. It gives no power.')}
-    ${host ? `<div class="choice-pair"><button class="choice ballot reform" data-a="hostEnact" data-v="R" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree" data-a="hostEnact" data-v="D" aria-label="Decree">${cardArt('decree')}</button></div>` : ''}</section>`;
+    ${host ? `<div class="choice-pair"><button class="choice ballot reform ${S.ui.policy === 'R' ? 'is-picked' : ''}" data-a="pickPolicy" data-v="R" aria-pressed="${S.ui.policy === 'R'}" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree ${S.ui.policy === 'D' ? 'is-picked' : ''}" data-a="pickPolicy" data-v="D" aria-pressed="${S.ui.policy === 'D'}" aria-label="Decree">${cardArt('decree')}</button></div>` : ''}</section>`;
   if (v.phase === 'power') {
     const pw = g.power; const [t, d] = POWER_TEXT[pw];
     const mine = g.speaker === me.id; const forS = !mine && host && isPhys(v, g.speaker);
     if (pw === 'peek') {
-      if (mine && me.docket) return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say('The top three policies, in order. Only you see this. Tell the table whatever you like.')}${secretTiles('docket', me.docket, (p) => tile(p))}</section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
-      if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say(`${mine ? 'Look' : `${S2}, look`} at the top three policies of the draw pile without changing their order, then put them back.`)}</section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
+      if (mine && me.docket) return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say('The top three policies, in order. Only you see this. Tell the table whatever you like.')}${secretTiles('docket', me.docket, (p) => tile(p))}</section>`;
+      if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say(`${mine ? 'Look' : `${S2}, look`} at the top three policies of the draw pile without changing their order, then put them back.`)}</section>`;
       return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say(`${S2} looks at the top three policies.`)}</section>`;
     }
     if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art(POWER_ART[pw])} ${esc(t)}</h1>${say(`${esc(d)} Tap a player at the table.${pw === 'investigate' && !g.appRoles ? ' They hand you their party card face down.' : ''}`)}</section>`;
@@ -486,7 +524,7 @@ function over(v) {
   return `<section class="winner a-${side}">${art(side === 'reform' ? 'torch' : g.reason === 'pretender' ? 'mask' : 'chain')}<h1>${side === 'reform' ? 'The Loyalists Win' : 'The Syndicate Wins'}</h1>
       <p class="say">${why}</p>${won}</section>
     ${roles ? `<section class="stage"><h2 class="block-title">Who Was Who</h2><ul class="roles-list">${roles}</ul></section>` : '<section class="stage"><p class="say">Everyone, reveal your roles.</p></section>'}
-    ${me?.host ? '<div class="sticky-act"><button class="btn big" data-a="again">Play Again</button></div>' : v.kind === 'screen' ? '' : '<p class="muted center">The host can start another game.</p>'}`;
+    ${me?.host ? '<div class="sticky-act"><button class="btn big" data-a="restart">Restart</button><button class="btn ghost" data-a="again">Change setup first</button></div>' : v.kind === 'screen' ? '' : '<p class="muted center">Waiting for the host to start another game.</p>'}`;
 }
 
 function lastReveals(v) {
@@ -594,7 +632,7 @@ function tableScreen(v) {
   const head = `<header class="appbar"><span class="appbar-mark">${art('torch')}</span><div class="appbar-title">The Gilded Chamber · <span class="code">${esc(v.code)}</span></div>${T.timerChip(v)}${dimBtn()}<span class="phase-badge">${ui(PHASE[v.phase]?.[1] || 'game')}${PHASE[v.phase]?.[0] || ''}</span></header>`;
   if (!g) return `${head}<main class="wrap screen-lobby"><h1 class="phase-title">Join at ${esc(location.host)}</h1><p class="room-code">${esc(v.code)}</p><div class="qr-tap is-static">${qrSvg(`${location.origin}/#/play/${v.code}`, `QR code to join room ${v.code}`)}</div><p class="say">${v.players.filter((p) => !p.watch).map((p) => esc(p.name)).join(' · ') || 'Nobody yet.'}</p></main>`;
   const lines = phaseScript(v).slice(0, 2);
-  return `${head}<div class="layout is-screen"><main class="col col-main wrap game">${board(v)}${roundTable({ ...v, me: null })}${v.phase === 'over' ? over(v) : `<section class="stage"><p class="say">${esc(lines.join(' '))}</p></section>`}${lastReveals(v)}</main>
+  return `${head}<div class="layout is-screen"><main class="col col-main wrap game">${board(v)}${roundTable({ ...v, me: null })}${v.phase === 'over' ? over(v) : `<section class="stage"><p class="say">${esc(lines.join(' '))}</p><div class="btn-row"><button type="button" class="btn ghost" data-a="roles">Roles in this game</button></div></section>`}${lastReveals(v)}</main>
     <aside class="col col-log">${T.logPane(v, chronicle(v))}</aside><aside class="col col-side">${T.chatPane(v, true)}</aside></div>`;
 }
 
@@ -614,11 +652,11 @@ function showQr(link, code) {
 
 // ---------------------------------------------------------------- transport
 function wsTransport(code, asScreen) {
-  let ws; let closed = false; let tries = 0; let timer;
+  let ws; let closed = false; let tries = 0; let timer; let longTimer;
   const creds = () => { try { return JSON.parse(store.get(`${KEY}.player.${code}`) || 'null'); } catch { return null; } };
   const open = () => {
     ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/${code}`);
-    ws.onopen = () => { tries = 0; S.conn = true; const c = creds();
+    ws.onopen = () => { tries = 0; S.conn = true; S.connLong = false; clearTimeout(longTimer); longTimer = null; const c = creds();
       if (asScreen) ws.send(JSON.stringify({ type: 'hello', screen: true }));
       else if (c) ws.send(JSON.stringify({ type: 'hello', ...c }));
       else if (S.pendingJoin) { ws.send(JSON.stringify({ type: 'hello', join: S.pendingJoin, hostKey: store.get(`${KEY}.host.${code}`) || undefined })); S.pendingJoin = null; }
@@ -630,24 +668,45 @@ function wsTransport(code, asScreen) {
       else if (m.type === 'error') toast(m.error);
       else if (m.type === 'joined') store.set(`${KEY}.player.${code}`, JSON.stringify({ playerId: m.playerId, token: m.token }));
       else if (m.type === 'closed') { closed = true; store.del(`${KEY}.player.${code}`); store.del(`${KEY}.host.${code}`); S.ended = true; S.view = null; render(); }
-      else if (m.type === 'fatal') { if (m.clear) { store.del(`${KEY}.player.${code}`); S.view = null; toast(m.error); render(); } else { closed = true; S.fatal = m.error; render(); } }
+      else if (m.type === 'fatal') { if (m.clear) { store.del(`${KEY}.player.${code}`); S.view = null; toast(m.error); render(); } else { closed = true; S.fatal = /expired/i.test(m.error) ? FATAL.gone : FATAL.closed; render(); } }
     };
-    ws.onclose = () => { if (closed) return; S.conn = false; render(); timer = setTimeout(open, Math.min(8000, 400 * 2 ** tries++)); };
+    ws.onclose = () => { if (closed) return; S.conn = false; if (!longTimer) longTimer = setTimeout(() => { if (!S.conn && !closed) { S.connLong = true; render(); } }, 20000); render(); timer = setTimeout(open, Math.min(8000, 400 * 2 ** tries++)); };
   };
   open();
   return {
     send: (a) => { if (ws?.readyState === 1) ws.send(JSON.stringify(a)); else toast('Not connected to the room yet. Wait a moment and try again.'); },
-    close: () => { closed = true; clearTimeout(timer); ws?.close(); },
+    close: () => { closed = true; clearTimeout(timer); clearTimeout(longTimer); ws?.close(); },
   };
+}
+
+// A restarted game (same code, new gameNo): drop everything tied to the old one. The stored player token still works.
+function newGameReset() {
+  closeSheets(); fx.reset(); S.ui.overShown = null;
+  Object.assign(S.ui, { open: {}, flip: false, fresh: {}, tab: 'game', side: 'chat', tally: {}, enactIdx: null, draft: { ...S.ui.draft, chat: '' } });
+}
+
+function showRoles() {
+  const v = S.view; if (!v) return;
+  const info = rolesInGame(rolesSeats(v), v.house);
+  openSheet({ title: 'Roles in this game', cls: 'roles-sheet',
+    bodyHtml: `<p class="muted">${v.game ? 'The roles dealt this game' : 'The roles planned for this table'}, ${info.seats} players. Who holds which is secret.</p>${rolesSheetBody(info, esc, art)}`,
+    buttons: [{ label: 'Close', cls: 'ghost' }] });
+}
+function restartAsk() {
+  openSheet({ title: 'Restart the game?', cls: 'restart-sheet',
+    bodyHtml: '<p>Everyone stays seated and gets a fresh deal with the same setup, straight to the secret cards. The chat, log, board and policies so far are cleared.</p>',
+    buttons: [{ label: 'Keep playing', cls: 'ghost' }, { label: 'Change setup first', cls: 'ghost', onClick: () => send({ type: 'again' }) }, { label: 'Restart now', onClick: () => send({ type: 'restart' }) }] });
 }
 
 function onView(v) {
   const p = S.view;
+  if (p && v.code === p.code && (p.gameNo || 1) !== (v.gameNo || 1)) newGameReset();
   if (p?.game && v.game) {
     if (v.game.reform + v.game.decree > p.game.reform + p.game.decree) S.ui.fresh.policy = true;
     if (v.game.history.length > p.game.history.length) S.ui.fresh.vote = true;
   }
-  if (v.phase !== p?.phase) { S.ui.open = {}; S.ui.tally = {}; S.ui.enactIdx = null; }
+  if (v.phase !== p?.phase) { S.ui.open = {}; S.ui.enactIdx = null; clearPicks(); }
+  else if (v.game && p?.game && [v.game.speaker, v.game.leg, v.game.power, v.game.nominee].join() !== [p.game.speaker, p.game.leg, p.game.power, p.game.nominee].join()) clearPicks();
   else if (JSON.stringify(p?.me?.hand) !== JSON.stringify(v.me?.hand) || JSON.stringify(p?.me?.docket) !== JSON.stringify(v.me?.docket)) { S.ui.open.hand = false; S.ui.open.docket = false; S.ui.enactIdx = null; }
   if (p?.phase !== v.phase && v.anim !== false && ['vote', 'legislate', 'power', 'over'].includes(v.phase)) haptic(30);
   T.onView(p, v);
@@ -658,12 +717,12 @@ function onView(v) {
 // ---------------------------------------------------------------- routing
 async function route() {
   fx.reset();
-  S.transport?.close(); S.transport = null; S.view = null; S.fatal = null; S.ended = false; S.pruned = false; S.conn = true; S.ui.open = {};
+  S.transport?.close(); S.transport = null; S.view = null; S.fatal = null; S.ended = false; S.pruned = false; S.conn = true; S.connLong = false; S.ui.open = {};
   const [kind, arg] = location.hash.replace(/^#\/?/, '').split('/');
   if ((kind === 'play' || kind === 'join' || kind === 'screen') && /^[A-Za-z]{6}$/.test(arg || '')) {
     S.mode = kind === 'screen' ? 'screen' : 'play'; S.code = arg.toUpperCase();
     const ex = await fetch(`/api/room/${S.code}`).then((r) => r.ok).catch(() => false);
-    if (!ex) { store.del(`${KEY}.player.${S.code}`); S.fatal = `There’s no table with the code ${S.code}. Check the letters and try again.`; }
+    if (!ex) { store.del(`${KEY}.player.${S.code}`); S.fatal = FATAL.noRoom(S.code); }
     else {
       S.pendingJoin = sessionStorage.getItem(`${KEY}.pendingJoin`);
       sessionStorage.removeItem(`${KEY}.pendingJoin`);
@@ -753,22 +812,29 @@ async function act(a, el) {
     case 'slide': { const t = el.closest('.car').querySelector('.car-track'); const sl = t.children[+d.i]; if (sl) t.scrollTo({ left: sl.offsetLeft - t.firstElementChild.offsetLeft, behavior: reducedMq.matches ? 'auto' : 'smooth' }); return; }
     case 'qrFull': showQr(d.link, d.code); return;
     case 'dim': store.set(`${KEY}.dim`, $html.dataset.dim === '1' ? '0' : '1'); applyDim(); render(); return;
-    case 'start': if (el.classList.contains('disabled')) { toast('Not ready to start yet.'); return; } send({ type: 'start' }); return;
-    case 'nominate': if (await askConfirm(`Nominate ${nameOf(S.view, d.id)} as Chancellor?`)) send({ type: 'nominate', id: d.id }); return;
+    case 'start': if (el.classList.contains('disabled')) { toast(d.why || 'Not ready to start yet.'); return; } send({ type: 'start' }); return;
+    case 'nominate': S.ui.nominee = d.id; render(); return;
+    case 'pickCard': S.ui.card = +d.v; render(); return;
+    case 'pickPolicy': S.ui.policy = d.v; render(); return;
+    case 'pickAnswer': S.ui.answer = d.v === '1'; render(); return;
+    case 'pickVeto': S.ui.veto = d.v === '1'; render(); return;
+    case 'dockSend': {
+      const nav = hostNav(S.view, pickUi()); if (!nav || nav.disabled) return;
+      if (nav.send.type === 'discard') haptic(20);
+      if (nav.send.type === 'enact') { S.ui.enactIdx = nav.send.i; haptic([20, 40, 20]); }
+      const m = nav.send; clearPicks(); send(m); return;
+    }
+    case 'dockSkip': { const nav = hostNav(S.view, pickUi()); const sk = nav?.skip; if (!sk) return; clearPicks(); for (const m of sk.msgs) send(m); return; }
     case 'vote': haptic(20); send({ type: 'vote', aye: d.v === '1' }); return;
-    case 'discard': if (await askConfirm('Discard this policy?')) { haptic(20); send({ type: 'discard', i: +d.v }); } return;
-    case 'enact': if (await askConfirm('Enact this policy?')) { S.ui.enactIdx = +d.v; haptic([20, 40, 20]); send({ type: 'enact', i: +d.v }); } return;
     case 'veto': send({ type: 'veto' }); return;
-    case 'vetoReply': send({ type: 'vetoReply', accept: d.v === '1' }); return;
-    case 'hostEnact': if (await askConfirm(`A ${d.v === 'R' ? 'Reform' : 'Decree'} was enacted?`)) send({ type: 'hostEnact', policy: d.v }); return;
     case 'hostVeto': if (await askConfirm('Both policies are discarded and Unrest moves one step. Confirm the veto?')) send({ type: 'hostVeto' }); return;
-    case 'check': send({ type: 'check', yes: d.v === '1' }); return;
-    case 'power': { const pw = S.view.game.power; const verb = { investigate: 'Look into', special: 'Make the next Speaker:', execute: S.view.house.exile ? 'Exile' : 'Execute' }[pw]; if (await askConfirm(`${verb} ${nameOf(S.view, d.id)}?`)) send({ type: 'power', id: d.id }); return; }
-    case 'peekDone': send({ type: 'peekDone' }); return;
+    case 'power': S.ui.target = d.id; render(); return;
     case 'piece': send({ type: 'mode', mode: { play: 'hybrid', [d.k]: d.v } }); return;
     case 'tallyToggle': S.ui.tally[d.id] = !S.ui.tally[d.id]; render(); return;
-    case 'tallySend': send({ type: 'tally', ayes: Object.keys(S.ui.tally).filter((k) => S.ui.tally[k]) }); return;
     case 'skip': send({ type: 'skip', id: d.id }); return;
+    case 'roles': showRoles(); return;
+    case 'restart': send({ type: 'restart' }); return;
+    case 'restartAsk': restartAsk(); return;
     case 'move': case 'ready': case 'skipReveal': case 'again': case 'shuffleSeats':
       send({ type: a, id: d.id, dir: d.dir }); return;
     default:

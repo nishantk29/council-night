@@ -100,6 +100,7 @@
 .fx-roles b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fx-roles small{font-size:.8rem;font-weight:600}
 .fx-btns{display:grid;gap:8px;padding:14px 16px 0}
+.fx-wait{margin:0;padding:12px 0;text-align:center;opacity:.8}
 .fx-parts{position:fixed;inset:0;pointer-events:none;overflow:hidden}
 .fx-over.is-out{animation:fx-fade-out calc(180ms * var(--dur-scale)) var(--ease-out) both}
 .fx-over.is-static *,.fx-over.is-static{animation:none!important}

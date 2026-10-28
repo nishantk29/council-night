@@ -55,6 +55,13 @@ Live: https://secrethitler.hatethespurs.com
 
 > The GitHub Actions files live in `docs/github-workflows/`: the box’s GitHub login has no `workflow` scope.
 
+## Deploy file
+`node scripts/build-deploy.mjs <outFile>` writes the Cloudflare-API deploy function (worker name, Durable Object binding and
+compatibility date come from `wrangler.jsonc` only; no migrations are sent). It first runs the whole suite through
+`scripts/test-gate.mjs` and prints `Deploy file NOT written: N test(s) failed` (exit 1, out file untouched) on any failure.
+There is no bypass. It also refuses a stale `public/sw.js` VERSION (re-stamp with make-pwa or `scripts/stamp-sw.mjs`).
+Every house rule and the test that guards it is listed in `RULES.md`.
+
 ## Credits
 Original game in the hidden-role policy family; names, wording and art are its own. Fonts: Big Shoulders
 Display, Alegreya and Alegreya Sans (SIL OFL 1.1), Special Elite (Apache 2.0). Interface icons: Phosphor (MIT).

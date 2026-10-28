@@ -169,7 +169,7 @@ export function makeFx({ S, send, esc }) {
         <div class="fx-band">${mascot(side)}<h2 id="fx-over-h">${WIN_NAME[side]} win!</h2></div>
         <p class="fx-reason">${esc(ev.text)}</p>${you}
         <div class="fx-roles-wrap">${rolesHtml(v)}</div>
-        <div class="fx-btns">${v.kind === 'screen' ? '' : v.me?.host ? '<button type="button" class="btn big" data-o="restart">Restart</button><button type="button" class="btn ghost" data-o="again">Change setup first</button>' : '<button type="button" class="btn big" data-o="again">Play again</button>'}<button type="button" class="btn ghost" data-o="close">Close</button></div>
+        <div class="fx-btns">${v.kind === 'screen' ? '' : v.me?.host ? '<button type="button" class="btn big" data-o="restart">Restart</button><button type="button" class="btn ghost" data-o="again">Change setup first</button>' : '<p class="fx-wait">Waiting for the host</p>'}<button type="button" class="btn ghost" data-o="close">Close</button></div>
       </div></div><div class="fx-parts"></div>`;
     el.addEventListener('click', (e) => { const o = e.target.closest('[data-o]')?.dataset.o; if (o === 'again') { send({ type: 'again' }); closeOver(); } else if (o === 'restart') { send({ type: 'restart' }); closeOver(); } else if (o === 'close') closeOver(); });
     prevFocus = document.activeElement; document.body.append(el); over = el;

@@ -30,7 +30,7 @@ const PNAME = { R: 'Reform', D: 'Decree' };
 export const WIN_TEXT = { reforms: '5 Reforms passed', decrees: '6 Decrees passed', pretender: 'The Boss was elected Chancellor', executed: 'The Boss was removed' };
 
 function finish(room, winner, reason, now) {
-  const g = room.game; g.winner = winner; g.reason = reason; room.phase = 'over'; room.overN = (room.overN || 0) + 1;
+  const g = room.game; g.winner = winner; g.reason = reason; room.phase = 'over'; room.overN = (room.overN || 0) + 1; room.undo = []; room.undoBarrier = false; // every role is public now: nothing can be un-ended
   log(room, 'game', winner === 'reform' ? 'The Loyalists win.' : 'The Syndicate wins.', null, now);
 }
 
@@ -60,7 +60,7 @@ function startGame(room, rng, now, restart = false) {
     hand: [], leg: null, vetoRefused: false, power: null, check: null, investigated: [], seen: {}, peek: {}, confirmedNot: [],
     history: [], lastVote: null, lastPolicy: null, ready: {}, winner: null, reason: null,
   };
-  room.phase = 'reveal'; room.undo = [];
+  room.phase = 'reveal'; room.undo = []; room.undoBarrier = false;
   if (restart) { // a clean slate: nothing from the old game survives
     room.log = []; room.logN = 0; room.timer = null; room.talk = null; room.paused = null; room.poll = null;
     room.counters = []; room.nudges = {};
@@ -293,6 +293,7 @@ function gameReduce(room, actor, msg, rng, now) {
         log(room, 'host', `The host skipped ${nm(room, g.nominee)}: a random policy was enacted.`, null, now);
         enactPolicy(room, pol, true, rng, now); return ok();
       }
+      if (room.phase === 'chaos') return err('Enter the policy that was turned up. It can’t be skipped.');
       if (room.phase === 'power') { log(room, 'host', 'The host skipped the power.', null, now); nextSpeaker(room); return ok(); }
       return err('Nothing to skip now.');
     }
@@ -301,11 +302,11 @@ function gameReduce(room, actor, msg, rng, now) {
       room.anim = !!msg.on; return ok();
     }
     case 'again': case 'abandon': {
-      if (!isHost && !(msg.type === 'again' && room.phase === 'over' && me)) return err('Only the host can do that.');
+      if (!isHost) return err(msg.type === 'again' ? 'Waiting for the host to start the next game.' : 'Only the host can do that.');
       if (msg.type === 'again' && room.phase !== 'over') return err('Finish this game first.');
       room.players = room.players.filter((p) => !p.open); // seats nobody took over
       for (const p of room.players) p.watch = p.host ? !!room.house.sitOut : false; // late watchers sit in the next deal
-      room.game = null; room.phase = 'lobby'; room.undo = []; room.timer = null; room.talk = null; room.paused = null;
+      room.game = null; room.phase = 'lobby'; room.undo = []; room.undoBarrier = false; room.timer = null; room.talk = null; room.paused = null;
       if (msg.type === 'abandon') log(room, 'host', 'The host ended the game.', null, now);
       return ok();
     }
@@ -321,16 +322,34 @@ function nextSpeakerFirst(room) { // the first Speaker is the one chosen at the 
   const g = room.game; g.speaker = g.order[g.rot]; room.phase = 'nominate';
 }
 
+const SECRET_STEPS = new Set(['discard', 'enact', 'peekDone']);
+function secretStep(room, msg) {
+  const g = room.game; if (!g) return false;
+  if (SECRET_STEPS.has(msg.type)) return true;
+  if (msg.type === 'power') return g.power === 'investigate';
+  return msg.type === 'skip' && room.phase === 'legislate' && g.cardsApp; // a random pick from a hand someone has seen
+}
+
 export function reduce(room, actor, msg, rng = Math.random, now = Date.now()) {
   if (!msg || typeof msg.type !== 'string') return err('Bad message.');
   const before = room.phase;
+  if (msg.type === 'undo' && actor.playerId && byId(room, actor.playerId)?.host) {
+    if (room.phase === 'over') return err('Can’t undo once the game is over.');
+    if (!room.undo.length && room.undoBarrier) return err('Can\'t undo past a secret look');
+  }
   const t = reduceTable(room, actor, msg, rng, now, HOOKS);
   if (t) { if (msg.type === 'undo' && t.ok) onPhaseChange(room, now); return t; }
   if (room.paused && GAME.has(msg.type)) return err('The game is paused.');
   if (GAME.has(msg.type) && !room.game) return err('No game is running.');
   const snap = room.game && UNDOABLE.has(msg.type) ? JSON.stringify({ game: room.game, phase: room.phase }) : null;
+  const sawSecret = secretStep(room, msg); // a step that shows a secret (a hand, the docket, an Inquiry) can't be taken back
   const res = gameReduce(room, actor, msg, rng, now);
-  if (res.ok && snap) { room.undo.push(snap); if (room.undo.length > 12) room.undo.shift(); }
+  if (res.ok && snap) {
+    const g = room.game;
+    if (room.phase === 'over') { room.undo = []; room.undoBarrier = false; }
+    else if (sawSecret) { room.undo = []; room.undoBarrier = true; }
+    else { room.undo.push(snap); if (room.undo.length > 12) room.undo.shift(); }
+  }
   if (res.ok && room.phase !== before) onPhaseChange(room, now);
   return res;
 }
@@ -378,7 +397,7 @@ export function viewForPlayer(room, playerId, connected = new Set()) {
     }
     if (room.phase === 'power' && g.power === 'peek' && me.id === g.speaker && g.cardsApp) view.me.docket = g.deck.slice(0, 3);
   }
-  if (g && me?.host && me.watch && g.roles) view.moderator = { roles: Object.fromEntries(g.order.map((id) => [id, roleView(g.roles[id])])) };
+  if (g && me?.host && me.watch && room.house.sitOut && g.roles) view.moderator = { roles: Object.fromEntries(g.order.map((id) => [id, roleView(g.roles[id])])) };
   endReveal(room, view);
   return view;
 }

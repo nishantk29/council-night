@@ -312,7 +312,7 @@ test('game over: every connected client (each phone, the host, the table screen)
   assert.ok(Object.keys(viewForScreen(t.room).game.roles).length === 7);
 });
 
-test('game over: any player can send everyone back to the lobby with the same players; Play again is refused mid-game', () => {
+test('game over: only the host can send everyone back to the lobby with the same players; Play again is refused mid-game', () => {
   const t = started(5, { seed: 12 });
   const other = t.ids.find((id) => id !== t.host);
   assert.ok(act(t.room, other, { type: 'again' }).error, 'not while the game runs');
@@ -320,7 +320,8 @@ test('game over: any player can send everyone back to the lobby with the same pl
   assert.ok(act(t.room, t.host, { type: 'abandon' }).ok);
   const t2 = started(5, { seed: 12 }); t2.g.reform = 4; pass(t2, 'R');
   const o2 = t2.ids.find((id) => id !== t2.host);
-  must(act(t2.room, o2, { type: 'again' }));
+  assert.ok(act(t2.room, o2, { type: 'again' }).error, 'Play again is the host’s');
+  must(act(t2.room, t2.host, { type: 'again' }));
   assert.equal(t2.room.phase, 'lobby'); assert.equal(t2.room.players.length, 5);
   assert.ok(act(t2.room, o2, { type: 'abandon' }).error, 'ending a running game stays host-only');
 });

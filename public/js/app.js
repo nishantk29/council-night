@@ -338,8 +338,9 @@ function board(v) {
 
 function marksFor(v) {
   const g = v.game; const m = {};
-  for (const k of v.me?.sees || []) m[k.id] = k.tag === 'pretender' ? ['is-cabal', art('mask'), 'The Boss'] : ['is-cabal', art('chain'), 'Syndicate'];
-  for (const k of v.me?.inquiries || []) m[k.id] = k.party === 'cabal' ? ['is-cabal', art('lens'), 'Inquiry: Syndicate'] : ['is-reform', art('lens'), 'Inquiry: Loyalist'];
+  const looking = isOpen('role'); // what you know shows only while the role card is open, like the role itself
+  for (const k of looking ? v.me?.sees || [] : []) m[k.id] = k.tag === 'pretender' ? ['is-cabal', art('mask'), 'The Boss'] : ['is-cabal', art('chain'), 'Syndicate'];
+  for (const k of looking ? v.me?.inquiries || [] : []) m[k.id] = k.party === 'cabal' ? ['is-cabal', art('lens'), 'Inquiry: Syndicate'] : ['is-reform', art('lens'), 'Inquiry: Loyalist'];
   if (v.moderator) for (const [id, r] of Object.entries(v.moderator.roles)) m[id] = [r.side === 'cabal' ? 'is-cabal' : 'is-reform', art(ROLE_ART[r.id]), r.name];
   for (const id of g.confirmedNot) if (!m[id]) m[id] = ['is-done', ui('check'), 'Not the Boss'];
   if (v.phase === 'vote') for (const id of g.voted) m[id] = ['is-done', ui('check'), 'Has voted'];
@@ -508,7 +509,7 @@ function over(v) {
   return `<section class="winner a-${side}">${art(side === 'reform' ? 'torch' : g.reason === 'pretender' ? 'mask' : 'chain')}<h1>${side === 'reform' ? 'The Loyalists Win' : 'The Syndicate Wins'}</h1>
       <p class="say">${why}</p>${won}</section>
     ${roles ? `<section class="stage"><h2 class="block-title">Who Was Who</h2><ul class="roles-list">${roles}</ul></section>` : '<section class="stage"><p class="say">Everyone, reveal your roles.</p></section>'}
-    ${me?.host ? '<div class="sticky-act"><button class="btn big" data-a="restart">Restart</button><button class="btn ghost" data-a="again">Change setup first</button></div>' : v.kind === 'screen' ? '' : '<p class="muted center">The host can start another game.</p>'}`;
+    ${me?.host ? '<div class="sticky-act"><button class="btn big" data-a="restart">Restart</button><button class="btn ghost" data-a="again">Change setup first</button></div>' : v.kind === 'screen' ? '' : '<p class="muted center">Waiting for the host to start another game.</p>'}`;
 }
 
 function lastReveals(v) {

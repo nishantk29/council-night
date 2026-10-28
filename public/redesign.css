@@ -1,12 +1,12 @@
 /* The Gilded Chamber redesign layer. Loaded last. Same structure as Mafia Night (actions left, logo and title right on desktop,
-   step transitions, footer), in the Chamber's own orange/ink colours and its own Limelight display type.
+   step transitions, footer), in the Chamber's own orange/ink colours and its own Big Shoulders Display type (the art deco face stays in Mafia only).
    Motion: transform and opacity only, one easing, no layout shift. Off for reduced motion and html.fx-off. */
-@font-face{font-family:"Limelight";font-weight:400;font-display:swap;src:url(/fonts/limelight-400.woff2) format("woff2")}
-:root{--gc-ease:cubic-bezier(.2,.8,.2,1);--display-deco:"Limelight","Rubik","Rubik Fallback",system-ui,sans-serif;
+@font-face{font-family:"Big Shoulders Display";font-weight:100 900;font-style:normal;font-display:swap;src:url(/fonts/big-shoulders-display-var.woff2) format("woff2")}
+:root{--gc-ease:cubic-bezier(.2,.8,.2,1);--display-gilded:"Big Shoulders Display","Rubik","Rubik Fallback",system-ui,sans-serif;
   --paper:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
 
-/* ---- type: Limelight (art deco) for the title and headings, Rubik stays for reading */
-.wordmark,.phase-title,.block-title,.path-title{font-family:var(--display-deco);font-weight:400;letter-spacing:.01em;hyphens:none;overflow-wrap:normal;text-wrap:balance}
+/* ---- type: Big Shoulders Display (condensed 1920s Chicago poster face) for the title and headings, Rubik stays for reading */
+.wordmark,.phase-title,.block-title,.path-title{font-family:var(--display-gilded);font-weight:800;letter-spacing:.01em;hyphens:none;overflow-wrap:normal;text-wrap:balance}
 .wordmark{line-height:1.04;text-transform:none}
 .home .wordmark{font-size:clamp(2.3rem,10.5vw,4rem)}
 .block-title,.path-title{line-height:1.12}

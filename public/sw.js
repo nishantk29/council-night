@@ -3,15 +3,13 @@
 // - Navigations: network-first, falling back to the cached app shell.
 // - /api/* and /ws/* never touch the cache.
 // VERSION is a content hash of every precached file, so it changes whenever a file does.
-const VERSION = 'a4c1855b0b';
+const VERSION = '18d1586675';
 const PREFIX = 'council-';
 const CACHE = PREFIX + VERSION;
 
 const SHELL = '/';
 const PRECACHE = [
   '/',
-  '/fonts/LICENSE-limelight.txt',
-  '/fonts/LICENSE-poiret-one.txt',
   '/fonts/LICENSE-rubik.txt',
   '/fonts/alegreya-italic-var.woff2',
   '/fonts/alegreya-sans-400.woff2',
@@ -19,8 +17,6 @@ const PRECACHE = [
   '/fonts/alegreya-sans-700.woff2',
   '/fonts/alegreya-sans-800.woff2',
   '/fonts/big-shoulders-display-var.woff2',
-  '/fonts/limelight-400.woff2',
-  '/fonts/poiret-one-400.woff2',
   '/fonts/rubik-var.woff2',
   '/fonts/special-elite-400.woff2',
   '/fx.css',

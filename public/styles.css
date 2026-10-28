@@ -858,3 +858,6 @@ html.fx-off .dc.flip,html[data-fxlite] .dc.flip{animation:none}
    has to scroll to find it (Nishant 2026-10-28). The card stays hidden; only its size changes. */
 .reveal-stage .rcard{width:min(100%, 360px, calc((100svh - var(--reveal-reserve, 19rem)) * 63 / 88))}
 @media (max-height:700px){.reveal-stage{gap:var(--s2)}.reveal-stage .phase-title{font-size:var(--fs-xl)}.reveal-stage>.say{display:none}}
+/* Reconnect notice as a compact callout (Nishant 2026-10-28: "call out box ... smaller font"). */
+.banner{font-size:var(--fs-xs);font-weight:600;color:var(--smoke);background:color-mix(in srgb, var(--panel-2) 88%, var(--brass));border-bottom:1px solid color-mix(in srgb, var(--rule) 60%, var(--brass))}
+.banner > .ui-ico{color:var(--brass)}

@@ -43,3 +43,23 @@ All five were DECIDED by Fennel on 2026-10-25 and are implemented; none is open.
 3. DECIDED (Fennel, 2026-10-25): an idle Speaker's skipped power stays lost.
 4. DECIDED (Fennel, 2026-10-25): exiled players do not count toward the "five or fewer players" term-limit exception.
 5. DECIDED (Fennel, 2026-10-25): at a physical table the third failure cannot be skipped; the host enters the tile turned up.
+
+# Task G: the host flow never dead-ends
+
+`public/js/host-nav.js` (`hostNav(view, ui)`, pure) says what the big dock button does in every phase. A step that needs a
+choice shows a greyed button whose label names it ("Choose a Chancellor", "Tap who voted Aye", "Pick a policy to discard",
+"Enter what was enacted", "Choose who to look into", "Choose who to execute", "Answer: is the Chancellor the Boss?"), and the Host
+gets a skip chip. Nothing-to-pick steps (docket look, Begin Game) are enabled at once. Picks are now selected first (seat,
+tile, policy, answer) and confirmed with the dock button; the old per-tap confirm pop-ups are gone. Test:
+`test/host-no-dead-end.test.js` (360 seeded games, 5-10 players, rebalance/exile/sit-out, all modes, rulesVersion 1 and 2,
+driven only through hostNav).
+
+| Area | Finding | Fix | rulesVersion |
+|---|---|---|---|
+| Unrest tile (physical) | Host had no skip when the tile could not be entered; `skip` was refused. | v2: skip enacts a random policy, weighted by the tiles not yet on the board, logged as a host skip. | 2+ only (v1 keeps the refusal; Host can still enter the tile, Restart works) |
+| Physical session | An idle Chancellor with physical tiles had no skip (only app hands did). | v2: skip enacts a random policy (discards +2). | 2+ only |
+| Boss question | `check` (Chancellor after 3 Decrees, or after an execution) had no skip. | v2: skip answers "No" and logs it. | 2+ only |
+| Views | The view did not carry `rulesVersion`, so a client could not tell which skips exist. | `rulesVersion` added to player and screen views (display only). | all |
+| Existing skips | Vote (nay), nominate (pass gavel), app-hand discard/enact (random), veto (refuse), power (lost) already worked and are reused unchanged. | none | all |
+| Snap election | A Pass-the-Gavel skip can hand the gavel back to the same player who was just snap-chosen (rotation resumes at the left of the original Speaker). Legal, so the test judges progress by the log, not the Speaker. | none | n/a |
+| Stall in v1 | Three physical steps have no skip in a v1 room (above). Not a stall: the Host can always enter the answer. A play change would be needed to add a skip, so v1 is left as is. | noted | 1 |

@@ -14,6 +14,7 @@ import { FAQ } from './faq.js';
 import { rolesInGame, rolesSeats, rolesSheetBody } from './roles_sheet.js';
 import { setupComposition, houseEffects } from './steppers.js';
 import { openSheet, closeSheets } from './sheets.js';
+import { hostNav } from './host-nav.js';
 import { errorBody, errorButtons, crashHtml, FATAL, ENDED } from './error-screen.js';
 
 const $app = document.getElementById('app');
@@ -235,7 +236,8 @@ function layout(v) {
 function gameMain(v) {
   if (v.me?.watch && !v.me.host) return [board(v), roundTable(v), `<section class="stage"><p class="say">You are watching this game. You’ll see what the whole table sees.</p></section>`, lastReveals(v)].join('');
   // When it's this player's move, the action comes first so it's on screen without scrolling (phones).
-  return (myMove(v) ? [stage(v), board(v), roundTable(v), lastReveals(v), myCardBlock(v)] : [board(v), roundTable(v), stage(v), lastReveals(v), myCardBlock(v)]).join('');
+  const stg = stage(v) + dock(v);
+  return (myMove(v) ? [stg, board(v), roundTable(v), lastReveals(v), myCardBlock(v)] : [board(v), roundTable(v), stg, lastReveals(v), myCardBlock(v)]).join('');
 }
 function myMove(v) {
   const g = v.game; const me = v.me; if (!g || !me) return false;
@@ -369,13 +371,14 @@ function roundTable(v) {
     const out = g.dead.includes(p.id); const exiled = g.exiled.includes(p.id);
     const can = tgt && tgt.ok(p.id);
     const yes = tgt?.act === 'tallyToggle' && S.ui.tally[p.id];
+    const picked = (tgt?.act === 'nominate' && S.ui.nominee === p.id) || (tgt?.act === 'power' && S.ui.target === p.id);
     const mk = tgt?.act === 'tallyToggle' && can ? (yes ? ['is-reform', art('aye'), 'Aye'] : ['is-cabal', art('nay'), 'Nay']) : marks[p.id];
     const sp = g.speaker === p.id && v.phase !== 'over'; const ch = g.nominee === p.id && ['vote', 'legislate', 'check'].includes(v.phase);
     const limited = g.ineligible.includes(p.id) && p.id !== g.speaker && !out;
     const tag = can ? 'button' : 'div';
     const label = `${p.name}${sp ? ', Speaker' : ''}${ch ? ', Chancellor nominee' : ''}${out ? (exiled ? ', exiled' : ', executed') : ''}${limited ? ', term-limited' : ''}${mk ? `, ${mk[2]}` : ''}`;
-    return `<${tag} class="knight ${p.id === v.me?.id ? 'is-me' : ''} ${ch ? 'on-team' : ''} ${can ? 'can-pick' : ''} ${out ? 'is-out' : ''} ${p.online || p.phoneless ? '' : 'is-off'}" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%"
-      ${can ? `type="button" data-a="${tgt.act}" data-id="${p.id}" aria-pressed="${!!yes}"` : ''} aria-label="${esc(label)}">
+    return `<${tag} class="knight ${p.id === v.me?.id ? 'is-me' : ''} ${ch ? 'on-team' : ''} ${can ? 'can-pick' : ''} ${picked ? 'is-picked' : ''} ${out ? 'is-out' : ''} ${p.online || p.phoneless ? '' : 'is-off'}" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%"
+      ${can ? `type="button" data-a="${tgt.act}" data-id="${p.id}" aria-pressed="${!!(yes || picked)}"` : ''} aria-label="${esc(label)}">
       <span class="knight-disc">${out ? art(exiled ? 'nay' : 'dagger') : initial(p.name)}${sp ? `<span class="knight-crown" title="Speaker">${art('speaker')}</span>` : ''}${ch ? `<span class="knight-lantern" title="Chancellor">${art('seal')}</span>` : ''}${mk ? `<span class="knight-mark ${mk[0]}" title="${esc(mk[2])}">${mk[1]}</span>` : ''}</span>
       <span class="knight-name">${esc(p.name)}${limited ? ' <small class="term">term limit</small>' : ''}</span></${tag}>`;
   }).join('');
@@ -421,6 +424,16 @@ document.addEventListener('contextmenu', (e) => { if (e.target.closest?.('.hold'
 const tile = (p, extra = '') => `<span class="dc ${extra}">${cardArt(POLICY_CARD[p])}</span>`;
 const mini = (kind, extra = '') => `<span class="mini ${extra}">${cardArt(kind)}</span>`;
 const placards = (sp, ch) => `<div class="placards"><figure>${mini('speaker')}<figcaption>${sp}</figcaption></figure><figure>${mini('chancellor')}<figcaption>${ch}</figcaption></figure></div>`;
+// The big button at the bottom of a phone that has to choose for the table: greyed while a choice is missing (the label
+// names it), and for the Host a skip chip that takes the neutral way on. All of it comes from host-nav.js.
+const pickUi = () => ({ nominee: S.ui.nominee, target: S.ui.target, tally: S.ui.tally, card: S.ui.card, policy: S.ui.policy, answer: S.ui.answer, veto: S.ui.veto });
+const clearPicks = () => { for (const k of ['nominee', 'target', 'card', 'policy', 'answer', 'veto']) S.ui[k] = null; S.ui.tally = {}; };
+function dock(v) {
+  if (v.phase === 'reveal' || !v.game || !v.me) return '';
+  const nav = hostNav(v, pickUi()); if (!nav) return '';
+  return `<div class="sticky-act dock"><button type="button" class="btn big" data-a="dockSend" ${nav.disabled ? 'aria-disabled="true"' : ''}>${esc(nav.label)}</button>
+    ${nav.skip ? `<button type="button" class="btn ghost dock-skip" data-a="dockSkip">${esc(nav.skip.label)}</button>` : ''}</div>`;
+}
 function stage(v) {
   const g = v.game; const me = v.me; const host = me.host;
   const say = (t) => `<p class="say">${t}</p>`;
@@ -449,9 +462,7 @@ function stage(v) {
     const nVoters = g.alive.length + g.exiled.length;
     if (v.mode.votes === 'physical') {
       if (!host) return `<section class="stage">${head}<p class="note">${ui('hand')} Vote at the table. On three, everyone shows Aye or Nay.</p></section>`;
-      const yes = Object.values(S.ui.tally).filter(Boolean).length;
-      return `<section class="stage">${head}<p class="note">${ui('hand')} Tap everyone who voted <b>Aye</b> at the table above, then confirm.</p></section>
-        <div class="sticky-act"><button class="btn big" data-a="tallySend">Confirm: ${yes} Aye, ${nVoters - yes} Nay</button></div>`;
+      return `<section class="stage">${head}<p class="note">${ui('hand')} Tap everyone who voted <b>Aye</b> at the table above, then confirm.</p></section>`;
     }
     if (me.watch || me.out && !g.exiled.includes(me.id)) return `<section class="stage">${head}</section>`;
     const voted = 'vote' in me;
@@ -463,34 +474,34 @@ function stage(v) {
     const c = g.check;
     const q = c.kind === 'chancellor' ? `Three Decrees are down. ${esc(nameOf(v, c.id))}, are you the Boss? Answer truthfully: say “Yes” only if you are; otherwise say “No”.` : `${esc(nameOf(v, c.id))} is ${v.house.exile ? 'exiled' : 'executed'}. Were they the Boss? Only say whether they were.`;
     return `<section class="stage"><h1 class="phase-title">The Question</h1>${say(q)}
-      ${host ? `<div class="choice-pair"><button class="choice no" data-a="check" data-v="1">Yes, the Boss</button><button class="choice yes" data-a="check" data-v="0">No</button></div>` : ''}</section>`;
+      ${host ? `<div class="choice-pair"><button class="choice no ${S.ui.answer === true ? 'is-picked' : ''}" data-a="pickAnswer" data-v="1" aria-pressed="${S.ui.answer === true}">Yes, the Boss</button><button class="choice yes ${S.ui.answer === false ? 'is-picked' : ''}" data-a="pickAnswer" data-v="0" aria-pressed="${S.ui.answer === false}">No</button></div>` : ''}</section>`;
   }
   if (v.phase === 'legislate') {
     if (!g.cardsApp) {
       const head = `<h1 class="phase-title">The Session</h1>${say(`${S2} draws the top three policies, discards one face down and passes two to ${C2}, who enacts one. No talking.`)}`;
       if (!host) return `<section class="stage">${head}</section>`;
       return `<section class="stage">${head}<p class="note">Which policy did ${C2} turn face up?</p>
-        <div class="choice-pair"><button class="choice ballot reform" data-a="hostEnact" data-v="R" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree" data-a="hostEnact" data-v="D" aria-label="Decree">${cardArt('decree')}</button></div>
+        <div class="choice-pair"><button class="choice ballot reform ${S.ui.policy === 'R' ? 'is-picked' : ''}" data-a="pickPolicy" data-v="R" aria-pressed="${S.ui.policy === 'R'}" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree ${S.ui.policy === 'D' ? 'is-picked' : ''}" data-a="pickPolicy" data-v="D" aria-pressed="${S.ui.policy === 'D'}" aria-label="Decree">${cardArt('decree')}</button></div>
         ${g.vetoOn ? '<button class="btn ghost" data-a="hostVeto">Confirm Veto</button>' : ''}</section>`;
     }
     const hand = me.hand || [];
     if (g.leg === 'speaker' && g.speaker === me.id) return `<section class="stage"><h1 class="phase-title">Discard One</h1>${say(`Tap the policy to <b>discard</b>. The other two go to ${C2}. Nobody else sees these.`)}
-      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn" data-a="discard" data-v="${i}" aria-label="Discard this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`)}</section>`;
+      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn ${S.ui.card === i ? 'is-picked' : ''}" data-a="pickCard" data-v="${i}" aria-pressed="${S.ui.card === i}" aria-label="Discard this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`)}</section>`;
     if (g.leg === 'chancellor' && g.nominee === me.id) return `<section class="stage"><h1 class="phase-title">Enact One</h1>${say('Tap the policy to <b>enact</b>. The other is discarded face down.')}
-      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn" data-a="enact" data-v="${i}" aria-label="Enact this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`)}
+      ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn ${S.ui.card === i ? 'is-picked' : ''}" data-a="pickCard" data-v="${i}" aria-pressed="${S.ui.card === i}" aria-label="Enact this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`)}
       ${g.vetoOn && !g.vetoRefused ? '<button class="btn ghost" data-a="veto">Propose Veto</button>' : g.vetoRefused ? '<p class="muted">The Speaker refused the veto. You must enact one.</p>' : ''}</section>`;
     if (g.leg === 'veto' && g.speaker === me.id) return `<section class="stage"><h1 class="phase-title">Veto?</h1>${say(`${C2} wants to veto this agenda. If you agree, both policies are discarded and Unrest moves one step.`)}
-      <div class="choice-pair"><button class="choice yes" data-a="vetoReply" data-v="1">${art('aye')}Agree</button><button class="choice no" data-a="vetoReply" data-v="0">${art('nay')}Refuse</button></div></section>`;
+      <div class="choice-pair"><button class="choice yes ${S.ui.veto === true ? 'is-picked' : ''}" data-a="pickVeto" data-v="1" aria-pressed="${S.ui.veto === true}">${art('aye')}Agree</button><button class="choice no ${S.ui.veto === false ? 'is-picked' : ''}" data-a="pickVeto" data-v="0" aria-pressed="${S.ui.veto === false}">${art('nay')}Refuse</button></div></section>`;
     return `<section class="stage"><h1 class="phase-title">In Session</h1>${say(g.leg === 'speaker' ? `${S2} is choosing a policy to discard.` : g.leg === 'veto' ? `${C2} proposed a veto. ${S2} decides.` : `${C2} is choosing a policy to enact.`)}</section>`;
   }
   if (v.phase === 'chaos') return `<section class="stage"><h1 class="phase-title">Unrest</h1>${say('Three failed governments. Turn over the top policy of the draw pile and place it on the board. It gives no power.')}
-    ${host ? `<div class="choice-pair"><button class="choice ballot reform" data-a="hostEnact" data-v="R" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree" data-a="hostEnact" data-v="D" aria-label="Decree">${cardArt('decree')}</button></div>` : ''}</section>`;
+    ${host ? `<div class="choice-pair"><button class="choice ballot reform ${S.ui.policy === 'R' ? 'is-picked' : ''}" data-a="pickPolicy" data-v="R" aria-pressed="${S.ui.policy === 'R'}" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree ${S.ui.policy === 'D' ? 'is-picked' : ''}" data-a="pickPolicy" data-v="D" aria-pressed="${S.ui.policy === 'D'}" aria-label="Decree">${cardArt('decree')}</button></div>` : ''}</section>`;
   if (v.phase === 'power') {
     const pw = g.power; const [t, d] = POWER_TEXT[pw];
     const mine = g.speaker === me.id; const forS = !mine && host && isPhys(v, g.speaker);
     if (pw === 'peek') {
-      if (mine && me.docket) return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say('The top three policies, in order. Only you see this. Tell the table whatever you like.')}${secretTiles('docket', me.docket, (p) => tile(p))}</section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
-      if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say(`${mine ? 'Look' : `${S2}, look`} at the top three policies of the draw pile without changing their order, then put them back.`)}</section><div class="sticky-act"><button class="btn big" data-a="peekDone">Done</button></div>`;
+      if (mine && me.docket) return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say('The top three policies, in order. Only you see this. Tell the table whatever you like.')}${secretTiles('docket', me.docket, (p) => tile(p))}</section>`;
+      if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say(`${mine ? 'Look' : `${S2}, look`} at the top three policies of the draw pile without changing their order, then put them back.`)}</section>`;
       return `<section class="stage"><h1 class="phase-title">${art('eye')} The Docket</h1>${say(`${S2} looks at the top three policies.`)}</section>`;
     }
     if (mine || forS) return `<section class="stage"><h1 class="phase-title">${art(POWER_ART[pw])} ${esc(t)}</h1>${say(`${esc(d)} Tap a player at the table.${pw === 'investigate' && !g.appRoles ? ' They hand you their party card face down.' : ''}`)}</section>`;
@@ -690,7 +701,8 @@ function onView(v) {
     if (v.game.reform + v.game.decree > p.game.reform + p.game.decree) S.ui.fresh.policy = true;
     if (v.game.history.length > p.game.history.length) S.ui.fresh.vote = true;
   }
-  if (v.phase !== p?.phase) { S.ui.open = {}; S.ui.tally = {}; S.ui.enactIdx = null; }
+  if (v.phase !== p?.phase) { S.ui.open = {}; S.ui.enactIdx = null; clearPicks(); }
+  else if (v.game && p?.game && [v.game.speaker, v.game.leg, v.game.power, v.game.nominee].join() !== [p.game.speaker, p.game.leg, p.game.power, p.game.nominee].join()) clearPicks();
   else if (JSON.stringify(p?.me?.hand) !== JSON.stringify(v.me?.hand) || JSON.stringify(p?.me?.docket) !== JSON.stringify(v.me?.docket)) { S.ui.open.hand = false; S.ui.open.docket = false; S.ui.enactIdx = null; }
   if (p?.phase !== v.phase && v.anim !== false && ['vote', 'legislate', 'power', 'over'].includes(v.phase)) haptic(30);
   T.onView(p, v);
@@ -797,20 +809,24 @@ async function act(a, el) {
     case 'qrFull': showQr(d.link, d.code); return;
     case 'dim': store.set(`${KEY}.dim`, $html.dataset.dim === '1' ? '0' : '1'); applyDim(); render(); return;
     case 'start': if (el.classList.contains('disabled')) { toast(d.why || 'Not ready to start yet.'); return; } send({ type: 'start' }); return;
-    case 'nominate': if (await askConfirm(`Nominate ${nameOf(S.view, d.id)} as Chancellor?`)) send({ type: 'nominate', id: d.id }); return;
+    case 'nominate': S.ui.nominee = d.id; render(); return;
+    case 'pickCard': S.ui.card = +d.v; render(); return;
+    case 'pickPolicy': S.ui.policy = d.v; render(); return;
+    case 'pickAnswer': S.ui.answer = d.v === '1'; render(); return;
+    case 'pickVeto': S.ui.veto = d.v === '1'; render(); return;
+    case 'dockSend': {
+      const nav = hostNav(S.view, pickUi()); if (!nav || nav.disabled) return;
+      if (nav.send.type === 'discard') haptic(20);
+      if (nav.send.type === 'enact') { S.ui.enactIdx = nav.send.i; haptic([20, 40, 20]); }
+      const m = nav.send; clearPicks(); send(m); return;
+    }
+    case 'dockSkip': { const nav = hostNav(S.view, pickUi()); const sk = nav?.skip; if (!sk) return; clearPicks(); for (const m of sk.msgs) send(m); return; }
     case 'vote': haptic(20); send({ type: 'vote', aye: d.v === '1' }); return;
-    case 'discard': if (await askConfirm('Discard this policy?')) { haptic(20); send({ type: 'discard', i: +d.v }); } return;
-    case 'enact': if (await askConfirm('Enact this policy?')) { S.ui.enactIdx = +d.v; haptic([20, 40, 20]); send({ type: 'enact', i: +d.v }); } return;
     case 'veto': send({ type: 'veto' }); return;
-    case 'vetoReply': send({ type: 'vetoReply', accept: d.v === '1' }); return;
-    case 'hostEnact': if (await askConfirm(`A ${d.v === 'R' ? 'Reform' : 'Decree'} was enacted?`)) send({ type: 'hostEnact', policy: d.v }); return;
     case 'hostVeto': if (await askConfirm('Both policies are discarded and Unrest moves one step. Confirm the veto?')) send({ type: 'hostVeto' }); return;
-    case 'check': send({ type: 'check', yes: d.v === '1' }); return;
-    case 'power': { const pw = S.view.game.power; const verb = { investigate: 'Look into', special: 'Make the next Speaker:', execute: S.view.house.exile ? 'Exile' : 'Execute' }[pw]; if (await askConfirm(`${verb} ${nameOf(S.view, d.id)}?`)) send({ type: 'power', id: d.id }); return; }
-    case 'peekDone': send({ type: 'peekDone' }); return;
+    case 'power': S.ui.target = d.id; render(); return;
     case 'piece': send({ type: 'mode', mode: { play: 'hybrid', [d.k]: d.v } }); return;
     case 'tallyToggle': S.ui.tally[d.id] = !S.ui.tally[d.id]; render(); return;
-    case 'tallySend': send({ type: 'tally', ayes: Object.keys(S.ui.tally).filter((k) => S.ui.tally[k]) }); return;
     case 'skip': send({ type: 'skip', id: d.id }); return;
     case 'roles': showRoles(); return;
     case 'restart': send({ type: 'restart' }); return;

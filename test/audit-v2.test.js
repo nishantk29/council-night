@@ -412,7 +412,7 @@ test('audit: exiled players do not count toward the five-or-fewer term-limit exc
 });
 
 test('audit: physical table, third failure: no skip, the host enters the tile', () => {
-  const t = started(5, { seed: 51, mode: { play: 'physical' }, phoneless: 2 });
+  const t = started(5, { seed: 51, mode: { play: 'physical' }, phoneless: 2 }); delete t.room.rulesVersion; // from version 2 the host may skip (see host-no-dead-end)
   for (let i = 0; i < 3; i++) { must(act(t.room, t.host, { type: 'nominate', id: t.ids.find((id) => id !== sp(t) && !open(t).ineligible.includes(id)) }, t.rng)); must(act(t.room, t.host, { type: 'tally', ayes: [] }, t.rng)); }
   assert.equal(t.room.phase, 'chaos');
   assert.match(refused(t, t.host, { type: 'skip' }), /Enter the policy that was turned up/);

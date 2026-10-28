@@ -57,13 +57,13 @@ test('embedded ASSETS serves the 404 page for a missing file', () => {
 });
 test('wrangler serves the 404 page for unknown assets', () => assert.match(fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"not_found_handling": "404-page"/));
 test('public/404.html is in sync with the template', () => assert.equal(fs.readFileSync(new URL('../public/404.html', import.meta.url), 'utf8'), errorPage({ status: 404 })));
-test('404 copy: shadows title, sentence-case Rubik title class', () => {
+test('404 copy: shadows title, sentence-case title in the Gilded display face', () => {
   const h = errorPage({ status: 404 });
   assert.match(h, /<title>This page slipped into the shadows · The Gilded Chamber<\/title>/);
   assert.match(h, /<h1 class="err-title">This page slipped into the shadows<\/h1>/);
   assert.match(h, /The page you wanted isn’t here\. Head back to the games\./);
   const css = fs.readFileSync(new URL('../public/redesign.css', import.meta.url), 'utf8');
-  assert.match(css, /\.err-title\{font-family:var\(--display-deco\);[^}]*text-transform:none/);
+  assert.match(css, /\.err-title\{font-family:var\(--display-gilded\);[^}]*text-transform:none/);
   assert.match(css, /\.err-page \.muted\{font-family:var\(--font-ui\)/);
 });
 test('404.html is self-contained: works with JS off', () => { const h = errorPage({ status: 404 }); assert.doesNotMatch(h, /<script/); assert.match(h, /styles\.css/); });

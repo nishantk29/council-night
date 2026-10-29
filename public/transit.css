@@ -40,7 +40,7 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 .reveal.a-reform,.reveal.a-cabal{background:var(--fill);--candle:var(--on-fill);--smoke:var(--on-fill);--faint:var(--on-fill);--town:var(--on-fill);--mafia:var(--on-fill);--panel-2:rgba(255,248,236,.16);color:var(--on-fill)}
 .reveal.a-cabal{box-shadow:var(--card-shadow),inset 0 0 0 3px var(--fill),inset 0 0 0 5px rgba(255,248,236,.6)}
 /* blue Join card on the home page */
-.path.c-blue{--candle:var(--on-fill);--smoke:var(--on-fill);--faint:var(--on-fill);--panel:#244B78;--panel-2:#244B78;--rule:#9CC3F0;--rule-strong:#FFF8EC;--btn:#FFE9C7;--on-btn:#2A0606;--brass:#FFF8EC;--focus:#FFF8EC;
+.path.c-blue{--candle:var(--on-fill);--smoke:var(--on-fill);--faint:var(--on-fill);--panel:#244B78;--panel-2:#244B78;--rule:#9CC3F0;--rule-strong:#FFF8EC;--divider:var(--rule);--divider-strong:var(--rule-strong);--btn:#FFE9C7;--on-btn:#2A0606;--brass:#FFF8EC;--focus:#FFF8EC;
   background:var(--reform-fill);color:var(--on-fill)}
 
 /* big glanceable numbers: Unrest, draw pile, discards */
@@ -55,13 +55,13 @@ h1,h2,h3{font-weight:900;letter-spacing:-.025em}
 .rejects i{width:18px;height:18px;border-width:3px}
 
 /* ---------------------------------------------------------------- header and tab bar */
-.appbar{min-height:calc(var(--appbar-h) + env(safe-area-inset-top));background:var(--head);-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom:1px solid var(--rule)}
+.appbar{min-height:calc(var(--appbar-h) + env(safe-area-inset-top));background:var(--head);-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom:1px solid var(--divider)}
 .appbar-mark{color:var(--brass)}
 .appbar-title{font-weight:800}
 .phase-badge{background:var(--orange);color:var(--ink);border:0;font-weight:800}
 .phase-badge .ui-ico,html[data-phase="night"] .phase-badge .ui-ico{color:var(--ink)}
 .dim-btn{color:var(--candle)}
-.tabbar{background:var(--head);-webkit-backdrop-filter:none;backdrop-filter:none;border-top:1px solid var(--rule);gap:4px}
+.tabbar{background:var(--head);-webkit-backdrop-filter:none;backdrop-filter:none;border-top:1px solid var(--divider);gap:4px}
 .tabbar button{color:var(--smoke);border-radius:var(--r-pill);font-weight:800;transition:transform var(--t-press) var(--ease-out)}
 .tabbar button[aria-current="page"]{background:var(--orange);color:var(--ink)}
 .tabbar button:active{transform:scale(.92)}
@@ -119,10 +119,10 @@ body:has(.sticky-act) #toast{bottom:calc(var(--tabbar-h) + 104px + env(safe-area
 .toggle.is-on{box-shadow:inset 0 0 0 3px var(--candle)}
 .roles-list li{box-shadow:inset 0 0 0 2px var(--team)}
 .roles-list li.a-cabal{box-shadow:inset 0 0 0 3px var(--orange),inset 0 0 0 5px var(--team)}
-.faq-q{border-bottom:2px solid var(--rule)}
+.faq-q{border-bottom:2px solid var(--divider)}
 .faq-q summary{font-weight:800}
 .timer-big b{font-size:clamp(2.6rem,12vw,3.6rem);font-weight:900;letter-spacing:-.03em}
-.sizes th,.sizes td{border-bottom-color:var(--rule)}
+.sizes th,.sizes td{border-bottom-color:var(--divider)}
 .history li{border-left-color:var(--rule-strong)}
 .empty{color:var(--smoke)}
 .col-log,.col-side{background:transparent;border:0;box-shadow:none}

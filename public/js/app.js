@@ -17,6 +17,14 @@ import { openSheet, closeSheets } from './sheets.js';
 import { hostNav } from './host-nav.js';
 import { errorBody, errorButtons, crashHtml, FATAL, ENDED } from './error-screen.js';
 import { wakeReconnect } from './wake.js';
+import { backClosesSheets } from './back-sheet.js';
+// Back (Android Back, the iOS edge swipe) closes the top sheet or confirm first, the same as Escape. They are <dialog>s on
+// <body>, so watching body's children keeps Back in step with them.
+const backNav = backClosesSheets(() => {
+  const d = [...document.querySelectorAll('dialog[open]')].at(-1);
+  return d ? { key: `${d.className}|${(d.querySelector('h2') || d).textContent.trim().slice(0, 40)}`, close: () => d.dispatchEvent(new Event('cancel', { cancelable: true })) } : null;
+});
+new MutationObserver(() => backNav.sync()).observe(document.body, { childList: true });
 
 const $app = document.getElementById('app');
 const $toast = document.getElementById('toast');

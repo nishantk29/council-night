@@ -123,7 +123,7 @@ export function makeSetup({ S, send, store, render, esc, ui, art, toast, openShe
         const p = presetById(el.dataset.id, c.saved); if (!p) return true;
         openSheet({ title: p.name, cls: 'gs-sheet', bodyHtml: '<p class="gs-small">Saved on this phone only.</p>', buttons: [
           { label: 'Rename', cls: 'gs-sheet-pri', onClick: () => promptName('Rename preset', p.name, 'Rename', (nm) => { store.set(PRESETS_STORE_KEY, JSON.stringify(renameSaved(savedList(), p.id, nm))); render(); }) },
-          { label: 'Delete', cls: 'gs-sheet-link', onClick: async () => { if (!(await askConfirm(`Delete ${p.name}? This can’t be undone.`))) return; store.set(PRESETS_STORE_KEY, JSON.stringify(deleteSaved(savedList(), p.id))); if (st.presetId === p.id) { st.presetId = DEFAULT_PRESET_ID; persist(st); } render(); } },
+          { label: 'Delete', cls: 'gs-sheet-link', onClick: async () => { if (!(await askConfirm(`Delete ${p.name}? This can’t be undone.`, 'Delete'))) return; store.set(PRESETS_STORE_KEY, JSON.stringify(deleteSaved(savedList(), p.id))); if (st.presetId === p.id) { st.presetId = DEFAULT_PRESET_ID; persist(st); } render(); } },
           { label: 'Close', cls: 'gs-sheet-link' }] });
         return true;
       }

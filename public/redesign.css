@@ -30,7 +30,7 @@ html[data-screen="1"] .bg-art{display:none}
 
 /* ---- home: Mafia structure. Back link on top, logo and title, then the actions, suggestions and footer */
 .home-brand{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:var(--s4)}
-.logo-mark{display:grid;place-items:center;width:72px;height:72px;border-radius:20px;background:var(--orange);color:var(--ink);box-shadow:0 10px 24px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.35);transform:rotate(-4deg)}
+.logo-mark{display:grid;place-items:center;width:72px;height:72px;border-radius:var(--f-r-card);background:var(--orange);color:var(--ink);box-shadow:0 10px 24px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.35);transform:rotate(-4deg)}
 .logo-mark .ico,.logo-mark svg{width:48px;height:48px}
 .logo-mark .ico{transform-origin:50% 50%}
 .boot .logo-mark .ico{animation:gc-spiral calc(1400ms * var(--dur-scale)) var(--gc-ease) 120ms both}
@@ -46,7 +46,7 @@ html[data-screen="1"] .bg-art{display:none}
   .wrap.home .home-paths{grid-column:1;grid-row:2/span 3}
   .home .wordmark{font-size:clamp(3rem,5vw,4.8rem)}
   .home-brand{gap:var(--s5)}
-  .logo-mark{width:92px;height:92px;border-radius:26px}.logo-mark .ico{width:62px;height:62px}
+  .logo-mark{width:92px;height:92px;border-radius:var(--f-r-card)}.logo-mark .ico{width:62px;height:62px}
   .more-games{grid-column:1/-1}.site-foot{grid-column:1/-1}
 }
 /* the bottom action bar is gone from home: the Open Chamber button now sits in the Host card */
@@ -56,8 +56,8 @@ html[data-screen="1"] .bg-art{display:none}
 /* ---- more games */
 .more-games{display:grid;gap:var(--s3);max-width:100%}
 .more-grid{display:grid;gap:var(--s3);grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
-.more-card{display:flex;align-items:center;gap:var(--s4);min-height:96px;padding:var(--s4);border-radius:var(--r-card);background:#1B1B22;color:#fff;text-decoration:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),inset 0 1px 0 rgba(255,255,255,.08),0 8px 22px rgba(0,0,0,.35);hyphens:none;overflow-wrap:normal}
-.more-logo{flex:none;display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:var(--tok,#2F6BD6);color:#fff}
+.more-card{display:flex;align-items:center;gap:var(--s4);min-height:96px;padding:var(--s4);border-radius:var(--f-r-sheet);background:#1B1B22;color:#fff;text-decoration:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),inset 0 1px 0 rgba(255,255,255,.08),0 8px 22px rgba(0,0,0,.35);hyphens:none;overflow-wrap:normal}
+.more-logo{flex:none;display:grid;place-items:center;width:56px;height:56px;border-radius:var(--f-r-round);background:var(--tok,#2F6BD6);color:#fff}
 .more-logo svg{width:32px;height:32px}
 .more-mafia{--tok:#8E1620}.more-quest{--tok:#2C3B8F}.more-hub{--tok:#2F6BD6}
 .more-text{display:grid;gap:2px;min-width:0}
@@ -85,10 +85,10 @@ html[data-screen="1"] .bg-art{display:none}
 .path,.more-card{position:relative}
 .path::after,.more-card::after{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--paper);background-size:160px;opacity:.06;mix-blend-mode:overlay;pointer-events:none}
 .msg.k-claim,.msg.k-tool,.msg.k-host{box-shadow:none}
-.history li,.history li.ok,.history li.bad{border-left:0;border-radius:10px;background:rgba(255,255,255,.05)}
+.history li,.history li.ok,.history li.bad{border-left:0;border-radius:0;background:rgba(255,255,255,.05)}
 .slot small,.gal-card figcaption,.stat,.side small,.how p,.faq-q summary{hyphens:none;overflow-wrap:normal;text-wrap:balance}
 .how p,.side small{text-wrap:pretty}
-.stat,.gal-card{border-radius:14px}
+.stat,.gal-card{border-radius:var(--f-r-field)}
 
 /* ---- FAQ: scannable answers, role entries read as short cards */
 .faq-a{line-height:1.6}
@@ -118,7 +118,7 @@ html[data-screen="1"] .bg-art{display:none}
 .btn.danger{min-height:48px}
 .resume-row{display:flex;align-items:center;gap:var(--s2)}
 .resume-row .resume{flex:1;min-width:0}
-.resume-x{flex:none;display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:inherit;cursor:pointer}
+.resume-x{flex:none;display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:var(--f-r-round);background:rgba(255,255,255,.14);color:inherit;cursor:pointer}
 .resume-x .ui-ico{width:18px;height:18px}
 @media (hover:hover){.resume-x:hover{background:rgba(255,255,255,.26)}}
 .ended{text-align:center;justify-items:center}

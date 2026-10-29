@@ -11,7 +11,7 @@
   border:1px solid rgba(255,255,255,.35);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 0 0 1px rgba(255,255,255,.12),0 2px 0 rgba(0,0,0,.4),0 14px 28px -14px rgba(0,0,0,.7)}
 /* the chat feed and the log are long lists: solid, never glass */
-.chat .msgs,.msgs.log{background:var(--panel);border-radius:16px;padding:var(--s2)}
+.chat .msgs,.msgs.log{background:var(--panel);border-radius:var(--f-r-card);padding:var(--s2)}
 .chat-form{background:transparent}
 @media (min-width:1100px){
   .col-side{background:transparent;border:0;padding:0;overflow:visible;max-height:none}
@@ -34,36 +34,36 @@
 
 /* an enactment slams onto the board */
 .fx-slam{position:relative;display:grid;place-items:center;width:min(44vw,190px);aspect-ratio:3/4;animation:fx-slam calc(280ms * var(--dur-scale)) var(--ease-out) both}
-.fx-slam-face{display:grid;place-items:center;align-content:center;gap:6px;width:100%;height:100%;border-radius:18px;background:var(--fill);color:var(--on-fill);
+.fx-slam-face{display:grid;place-items:center;align-content:center;gap:6px;width:100%;height:100%;border-radius:var(--f-r-card);background:var(--fill);color:var(--on-fill);
   font:900 1.5rem/1 var(--font-display);text-transform:uppercase;letter-spacing:.06em;
   box-shadow:inset 0 0 0 4px var(--fill),inset 0 0 0 6px var(--on-fill),inset 0 0 0 8px var(--fill),inset 0 0 0 9px var(--gold),0 2px 0 rgba(26,20,16,.4),0 9px 0 -1px rgba(26,20,16,.3),0 26px 36px -18px rgba(26,20,16,.7)}
 .fx-slam-face .ico{width:52%;height:auto;aspect-ratio:1}
-.fx-stamp{position:absolute;left:50%;bottom:12%;padding:2px 12px;border:3px solid var(--on-fill);border-radius:8px;background:var(--fill);color:var(--on-fill);
+.fx-stamp{position:absolute;left:50%;bottom:12%;padding:2px 12px;border:3px solid var(--on-fill);border-radius:var(--f-r-field);background:var(--fill);color:var(--on-fill);
   font:900 1rem/1.3 var(--font-display);letter-spacing:.14em;text-transform:uppercase;font-style:normal;transform:translateX(-50%) rotate(-9deg) scale(0);animation:fx-stamp calc(280ms * var(--dur-scale)) var(--ease-out) calc(160ms * var(--dur-scale)) both}
 
 /* cards drawn from the pile slide out, face down */
 .fx-hand{position:relative;width:260px;height:150px}
-.fx-back{position:absolute;left:50%;top:0;display:grid;place-items:center;width:88px;margin-left:-44px;aspect-ratio:3/4;border-radius:12px;color:var(--gold);
+.fx-back{position:absolute;left:50%;top:0;display:grid;place-items:center;width:88px;margin-left:-44px;aspect-ratio:3/4;border-radius:var(--f-r-field);color:var(--gold);
   background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(226,176,74,.2) 0 7.5deg,transparent 7.5deg 15deg),radial-gradient(circle,#3A2410,#140A03);
   box-shadow:inset 0 0 0 3px #140A03,inset 0 0 0 4.5px var(--gold),0 2px 0 rgba(26,20,16,.4),0 14px 22px -12px rgba(26,20,16,.7);
   animation:fx-draw calc(320ms * var(--dur-scale)) var(--ease-out) calc(var(--i) * calc(50ms * var(--dur-scale)) * var(--dur-scale)) both}
 .fx-back .ico{width:55%;height:auto;aspect-ratio:1}
 
 /* the third failed government: the tracker clicks forward */
-.fx-pill{display:flex;align-items:center;gap:14px;padding:14px 26px;border-radius:var(--r-pill);animation:fx-pop calc(280ms * var(--dur-scale)) var(--ease-out) both}
+.fx-pill{display:flex;align-items:center;gap:14px;padding:14px 26px;border-radius:var(--f-r-pill);animation:fx-pop calc(280ms * var(--dur-scale)) var(--ease-out) both}
 .fx-pill b{font:900 1.3rem/1 var(--font-display);text-transform:uppercase;letter-spacing:.08em}
 .fx-pill .fx-3of3{font-size:2.4rem}
 .fx-pips{display:flex;gap:8px}
-.fx-pips i{position:relative;width:26px;height:26px;border-radius:50%;border:3px solid var(--candle)}
+.fx-pips i{position:relative;width:26px;height:26px;border-radius:var(--f-r-round);border:3px solid var(--candle)}
 .fx-pips i.on{background:var(--cabal-fill)}
-.fx-pips i.last::after{content:"";position:absolute;inset:-3px;border-radius:50%;background:var(--cabal-fill);transform:scale(0);animation:fx-click calc(280ms * var(--dur-scale)) var(--ease-out) calc(240ms * var(--dur-scale)) both}
+.fx-pips i.last::after{content:"";position:absolute;inset:-3px;border-radius:var(--f-r-round);background:var(--cabal-fill);transform:scale(0);animation:fx-click calc(280ms * var(--dur-scale)) var(--ease-out) calc(240ms * var(--dur-scale)) both}
 
 /* an execution: the table dims, the player's card fades out */
 .fx-scrim{position:absolute;inset:0;background:rgba(12,5,0,.6);animation:fx-scrim-in calc(220ms * var(--dur-scale)) var(--ease-out) both}
-.fx-victim{position:relative;display:grid;justify-items:center;gap:4px;padding:22px 34px;border-radius:26px;overflow:hidden;animation:fx-victim calc(300ms * var(--dur-scale)) var(--ease-out) both}
+.fx-victim{position:relative;display:grid;justify-items:center;gap:4px;padding:22px 34px;border-radius:var(--f-r-card);overflow:hidden;animation:fx-victim calc(300ms * var(--dur-scale)) var(--ease-out) both}
 .fx-victim b{font:900 1.6rem/1.1 var(--font-display);text-transform:uppercase;letter-spacing:.05em}
 .fx-victim small{font-weight:700;font-size:1rem}
-.fx-disc{display:grid;place-items:center;width:68px;aspect-ratio:1;border-radius:50%;background:var(--cabal-fill);color:var(--on-fill);border:3px solid var(--candle);font:900 2rem/1 var(--font-display)}
+.fx-disc{display:grid;place-items:center;width:68px;aspect-ratio:1;border-radius:var(--f-r-round);background:var(--cabal-fill);color:var(--on-fill);border:3px solid var(--candle);font:900 2rem/1 var(--font-display)}
 .fx-gone{position:absolute;inset:0;background:rgba(26,20,16,.6);opacity:0;animation:fx-gone calc(280ms * var(--dur-scale)) var(--ease-out) calc(280ms * var(--dur-scale)) both}
 
 /* ================================================================ effects on the page */
@@ -82,7 +82,7 @@
 .fx-over{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;overflow-x:clip;overflow-y:auto;overscroll-behavior:none;touch-action:pan-y}
 .fx-over .fx-scrim{position:fixed;background:rgba(12,5,0,.6);animation:fx-scrim-in var(--t-open) var(--ease-out) both;pointer-events:auto}
 .fx-pop{position:relative;width:min(100%,420px);margin:auto;animation:fx-spring calc(360ms * var(--dur-scale)) var(--ease-out) both}
-.fx-card{overflow:hidden;border-radius:var(--r-card);padding:0 0 18px}
+.fx-card{overflow:hidden;border-radius:var(--f-r-sheet);padding:0 0 18px}
 .fx-fan{position:absolute;left:50%;bottom:calc(100% - 46px);width:min(135%,560px);transform:translateX(-50%);transform-origin:50% 100%;pointer-events:none;animation:fx-fan calc(360ms * var(--dur-scale)) var(--ease-out) calc(80ms * var(--dur-scale)) both}
 .fx-band{display:grid;justify-items:center;gap:4px;padding:18px 16px 14px;background:var(--fill);color:var(--on-fill);text-align:center}
 .fx-band h2{font:900 clamp(2rem,8vw,2.8rem)/1 var(--font-display);text-transform:uppercase;letter-spacing:.03em}
@@ -94,7 +94,7 @@
 .fx-roles-wrap{max-height:30vh;overflow:auto;padding:10px 16px 0}
 .fx-turn{text-align:center;font-weight:700}
 .fx-roles{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:0;padding:0;list-style:none}
-.fx-roles li{display:flex;align-items:center;gap:8px;min-width:0;padding:6px 10px;border-radius:14px;background:var(--fill);color:var(--on-fill);animation:fx-fade calc(240ms * var(--dur-scale)) var(--ease-out) calc((120ms + var(--i) * 24ms) * var(--dur-scale)) both}
+.fx-roles li{display:flex;align-items:center;gap:8px;min-width:0;padding:6px 10px;border-radius:var(--f-r-field);background:var(--fill);color:var(--on-fill);animation:fx-fade calc(240ms * var(--dur-scale)) var(--ease-out) calc((120ms + var(--i) * 24ms) * var(--dur-scale)) both}
 .fx-roles .ico{width:26px;height:26px;flex:none}
 .fx-roles span{display:grid;min-width:0;line-height:1.15}
 .fx-roles b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

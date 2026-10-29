@@ -356,7 +356,8 @@ test('audit: Play again is host only', () => {
   assert.match(refused(t, other, { type: 'again' }), /host/i);
   assert.equal(t.room.phase, 'over'); must(act(t.room, t.host, { type: 'again' }, t.rng)); assert.equal(t.room.phase, 'lobby');
   const fx = readFileSync(new URL('../public/js/fx.js', import.meta.url), 'utf8');
-  assert.ok(fx.includes('Waiting for the host') && !fx.includes('>Play again<'));
+  // "Play again" (same setup, new deal) appears only in the host's branch of the end overlay.
+  assert.ok(fx.includes('Waiting for the host') && (fx.match(/>Play again</g) || []).length === 1 && /v\.me\?\.host \? '<button[^']*data-o="restart">Play again</.test(fx));
 });
 
 test('audit: no undo past a secret look', () => {

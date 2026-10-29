@@ -50,7 +50,7 @@ function chips(ctx) {
 function stepPlayers(st, ctx) {
   const { v, esc, ui, link, draft } = ctx; const n = ctx.n;
   return `<h1 class="gs-h" tabindex="-1">Who sits in the chamber?</h1>
-    <p class="gs-code">${ui('phone')}<span>Members join with code <b>${esc(v.code)}</b></span><button type="button" class="gs-link" data-a="qrFull" data-link="${esc(link)}" data-code="${esc(v.code)}">Show QR</button></p>
+    <p class="gs-code">${ui('phone')}<span>Members join with code <b>${esc(v.code)}</b></span><button type="button" class="gs-link" data-a="qrFull" data-link="${esc(link)}" data-code="${esc(v.code)}">Show QR code</button></p>
     <section class="gs-block"><p class="gs-grp">${plural(n, 'member', 'members')}</p><ul class="gs-chips">${chips(ctx)}</ul></section>
     <div class="gs-add"><input data-i="seatName" maxlength="20" placeholder="Add a name" aria-label="Add a name" autocomplete="off" enterkeyhint="done" value="${esc(draft.seatName || '')}"><button type="button" class="gs-sec" data-a="addSeat">Add</button></div>
     <p class="gs-callout">${ui('info')}Names are only kept for this room.</p>`;
@@ -106,7 +106,7 @@ function advanced(ctx) {
     <label class="gs-tg"><span><b>Vote Reveal Delay</b><span>A short drumroll before the votes are shown.</span></span>${sel('revealDelay', [[0, 'Off'], [3, '3 sec'], [5, '5 sec']])}</label>
     <label class="gs-tg"><span><b>First Speaker</b><span>Who holds the gavel first.</span></span>${sel('firstLeader', [['random', 'Random'], ['host', 'The host']])}</label></div>
     <p class="gs-grp">Seat order</p><p class="gs-note">The order the Speaker role travels. Match it to how you are sitting.</p><ul class="gs-seatord">${seats}</ul>
-    <div class="gs-advact"><button type="button" class="gs-sec" data-a="shuffleSeats">${ui('shuffle')} Shuffle seats</button><button type="button" class="gs-sec" data-a="gsSave">${ui('save')} Save as a preset</button></div>`;
+    <div class="gs-advact"><button type="button" class="gs-sec" data-a="shuffleSeats">${ui('shuffle')} Shuffle seats</button><button type="button" class="gs-sec" data-a="gsSave">${ui('save')} Save preset</button></div>`;
 }
 
 // The host's whole setup. ctx: { v, st, n, preset, seating, esc, ui, art, link, draft }.

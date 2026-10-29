@@ -35,8 +35,8 @@ function offenders(css) {
   return bad;
 }
 const cssFiles = readdirSync(new URL('../public/', import.meta.url)).filter((f) => f.endsWith('.css') && f !== 'print.css');
-// ambient loops: the slow background drift keeps its period
-const AMBIENT = ['gc-turn 120s linear infinite'];
+// the slow background turn keeps its period (it plays once now: test/play-once.test.js)
+const AMBIENT = ['gc-turn 120s cubic-bezier(.3,0,.2,1) 1'];
 const clean = (arr) => arr.filter((x) => !AMBIENT.includes(x));
 
 test('no unscaled duration/delay in CSS files', () => {

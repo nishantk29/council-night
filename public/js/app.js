@@ -86,7 +86,9 @@ function paint() {
   const y = window.scrollY;
   $html.dataset.phase = S.view?.phase || S.mode;
   $html.dataset.screen = S.mode === 'screen' ? '1' : '';
-  $html.dataset.gs = S.mode === 'play' && S.view?.phase === 'lobby' && S.view.kind !== 'screen' ? '1' : ''; // the wood-and-ballot setup look
+  // the wood-and-ballot setup look, in the lobby only. Remove the attribute otherwise: an empty data-gs still matches
+  // html[data-gs] and hid the sun and columns (and swapped the page background) on every other screen.
+  if (S.mode === 'play' && S.view?.phase === 'lobby' && S.view.kind !== 'screen') $html.dataset.gs = '1'; else delete $html.dataset.gs;
   $html.classList.toggle('fx-off', S.view?.anim === false); // the host's Animations switch: card flips are skipped too
   try { $app.innerHTML = screen(); } catch (e) { console.error(e); crash(); return; }
   S.ui.fresh = {};

@@ -16,7 +16,9 @@
 #app{position:relative;z-index:1}
 .bg-art{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:radial-gradient(90% 60% at 85% 0%,rgba(240,122,34,.10),transparent 60%),radial-gradient(70% 50% at 0% 100%,rgba(226,176,74,.06),transparent 60%)}
 .bg-sun{position:absolute;right:-18vmin;top:-14vmin;width:min(90vmin,820px);height:auto;opacity:.16;transform-origin:50% 50%}
-.sun-spin{transform-origin:400px 400px;animation:gc-turn 120s linear infinite}
+/* the sun behind the page turns one full revolution, easing to a stop where it started (no looping motion: Nishant, Oct 28 11:09 PM ET);
+   the final frame is the resting pose, which is also what reduced motion and effects-off show */
+.sun-spin{transform-origin:400px 400px;animation:gc-turn 120s cubic-bezier(.3,0,.2,1) 1}
 .sun-rays{transform-origin:400px 400px}
 .bg-columns{position:absolute;left:0;bottom:0;width:min(100vw,900px);height:min(34vh,300px);opacity:.07}
 @media (max-width:640px){.bg-sun{width:120vw;right:-40vw;top:-18vw;opacity:.14}.bg-columns{opacity:.05}}

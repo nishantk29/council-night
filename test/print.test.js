@@ -60,12 +60,19 @@ test('print page links point at pages and files that exist', () => {
   }
 });
 
-test('the service worker precaches every print file, and VERSION is the content hash of public/', () => {
+test('the service worker precaches the print page but not the PDFs (fetched on demand), and VERSION is the content hash of public/', () => {
   const sw = read('sw.js');
   const precache = [...sw.matchAll(/^\s+'([^']+)',$/gm)].map((m) => m[1]);
-  for (const f of ['/js/print.js', '/js/print_data.js', '/print.html', '/print.css', '/print/gilded-chamber-designed-cards.pdf', '/print/gilded-chamber-card-guide.pdf', '/print/gilded-chamber-cards.pdf']) {
+  for (const f of ['/js/print.js', '/js/print_data.js', '/print.html', '/print.css']) {
     assert.ok(precache.includes(f), `${f} is not precached`);
   }
+  // Tech review, Oct 28 2026: 1.57 MB of PDFs were downloaded by every phone on its first visit. Opening one is a
+  // navigation (the SW goes to the network for those), so precaching them never helped offline.
+  for (const f of ['/print/gilded-chamber-designed-cards.pdf', '/print/gilded-chamber-card-guide.pdf', '/print/gilded-chamber-cards.pdf']) {
+    assert.ok(!precache.includes(f), `${f} is precached`);
+    assert.ok(existsSync(new URL(`../public${f}`, import.meta.url)), `${f} is missing`);
+  }
+  assert.ok(!precache.some((f) => /\.pdf$/i.test(f)), 'no PDF in the precache');
   for (const f of precache.filter((p) => p !== '/')) assert.ok(existsSync(new URL(`../public${f}`, import.meta.url)), `${f} is precached but missing`);
   // make-pwa.mjs: sha256 over every file's path and bytes (sorted; sw.js and big PDFs left out)
   const files = [];

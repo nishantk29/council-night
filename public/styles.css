@@ -861,3 +861,6 @@ html.fx-off .dc.flip,html[data-fxlite] .dc.flip{animation:none}
 /* Reconnect notice as a compact callout (Nishant 2026-10-28: "call out box ... smaller font"). */
 .banner{font-size:var(--fs-xs);font-weight:600;color:var(--smoke);background:color-mix(in srgb, var(--panel-2) 88%, var(--brass));border-bottom:1px solid color-mix(in srgb, var(--rule) 60%, var(--brass))}
 .banner > .ui-ico{color:var(--brass)}
+
+/* deslop 2026-10-29: link rows are spaced by layout, not middle dots */
+.linkrow{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}

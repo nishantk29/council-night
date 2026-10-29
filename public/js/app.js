@@ -80,7 +80,7 @@ function render() {
     $app.addEventListener('animationend', () => $app.classList.remove('screen-in'), { once: true });
   }
 }
-const TITLES = { home: 'The Gilded Chamber', rules: 'How to Play | The Gilded Chamber', faq: 'Rules & FAQ | The Gilded Chamber', screen: 'Table Screen | The Gilded Chamber' };
+const TITLES = { home: 'The Gilded Chamber', rules: 'How to play | The Gilded Chamber', faq: 'Rules & FAQ | The Gilded Chamber', screen: 'Table Screen | The Gilded Chamber' };
 function paint() {
   document.title = S.ended ? 'Game ended | The Gilded Chamber' : S.mode === 'play' && S.code ? `Chamber ${S.code} | The Gilded Chamber` : TITLES[S.mode] || 'The Gilded Chamber';
   const y = window.scrollY;
@@ -158,7 +158,7 @@ function home() {
   return `<main class="wrap home">
     <nav class="home-nav" aria-label="Game Night">${hubLink}</nav>
     <header class="home-head"><div class="home-brand"><span class="logo-mark" aria-hidden="true">${art('sun')}</span>
-      <div><p class="home-meta">5–10 players · One phone each</p><h1 class="wordmark">The Gilded Chamber</h1></div></div></header>
+      <div><p class="home-meta">5–10 players, one phone each</p><h1 class="wordmark">The Gilded Chamber</h1></div></div></header>
     <section class="home-hero"><p class="lede">The Loyalists hold the majority, but the Syndicate sits among them, and one of them is the Boss.</p>
       <p class="lede-sub">Elect governments, pass policies, and unmask the Boss before they take power.</p>
       <div class="pile" role="img" aria-label="The policy pile holds 6 Reforms and 11 Decrees"><span class="pile-r"><b>6</b>Reforms</span><span class="pile-d"><b>11</b>Decrees</span></div>
@@ -173,8 +173,8 @@ function home() {
         <div class="join-row"><label class="field"><span>Room code</span><input class="code-input" data-i="joinCode" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="go" placeholder="ABCDEF" value="${esc(S.ui.draft.joinCode || '')}"></label>
         <button type="button" class="btn ghost" data-a="goJoin">Join Room</button></div></section>
       <a class="side" href="#/faq"><span><b>Rules &amp; FAQ</b><small>Roles, powers, house rules and edge cases.</small></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
-      <h2 class="path-title how-title">How to Play</h2>
-      <ol class="how" aria-label="How to Play, 4 steps">${[
+      <h2 class="path-title how-title">How to play</h2>
+      <ol class="how" aria-label="How to play, 4 steps">${[
         '<h3>Roles</h3><p>Everyone gets a secret role. Most are Loyalists; the rest are the Syndicate, and one of them is the Boss.</p>',
         '<h3>Vote</h3><p>Each round the Speaker nominates a Chancellor. A strict majority of Aye votes elects them; a tie fails.</p>',
         '<h3>Pass</h3><p>The Speaker passes two policies to the Chancellor, who enacts one. Some Decrees give a power.</p>',
@@ -187,14 +187,14 @@ function home() {
   </main>`;
 }
 
-const powerRow = (n) => POWERS[n].map((p) => (p ? POWER_TEXT[p][0] : '–')).join(' · ');
+const powerRow = (n) => POWERS[n].map((p) => (p ? POWER_TEXT[p][0] : '–')).join(', ');
 const CARD_GALLERY = [['loyalistRole', 'Loyalist', 'Most of the table. Knows nothing.'], ['syndicateRole', 'Syndicate', 'Knows the team and the Boss.'], ['bossRole', 'The Boss', 'Wins if elected after three Decrees.'],
   ['reform', 'Reform', 'Five win it for the Loyalists.'], ['decree', 'Decree', 'Six win it for the Syndicate.'], ['loyalistParty', 'Loyalist Party', 'What an Inquiry shows.'], ['syndicateParty', 'Syndicate Party', 'The Boss shows this too.']];
 function rulesPage() {
   const rows = Object.keys(TEAMS).map((n) => `<tr><td>${n}</td><td>${TEAMS[n][0]}</td><td>${TEAMS[n][1]} + the Boss</td><td>${powerRow(n)}</td></tr>`).join('');
   return `<main class="wrap game rules">
-    <p><a class="link" href="#/">${ui('back')} Home</a> · <a class="link" href="#/faq">FAQ</a></p>
-    <section class="stage"><h1 class="phase-title">How to Play</h1>
+    <p class="linkrow"><a class="link" href="#/">${ui('back')} Home</a><a class="link" href="#/faq">FAQ</a></p>
+    <section class="stage"><h1 class="phase-title">How to play</h1>
       <p>Everyone gets a secret role. Most of you are <b class="t-reform">Loyalists</b>. The rest are <b class="t-cabal">the Syndicate</b>, and one of them is <b class="t-cabal">the Boss</b>. The Syndicate know each other and who the Boss is; the Boss only knows the Syndicate in 5–6 player games.</p>
       <p><b>Each round</b> the Speaker role moves one seat left. The Speaker nominates a Chancellor, and everyone still in the game votes <b>Aye</b> or <b>Nay</b>. A strict majority elects them; a tie fails.</p>
       <p><b>Term limits:</b> the last elected Chancellor can’t be nominated, and neither can the last elected Speaker unless only five players are left.</p>
@@ -579,7 +579,7 @@ function hostPane(v) {
 // ---------------------------------------------------------------- shared table screen (TV / laptop)
 function tableScreen(v) {
   const g = v.game;
-  const head = `<header class="appbar"><span class="appbar-mark">${art('torch')}</span><div class="appbar-title">The Gilded Chamber · <span class="code">${esc(v.code)}</span></div>${T.timerChip(v)}${dimBtn()}<span class="phase-badge">${ui(PHASE[v.phase]?.[1] || 'game')}${PHASE[v.phase]?.[0] || ''}</span></header>`;
+  const head = `<header class="appbar"><span class="appbar-mark">${art('torch')}</span><div class="appbar-title">The Gilded Chamber <span class="code">${esc(v.code)}</span></div>${T.timerChip(v)}${dimBtn()}<span class="phase-badge">${ui(PHASE[v.phase]?.[1] || 'game')}${PHASE[v.phase]?.[0] || ''}</span></header>`;
   if (!g) return `${head}<main class="wrap screen-lobby"><h1 class="phase-title">Join at ${esc(location.host)}</h1><p class="room-code">${esc(v.code)}</p><div class="qr-tap is-static">${qrSvg(`${location.origin}/#/play/${v.code}`, `QR code to join room ${v.code}`)}</div><p class="say">${v.players.filter((p) => !p.watch).map((p) => esc(p.name)).join(' · ') || 'Nobody yet.'}</p></main>`;
   const lines = phaseScript(v).slice(0, 2);
   return `${head}<div class="layout is-screen"><main class="col col-main wrap game">${board(v)}${roundTable({ ...v, me: null })}${v.phase === 'over' ? over(v) : `<section class="stage"><p class="say">${esc(lines.join(' '))}</p><div class="btn-row"><button type="button" class="btn ghost" data-a="roles">Roles in this game</button></div></section>`}${lastReveals(v)}</main>

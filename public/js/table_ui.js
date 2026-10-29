@@ -217,7 +217,7 @@ export function makeTable(ctx) {
 
 // ------------------------------------------------------------ FAQ (collapsible, with a quick search)
 export function faqPage(groups, esc, ui, title = 'Questions and answers') {
-  return `<main class="wrap game faq"><p><a class="link" href="#/">${ui('back')} Home</a> · <a class="link" href="#/rules">How to play</a></p>
+  return `<main class="wrap game faq"><p class="linkrow"><a class="link" href="#/">${ui('back')} Home</a><a class="link" href="#/rules">How to play</a></p>
     <section class="stage"><h1 class="phase-title">${esc(title)}</h1>
     <label class="field"><span>Search</span><input type="search" data-faq="search" placeholder="Try “tie”, “veto”, “roles”, “timer”" autocomplete="off"></label>
     <p class="muted" data-faq="none" hidden>Nothing matches. Try a different word.</p></section>

@@ -49,7 +49,7 @@ button.tiles.hold:focus-visible{outline:3px solid var(--focus);outline-offset:4p
 
 /* ---------------------------------------------------------------- one screen fade per real screen change */
 @media (prefers-reduced-motion:no-preference){
-  #app.screen-in{animation:screen-in var(--t-open) var(--ease-out) both}
+  #app.screen-in{animation:screen-in var(--t-enter) var(--ease-out) both}
   html.fx-off #app.screen-in{animation:none}
   @keyframes screen-in{from{opacity:0}to{opacity:1}}
 }

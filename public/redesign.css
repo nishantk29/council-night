@@ -66,7 +66,7 @@ html[data-screen="1"] .bg-art{display:none}
 .more-card:focus-visible{outline:3px solid var(--focus,#fff);outline-offset:3px}
 
 /* ---- footer: game links, then the low-light switch and a quiet Credits expander */
-.site-foot{width:min(100%,46rem);margin-inline:auto;padding-inline:var(--gutter,16px);display:grid;gap:var(--s3);padding-block:var(--s5) var(--s6);margin-top:var(--s4);border-top:1px solid rgba(255,255,255,.12);max-width:100%}
+.site-foot{width:min(100%,46rem);margin-inline:auto;padding-inline:var(--gutter,16px);display:grid;gap:var(--s3);padding-block:var(--s5) var(--s6);margin-top:var(--s4);border-top:1px solid var(--divider);max-width:100%}
 .site-foot nav{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s5)}
 .site-foot nav a{display:inline-flex;align-items:center;min-height:44px;color:#fff;font-weight:700;text-decoration:none}
 .site-foot nav a[aria-current]{color:var(--brass)}
@@ -128,16 +128,16 @@ html[data-screen="1"] .bg-art{display:none}
 @supports (view-transition-name:none){
   #app > main.wrap{view-transition-name:step}
   ::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
-  ::view-transition-old(step){animation:gc-step-out calc(160ms * var(--dur-scale)) var(--gc-ease) both}
-  ::view-transition-new(step){animation:gc-step-in calc(380ms * var(--dur-scale)) var(--gc-ease) both}
+  ::view-transition-old(step){animation:gc-step-out calc(50ms * var(--dur-scale)) var(--gc-ease) both}
+  ::view-transition-new(step){animation:gc-step-in var(--t-enter) var(--gc-ease) both}
 }
-@keyframes gc-step-out{to{opacity:0;transform:translateX(-26px)}}
-@keyframes gc-step-in{from{opacity:0;transform:translateX(40px)}}
+@keyframes gc-step-out{to{opacity:0;transform:translateX(-8px)}}
+@keyframes gc-step-in{from{opacity:0;transform:translateX(16px)}}
 
 /* ---- first-load entrance on the home screen only (html.boot is removed shortly after load) */
-.boot .home-head,.boot .home-hero,.boot .home-paths > *,.boot .more-games{animation:gc-rise calc(640ms * var(--dur-scale)) var(--gc-ease) both}
-.boot .home-hero{animation-delay:calc(60ms * var(--dur-scale))}.boot .home-paths > :nth-child(1){animation-delay:calc(100ms * var(--dur-scale))}.boot .home-paths > :nth-child(2){animation-delay:calc(160ms * var(--dur-scale))}.boot .home-paths > :nth-child(n+3){animation-delay:calc(220ms * var(--dur-scale))}.boot .more-games{animation-delay:calc(300ms * var(--dur-scale))}
-@keyframes gc-rise{from{opacity:0;transform:translateY(18px)}}
+.boot .home-head,.boot .home-hero,.boot .home-paths > *,.boot .more-games{animation:gc-rise var(--t-enter) var(--gc-ease) both}
+.boot .home-hero{animation-delay:calc(15ms * var(--dur-scale))}.boot .home-paths > :nth-child(1){animation-delay:calc(25ms * var(--dur-scale))}.boot .home-paths > :nth-child(2){animation-delay:calc(40ms * var(--dur-scale))}.boot .home-paths > :nth-child(n+3){animation-delay:calc(55ms * var(--dur-scale))}.boot .more-games{animation-delay:calc(75ms * var(--dur-scale))}
+@keyframes gc-rise{from{opacity:0;transform:translateY(8px)}}
 
 /* ---- reduced motion and the Animations switch */
 @media (prefers-reduced-motion:reduce){

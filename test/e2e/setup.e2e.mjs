@@ -28,8 +28,12 @@ try {
   const phones = [];
   for (const nm of ['Bea', 'Cy', 'Dov', 'Eli']) {
     const p = await phone(browser, srv.base, nm, 'p390'); phones.push(p);
-    await p.goto(`/#/play/${code}`); await p.page.fill('[data-i=joinName]', nm); await p.page.click('[data-a=join]');
-    await p.page.waitForSelector('.gs-guest');
+    await p.goto(`/#/play/${code}`);
+    // Live rooms: the socket may still be opening, so retry the join until the guest lobby shows (max 4 tries).
+    for (let t = 0; t < 4; t++) {
+      await p.page.fill('[data-i=joinName]', nm).catch(() => {}); await p.page.click('[data-a=join]', { timeout: 3000 }).catch(() => {});
+      if (await p.page.waitForSelector('.gs-guest', { timeout: 5000 }).then(() => true, () => false)) break;
+    }
   }
   await host.page.waitForFunction(() => !document.querySelector('.gs-pri')?.hasAttribute('aria-disabled'));
   L.check('5 members: Next opens', true);

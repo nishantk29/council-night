@@ -1,0 +1,189 @@
+/* The Gilded Chamber: the host's four-step setup, the Presets page and the Roles panel (loaded after redesign.css).
+   Identity: dark wood, ballot paper, Big Shoulders Display, orange, 0 radius on buttons. Tokens are scoped to .gs / html[data-gs]
+   so nothing else in the app (the hub's Gilded card, the Gilded sheet, the game screens) changes. Motion: transform and opacity only. */
+/* tokens live on :root (nothing outside .gs, the sheets and the roles panel reads them) */
+:root{
+  --gs-bg:oklch(22.5% 0.011 73); --gs-ink:oklch(91.2% 0.035 87); --gs-tint:oklch(76.8% 0.039 85); --gs-hair:rgba(236,225,200,.16); --gs-hair2:rgba(236,225,200,.34);
+  --gs-acc:oklch(82.5% 0.125 63); --gs-acc-edge:oklch(56% 0.11 58); --gs-on:oklch(19.3% 0.061 25); --gs-well:oklch(19.3% 0.011 81); --gs-sheet:oklch(26.5% 0.015 71);
+  --gs-reform:oklch(70% 0.1 253); --gs-rust:oklch(70% 0.15 35); --gs-tok:oklch(28.1% 0.017 75);
+  --gs-paper:#EFE3CB; --gs-paper-ink:#1B1410; --gs-paper-tint:#5A4A3A;
+}
+html[data-gs] body,body:has(.roles-panel){background:radial-gradient(120% 70% at 50% -10%,oklch(30% 0.02 70) 0,var(--gs-bg) 60%) fixed,var(--gs-bg)}
+html[data-gs] .bg-art,body:has(.roles-panel) .bg-art{display:none}
+html[data-gs] .layout .col-main{color:var(--gs-ink)}
+
+.gs{display:grid;gap:var(--s3);align-content:start;color:var(--gs-ink);font-size:1rem}
+.gs h1,.gs h2,.gs p,.gs ul,.gs ol{margin:0}
+.gs ul,.gs ol{list-style:none;padding:0}
+:where(.gs) button{font:inherit;color:inherit}
+.gs-disp,.gs-h{font-family:var(--display-gilded);font-weight:800;text-transform:uppercase;letter-spacing:.01em;line-height:1.05;text-wrap:balance}
+.gs-h{font-size:clamp(1.9rem,8.4vw,2.4rem);outline:none}
+.gs-sub{color:var(--gs-tint);margin-top:calc(-1 * var(--s2))}
+.gs-grp{font-size:1rem;font-weight:600;color:var(--gs-tint);margin-bottom:var(--s2)}
+.gs-small{font-size:.9375rem;color:var(--gs-tint)} .gs-small.is-warn{color:var(--gs-acc)}
+.gs-note{font-size:.9375rem;color:var(--gs-tint)}
+.gs-block{display:grid;gap:var(--s2)}
+.gs-link{white-space:nowrap;display:inline-flex;align-items:center;gap:6px;min-height:44px;min-width:44px;padding:0;border:0;background:none;color:var(--gs-acc);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;cursor:pointer}
+.gs-caret{width:1em;height:1em;transform:rotate(-90deg)} .gs-caret.open{transform:none}
+
+/* top row: Back, dots (44px targets, small visual), "Step n of 4" */
+.gs-top{display:flex;align-items:center;gap:var(--s2);min-height:52px}
+.gs-sp{width:4px;flex:none}
+.gs-back{display:inline-flex;align-items:center;gap:2px;min-height:44px;min-width:44px;padding:0 var(--s2) 0 0;border:0;background:none;color:var(--gs-tint);cursor:pointer}
+.gs-back .ui-ico{width:20px;height:20px}
+.gs-dots{display:flex;gap:0;flex:none}
+.gs-dot{width:38px;height:44px;display:grid;place-items:center;border:0;background:none;cursor:pointer}
+.gs-dot span{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:600 .8125rem/1 var(--font-ui);background:color-mix(in srgb,var(--gs-ink) 10%,transparent)}
+.gs-dot.done span{background:color-mix(in srgb,var(--gs-ink) 28%,transparent)}
+.gs-dot.now span{background:var(--gs-acc);color:var(--gs-on)}
+.gs-dot[aria-disabled="true"]{cursor:default;opacity:.7}
+.gs-stepof{flex:1;min-width:0;text-align:right;font-size:.8125rem;color:var(--gs-tint);line-height:1.2}
+
+/* step content */
+.gs-slide{display:grid;gap:var(--s3);align-content:start}
+.gs-code{display:flex;align-items:center;gap:var(--s2);color:var(--gs-tint)}
+.gs-code .ui-ico{width:22px;height:22px}
+.gs-code b{color:var(--gs-ink);letter-spacing:.08em}
+.gs-code .gs-link{margin-left:auto}
+.gs-chips{display:flex;flex-wrap:wrap;gap:var(--s2);max-height:clamp(96px,26dvh,36dvh);overflow-y:auto;overscroll-behavior:contain;padding:2px}
+.gs-chip{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:6px 0 6px 5px;border-radius:999px;background:color-mix(in srgb,var(--gs-ink) 9%,transparent)}
+.gs-chip:not(:has(.gs-x)){padding-right:14px}
+.gs-ini{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--gs-tok);box-shadow:inset 0 0 0 2px oklch(43% 0.03 78),inset 0 -2px 0 rgba(0,0,0,.3);font-size:.8125rem;font-weight:600}
+.gs-nm small{color:var(--gs-tint);font-size:.8125rem}
+.gs-dev{display:inline-flex;color:var(--gs-tint)} .gs-dev .ui-ico{width:18px;height:18px}
+.gs-x{width:40px;height:44px;border:0;background:none;color:var(--gs-tint);display:grid;place-items:center;cursor:pointer}
+.gs-x .ui-ico{width:18px;height:18px}
+.gs-add{display:flex;gap:var(--s2);background:var(--gs-well);padding:var(--s2)}
+.gs-add input{flex:1;min-width:0;min-height:48px;padding:0 var(--s3);border:0;background:transparent;color:var(--gs-ink);font:inherit;font-size:1rem;outline-offset:2px}
+.gs-add input::placeholder{color:var(--gs-tint)}
+.gs-sec{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:48px;padding:0 var(--s4);border:0;border-radius:0;background:color-mix(in srgb,var(--gs-ink) 12%,transparent);color:var(--gs-ink);font-weight:600;cursor:pointer}
+.gs-sec .ui-ico{width:18px;height:18px}
+.gs-callout{display:flex;align-items:center;gap:var(--s2);padding:8px 12px;border-radius:8px;background:color-mix(in srgb,var(--gs-ink) 8%,transparent);font-size:.9375rem;color:var(--gs-tint);align-self:start}
+.gs-callout .ui-ico{width:18px;height:18px;flex:none}
+
+/* ballot paper: the selected preset */
+.gs-stock{display:grid;gap:var(--s2);padding:var(--s4);border-radius:6px;background:var(--paper),var(--gs-paper);background-size:160px,auto;background-blend-mode:multiply;color:var(--gs-paper-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 1px 0 #0004,0 3px 0 #A8977A,0 14px 22px -12px #000}
+.gs-stock .gs-small{color:var(--gs-paper-tint)} .gs-stock .gs-small.is-warn{color:#8A3A0A;font-weight:600}
+.gs-stock-top{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s3)}
+.gs-stock .gs-disp{font-size:1.75rem}
+.gs-diff{font-size:.9375rem;color:var(--gs-paper-tint);white-space:nowrap}
+.gs-pips{display:inline-flex;gap:3px;vertical-align:middle;margin-left:4px}
+.gs-pips i{width:6px;height:6px;border-radius:50%;background:color-mix(in srgb,currentColor 25%,transparent)} .gs-pips i.on{background:currentColor}
+.gs-roles{display:grid}
+.gs-role{display:flex;align-items:center;gap:var(--s3);min-height:64px;padding:var(--s2) 0;border-bottom:1px solid var(--gs-hair)}
+.gs-rt{flex:1;display:grid;gap:2px;min-width:0} .gs-rt small{font-size:.9375rem;color:var(--gs-tint)}
+.gs-ct{font-size:1.25rem;font-variant-numeric:tabular-nums}
+.gs-tok{position:relative;flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--gs-tok);box-shadow:inset 0 0 0 2px var(--rim,var(--gs-reform)),inset 0 -3px 0 rgba(0,0,0,.28),0 2px 0 rgba(0,0,0,.35);color:var(--rim,var(--gs-reform))}
+.gs-tok .ico{width:24px;height:24px}
+.a-cabal .gs-tok{--rim:var(--gs-rust)}
+.gs-tok.s{width:34px;height:34px} .gs-tok.s .ico{width:18px;height:18px}
+
+/* seating */
+.gs-opts{display:grid;gap:var(--s2)}
+.gs-opt{display:flex;align-items:center;gap:var(--s3);min-height:72px;padding:var(--s3);margin-inline:calc(-1 * var(--s3));border:0;border-radius:0;background:none;text-align:left;cursor:pointer}
+.gs-opt.on{background:color-mix(in srgb,var(--gs-acc) 13%,transparent)}
+.gs-ot{flex:1;display:grid;gap:2px} .gs-ot span{font-size:.9375rem;color:var(--gs-tint)}
+.gs-oico{width:44px;height:44px;display:grid;place-items:center;color:var(--gs-tint)} .gs-oico .ui-ico{width:26px;height:26px}
+.gs-opt.on .gs-oico{color:var(--gs-acc)}
+.gs-radio{width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gs-hair2);flex:none}
+.gs-opt.on .gs-radio{box-shadow:inset 0 0 0 7px var(--gs-acc)}
+.gs-pieces{display:grid;gap:var(--s2)}
+.gs-piece{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);min-height:52px}
+.gs-seg{display:inline-flex;background:var(--gs-well)}
+.gs-seg button{min-height:44px;min-width:44px;padding:0 var(--s3);border:0;background:none;cursor:pointer;color:var(--gs-tint)}
+.gs-seg button[aria-pressed="true"]{background:var(--gs-acc);color:var(--gs-on);font-weight:600}
+
+/* deal */
+.gs-sums{display:grid}
+.gs-sum{display:flex;align-items:center;gap:var(--s3);min-height:56px;padding:var(--s2) 0;border-bottom:1px solid var(--gs-hair)}
+.gs-k{width:84px;flex:none;font-size:.9375rem;color:var(--gs-tint)} .gs-v{flex:1;min-width:0;overflow-wrap:anywhere} .gs-v small{color:var(--gs-tint);font-size:.8125rem}
+.gs-rolesrow{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s3)} .gs-rolesrow .gs-grp{width:100%;margin:0}
+.gs-minis{display:flex;gap:var(--s3);align-items:center} .gs-mini{display:inline-flex;align-items:center;gap:4px} .gs-mini small{font-size:.9375rem}
+.gs-adv{border-top:1px solid var(--gs-hair)}
+.gs-advbtn{display:flex;align-items:center;gap:var(--s3);width:100%;min-height:56px;padding:var(--s2) 0;border:0;background:none;text-align:left;cursor:pointer}
+.gs-advbtn span{flex:1;font-size:.9375rem;color:var(--gs-tint)}
+.gs-advbody{display:grid;gap:var(--s3);padding:var(--s2) 0 var(--s4)}
+.gs-tgs{display:grid;gap:var(--s2)}
+.gs-tg{display:flex;align-items:center;gap:var(--s3);min-height:56px;padding:var(--s2) 0;cursor:pointer}
+.gs-tg > span{flex:1;display:grid;gap:2px} .gs-tg > span span{font-size:.9375rem;color:var(--gs-tint)}
+.gs-tg input[type=checkbox]{width:24px;height:24px;flex:none;accent-color:var(--gs-acc)}
+.gs-tg select{min-height:44px;max-width:8rem;border:0;border-radius:0;background:var(--gs-well);color:var(--gs-ink);font:inherit;font-size:1rem;padding:0 var(--s2)}
+.gs-seatord li{display:flex;align-items:center;gap:var(--s2);min-height:44px} .gs-seatord .gs-nm{flex:1}
+.gs-ib{width:44px;height:44px;display:grid;place-items:center;border:0;background:none;cursor:pointer} .gs-ib[disabled]{opacity:.35} .gs-ib .ui-ico{width:20px;height:20px}
+.gs-advact{display:flex;flex-wrap:wrap;gap:var(--s2)}
+
+/* the one primary, in a dock above the tab bar */
+.gs-dock{position:sticky;bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom));z-index:12;display:grid;gap:var(--s2);margin-inline:calc(-1 * var(--gutter-r));padding:var(--s3) var(--gutter-r) var(--s3) var(--gutter-l);background:linear-gradient(to bottom,transparent,var(--gs-bg) 24%)}
+@media (min-width:1100px){.gs-dock{bottom:0}}
+.gs-why{font-size:.9375rem;color:var(--gs-ink);line-height:1.35}
+.gs-why .gs-link{min-height:44px;vertical-align:middle}
+.gs-pri{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;padding:var(--s2) var(--s4);border:0;border-radius:0;background:var(--gs-acc);color:var(--gs-on);font-size:1.0625rem;font-weight:600;line-height:1.15;text-wrap:balance;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 2px 0 var(--gs-acc-edge);cursor:pointer}
+.gs-pri[aria-disabled="true"]{background:color-mix(in srgb,var(--gs-ink) 14%,transparent);color:var(--gs-tint);box-shadow:none;cursor:default}
+.gs-pri:active{transform:translateY(1px)}
+html[data-gs] .layout .col-main{padding-bottom:calc(var(--tabbar-h) + 24px + env(safe-area-inset-bottom))}
+@media (min-width:1100px){html[data-gs] .layout .col-main{padding-bottom:24px}}
+@media (pointer:coarse) and (max-width:1099px){html:has(input:not([type=checkbox]):not([type=radio]):focus) .gs-dock{display:none}}
+.gs :focus-visible{outline:3px solid var(--focus,#F7D58A);outline-offset:2px}
+
+/* presets page */
+.gs-prelist{display:grid}
+.gs-pre{position:relative;border-bottom:1px solid var(--gs-hair)}
+.gs-pre.cur{margin-inline:calc(-1 * var(--gutter-r));padding-inline:var(--gutter-r);background:color-mix(in srgb,var(--gs-acc) 9%,transparent);border-bottom:0}
+.gs-prebtn{display:grid;gap:4px;width:100%;min-height:44px;padding:var(--s4) 0;border:0;background:none;text-align:left;cursor:pointer}
+.gs-pre.saved .gs-prebtn{padding-right:52px}
+.gs-pre-top{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s3)}
+.gs-pre .gs-disp{font-size:1.625rem}
+.gs-vibe{color:var(--gs-tint)} .gs-meta{display:flex;flex-wrap:wrap;gap:var(--s1) var(--s4);font-size:.9375rem;color:var(--gs-tint)}
+.gs-sets{font-size:.9375rem;color:var(--gs-ink)}
+.gs-sel,.gs-badge{display:inline-flex;align-items:center;gap:6px;font-size:.9375rem;font-weight:600;color:var(--gs-acc);white-space:nowrap} .gs-sel .ui-ico,.gs-badge .ui-ico{width:16px;height:16px}
+.gs-badge.inline{margin-bottom:var(--s2)}
+.gs-pre.off .gs-disp,.gs-pre.off .gs-vibe,.gs-pre.off .gs-sets{color:var(--gs-tint)} .gs-pre.off{opacity:.8}
+.gs-more{position:absolute;right:0;top:var(--s3);width:44px;height:44px;display:grid;place-items:center;border:0;background:none;cursor:pointer;color:var(--gs-tint)} .gs-more .ui-ico{width:20px;height:20px}
+.gs-pre.cur .gs-more{right:var(--gutter-r)}
+
+/* sheets (preview, rename, saved-preset menu): the ballot look on the existing dialog */
+dialog.gs-sheet{background:var(--gs-sheet,oklch(26.5% 0.015 71));color:var(--gs-ink,#F1E6D2);border:0;border-radius:18px 18px 0 0;font-size:1rem}
+dialog.gs-sheet .x-btn{color:var(--gs-ink,#F1E6D2)}
+dialog.gs-sheet .sheet-title{font-family:var(--display-gilded);font-weight:800;text-transform:uppercase;font-size:1.75rem;letter-spacing:.01em}
+dialog.gs-sheet p{margin:0 0 var(--s3)} dialog.gs-sheet ul{list-style:none;padding:0;margin:0 0 var(--s3)}
+dialog.gs-sheet .gs-grp{font-size:1rem;font-weight:600;color:var(--gs-tint,#BFAE95);margin:var(--s3) 0 var(--s2)}
+dialog.gs-sheet .gs-small{font-size:.9375rem;color:var(--gs-tint,#BFAE95)} dialog.gs-sheet .gs-small.is-warn{color:var(--gs-acc,#F2B46A)}
+dialog.gs-sheet .btn{border-radius:0;border:0;min-height:52px;font-size:1.0625rem;font-weight:600}
+dialog.gs-sheet .btn.gs-sheet-pri{background:var(--gs-acc,#F2B46A);color:var(--gs-on,#2A0F0C);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 2px 0 var(--gs-acc-edge,#A5622A)}
+dialog.gs-sheet .btn.gs-sheet-link{background:none;color:var(--gs-acc,#F2B46A);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;min-height:44px}
+dialog.gs-sheet .gs-role{border-color:var(--gs-hair,rgba(236,225,200,.16))}
+dialog.gs-sheet .gs-bar{display:flex;gap:2px;height:10px;margin:var(--s2) 0} dialog.gs-sheet .gs-bar i{display:block} dialog.gs-sheet .gs-bar .a{background:var(--gs-reform,#7FA6E0)} dialog.gs-sheet .gs-bar .b{background:var(--gs-rust,#E0694A)}
+dialog.gs-sheet .gs-fx{display:grid;gap:var(--s1);font-size:.9375rem;color:var(--gs-tint,#BFAE95)}
+dialog.gs-sheet .gs-lbl{display:block;margin-bottom:var(--s2);color:var(--gs-tint,#BFAE95)}
+dialog.gs-sheet .gs-name{width:100%;min-height:52px;padding:0 var(--s3);border:0;border-radius:0;background:var(--gs-well,#1B1812);color:var(--gs-ink,#F1E6D2);font:inherit;font-size:1rem}
+dialog.gs-sheet .gs-tok{--rim:var(--gs-reform,#7FA6E0);background:var(--gs-tok,#2D251C);color:var(--rim)} dialog.gs-sheet .a-cabal .gs-tok{--rim:var(--gs-rust,#E0694A)}
+
+/* Roles in this game: header chip and the panel shown before "See my role" (same list on every phone) */
+.roles-chip{flex:none;min-height:44px;min-width:44px;padding:0 var(--s3);border:0;border-radius:var(--r-pill);background:var(--panel-2);color:var(--candle);font:inherit;font-size:.9375rem;font-weight:700;white-space:nowrap;cursor:pointer}
+.layout .col-main > .stage.roles-panel{background:none;box-shadow:none;border-radius:0;padding:var(--s2) 0 0;color:var(--gs-ink);gap:var(--s2)}
+.layout .col-main > .stage.roles-panel::before,.layout .col-main > .stage.roles-panel::after{display:none}
+.roles-panel .phase-title{font-family:var(--display-gilded);font-weight:800;text-transform:uppercase;font-size:clamp(1.9rem,8.4vw,2.4rem);color:var(--gs-ink);outline:none}
+.roles-panel .say,.roles-panel .muted{color:var(--gs-tint);font-weight:400;font-size:1rem}
+.roles-panel .rs-group{margin:var(--s3) 0 0}
+.roles-panel .rs-side{font-family:var(--font-ui);font-size:1rem;font-weight:600;color:var(--gs-tint)}
+.roles-panel .a-reform .rs-side{color:var(--gs-reform)} .roles-panel .a-cabal .rs-side{color:var(--gs-rust)}
+.roles-panel .rs-side small{color:inherit}
+.roles-panel .rs-list{display:grid;gap:0;list-style:none;padding:0}
+.roles-panel .rs-row{background:none;border-radius:0;padding:var(--s3) 0;border-bottom:1px solid var(--gs-hair);align-items:flex-start}
+.roles-panel .rs-ico{background:var(--gs-tok);box-shadow:inset 0 0 0 2px var(--rim,var(--gs-reform)),inset 0 -3px 0 rgba(0,0,0,.28),0 2px 0 rgba(0,0,0,.35)}
+.roles-panel .a-cabal .rs-ico{--rim:var(--gs-rust)}
+.roles-panel .rs-ico .ico{color:var(--rim,var(--gs-reform))}
+.roles-panel .rs-main b{color:var(--gs-ink);font-size:1.0625rem} .roles-panel .rs-n{color:var(--gs-acc)}
+.roles-panel .rs-blurb,.roles-panel .rs-note{color:var(--gs-tint);font-size:1rem}
+.roles-panel .rs-knows .rs-facts li{background:none;border-radius:0;padding:var(--s2) 0;color:var(--gs-tint);font-size:1rem}
+.roles-dock{display:block}
+.roles-dock .gs-pri{width:100%}
+@media (max-width:420px){.appbar .ab-word{display:none}.appbar .phase-badge{box-sizing:border-box;padding:11px;width:44px;min-height:44px;justify-content:center}.appbar .phase-badge .pb-t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.appbar .phase-badge .ui-ico{width:22px;height:22px;color:var(--ink)}}
+
+/* a guest's lobby */
+.gs-guest{padding-top:var(--s4)}
+
+@media (prefers-reduced-motion:reduce){.gs *{transition:none!important}}
+
+/* short phones (375x667): the same step has to fit above the dock, so the small callout steps aside */
+@media (max-height:720px){.gs-slide > .gs-callout{display:none}.gs-top{min-height:48px}.gs-h{font-size:clamp(1.75rem,7.6vw,2.1rem)}}

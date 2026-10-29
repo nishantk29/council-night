@@ -11,8 +11,8 @@ import { makeFx } from './fx.js';
 import { qrSvg } from './qr.js';
 import { toggleFullscreen, revealAfterRelease, TAP_REVEAL_MS, wantsWake, screenKey, motionOk, makeWake, haptic } from './phone.js';
 import { FAQ } from './faq.js';
-import { rolesInGame, rolesSeats, rolesSheetBody } from './roles_sheet.js';
-import { setupComposition, houseEffects } from './steppers.js';
+import { rolesInGame, rolesSeats, rolesSheetBody, rolesChip } from './roles_sheet.js';
+import { makeSetup } from './setup_flow.js';
 import { openSheet, closeSheets } from './sheets.js';
 import { hostNav } from './host-nav.js';
 import { errorBody, errorButtons, crashHtml, FATAL, ENDED } from './error-screen.js';
@@ -24,7 +24,7 @@ const $html = document.documentElement;
 const KEY = 'council';
 
 const S = { mode: 'home', code: null, view: null, fatal: null, conn: true, transport: null,
-  ui: { open: {}, flip: false, draft: {}, fresh: {}, tab: 'game', side: 'chat', tally: {} } };
+  ui: { open: {}, flip: false, draft: {}, fresh: {}, tab: 'game', side: 'chat', tally: {}, rolesSeen: {}, setup: null } };
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const initial = (n) => esc(([...String(n || '').trim()][0] || '?').toUpperCase());
@@ -86,6 +86,7 @@ function paint() {
   const y = window.scrollY;
   $html.dataset.phase = S.view?.phase || S.mode;
   $html.dataset.screen = S.mode === 'screen' ? '1' : '';
+  $html.dataset.gs = S.mode === 'play' && S.view?.phase === 'lobby' && S.view.kind !== 'screen' ? '1' : ''; // the wood-and-ballot setup look
   $html.classList.toggle('fx-off', S.view?.anim === false); // the host's Animations switch: card flips are skipped too
   try { $app.innerHTML = screen(); } catch (e) { console.error(e); crash(); return; }
   S.ui.fresh = {};
@@ -93,12 +94,16 @@ function paint() {
   window.scrollTo(0, toTop ? 0 : y); toTop = false;
   for (const el of $app.querySelectorAll('[data-scroll]')) el.scrollTop = el.scrollHeight;
   fx.after();
+  setup.afterPaint(reducedMq.matches);
   wake(S.mode !== 'home' && wantsWake(S.view));
   if (S.mode === 'home' && !S.pruned) { S.pruned = true; pruneClosedRooms($app, (c) => { store.del(`${KEY}.player.${c}`); store.del(`${KEY}.host.${c}`); }); }
 }
 document.addEventListener('focusout', () => { if (pending) setTimeout(render, 50); });
 const T = makeTable({ S, send, esc, ui, toast, render });
 const fx = makeFx({ S, send, esc });
+// The three play modes, named as the printed guide and the Seating step name them (Own phones = Phones mode, Mixed = Hybrid, One phone = Host-only mode).
+const MODE_NAMES = { phone: 'Phones mode', hybrid: 'Hybrid', physical: 'Host-only mode' };
+const setup = makeSetup({ S, send, store, render, esc, ui, art, toast, openSheet, askConfirm, modeNames: MODE_NAMES });
 
 // The one client error screen: title + short line + the two home buttons. Fixed words only, never raw error text.
 const errorScreen = ({ title, line, icon = 'warning' }) => errorBody({ title, line, icon: icon === 'sun' ? art('sun') : ui(icon, 'is-big') });
@@ -214,11 +219,12 @@ function joinForm() {
 
 const PHASE = { lobby: ['Gathering', 'table'], reveal: ['Secret Roles', 'cards'], nominate: ['Nomination', 'gavel'], vote: ['Election', 'hand'],
   check: ['A Question', 'question'], legislate: ['Session', 'rules'], chaos: ['Unrest', 'warning'], power: ['Power', 'sparkle'], over: ['Game Over', 'trophy'] };
+const rolesChipBtn = (v) => { const c = rolesChip(v); return `<button type="button" class="roles-chip" data-a="roles" aria-label="${esc(c.label)}">${esc(c.text)}</button>`; };
 function appbar(v) {
   const [label, icon] = PHASE[v.phase] || ['', 'game'];
   return `<header class="appbar"><a class="appbar-mark" href="#/" aria-label="Home">${art('torch')}</a>
     <div class="appbar-title"><span class="ab-word">Chamber </span><span class="code">${esc(v.code)}</span></div>
-    ${T.timerChip(v)}${dimBtn()}<span class="phase-badge">${ui(icon)}${label}</span></header>`;
+    ${T.timerChip(v)}${rolesChipBtn(v)}${dimBtn()}<span class="phase-badge">${ui(icon)}<span class="pb-t">${label}</span></span></header>`;
 }
 
 const nameOf = (v, id) => v.players.find((p) => p.id === id)?.name || '?';
@@ -253,74 +259,8 @@ function myMove(v) {
   return ['check', 'chaos'].includes(v.phase) && me.host;
 }
 
-// ---------------------------------------------------------------- lobby (the setup part of the host dashboard)
-const MODES = [['phone', 'Phones mode', 'Every player uses their own phone. Works for online play too.'],
-  ['hybrid', 'Hybrid', 'Choose below, for each piece, whether the table handles it out loud or the app does.'],
-  ['physical', 'Host-only mode', 'The table handles everything out loud. This phone is the board, the tracker and the Host.']];
-const PIECE_TEXT = { roles: ['Secret Roles', 'role'], votes: ['Aye/Nay Votes', 'vote'], cards: ['Policy Tiles', 'policy'] };
-const HOUSE = [
-  ['rebalance', 'Rebalanced Tables', 'Community variant: at 6 players one Decree starts on the board; at 7 one Decree, and at 9 two Decrees, are left out of the policy pile.'],
-  ['exile', 'Exile Instead of Execution', 'Removed players stay at the table and still vote, but can’t hold office or be nominated. Exiling the Boss still wins for the Loyalists.'],
-  ['anonVotes', 'Anonymous Votes', 'Show only the count of Ayes and Nays, not who voted how.'],
-  ['noClaims', 'No-Claims Mode', 'Turns off posting claims in the chat. Claims are made out loud.'],
-  ['sitOut', 'Host Sits Out', 'The host doesn’t get a role and sees the whole deal on their own phone.'],
-];
-function lobby(v) {
-  const me = v.me; const seatedP = v.players.filter((p) => !p.watch); const n = seatedP.length; const host = me.host;
-  const link = `${location.origin}/#/play/${v.code}`;
-  const comp = setupComposition(n);
-  const status = comp.error ? `<p class="note is-warn" role="alert">${ui(n > MAX_PLAYERS ? 'warning' : 'info')} ${esc(comp.error)}</p>` : `<p class="note">${ui('check')} ${esc(comp.summary)}.</p>`;
-  const seats = v.players.map((p, i) => `<li><span class="n">${p.watch ? '–' : i + 1}</span><span class="dot ${p.online || p.phoneless ? 'on' : ''}" title="${p.phoneless ? 'No phone' : p.online ? 'Connected' : 'Not connected'}"></span>
-      <span class="who">${esc(p.name)}${p.host ? ' <small class="muted">Host</small>' : ''}${p.watch ? ' <small class="muted">Sitting Out</small>' : ''}${p.phoneless ? ' <small class="muted">No Phone</small>' : ''}${p.id === me.id ? ' <small class="muted">You</small>' : ''}</span>
-      ${host ? `<button class="icon-btn" data-a="move" data-id="${p.id}" data-dir="up" aria-label="Move ${esc(p.name)} up" ${i === 0 ? 'disabled' : ''}>${ui('caret-down', 'flip-up')}</button>
-      <button class="icon-btn" data-a="move" data-id="${p.id}" data-dir="down" aria-label="Move ${esc(p.name)} down" ${i === v.players.length - 1 ? 'disabled' : ''}>${ui('caret-down')}</button>
-      ${p.host ? '' : `<button class="icon-btn" data-a="kick" data-id="${p.id}" aria-label="Remove ${esc(p.name)}">${ui('x')}</button>`}` : ''}</li>`).join('');
-  const m = v.mode;
-  const modes = MODES.map(([k, t, d]) => `<label class="toggle radio ${m.play === k ? 'is-on' : ''}"><input type="radio" name="play" data-a="modeSet" data-k="play" value="${k}" ${m.play === k ? 'checked' : ''} ${host ? '' : 'disabled'}><span><b>${t}</b><span class="muted">${d}</span></span></label>`).join('');
-  const pieces = m.play === 'hybrid' ? `<div class="pieces">${Object.entries(PIECE_TEXT).map(([k, [t]]) => `<div class="piece"><span>${t}</span><span class="seg mini">${['app', 'physical'].map((x) => `<button type="button" data-a="piece" data-k="${k}" data-v="${x}" aria-pressed="${m[k] === x}" ${host ? '' : 'disabled'}>${x === 'app' ? 'In the app' : 'At the table'}</button>`).join('')}</span></div>`).join('')}</div>` : '';
-  const fx = Object.fromEntries(houseEffects(n, v.house).map((h) => [h.key, h.effect]));
-  const house = HOUSE.map(([k, t, d]) => `<label class="toggle ${v.house[k] ? 'is-on' : ''}"><input type="checkbox" data-a="houseSet" data-k="${k}" ${v.house[k] ? 'checked' : ''} ${host ? '' : 'disabled'}><span><b>${t}</b><span class="muted">${fx[k] ? esc(fx[k]) : d}</span></span></label>`).join('');
-  const sel = (k, opts2) => `<select data-a="houseSel" data-k="${k}" ${host ? '' : 'disabled'}>${opts2.map(([val, l]) => `<option value="${val}" ${String(v.house[k]) === String(val) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
-  return `<section class="join-code"><p class="muted">Room code</p><p class="room-code">${esc(v.code)}</p>
-      <button type="button" class="qr-tap" data-a="qrFull" data-link="${esc(link)}" data-code="${esc(v.code)}" aria-label="Show the join QR code full screen">${qrSvg(link, `QR code to join room ${v.code}`)}<span>Scan to join. Tap for full screen.</span></button>
-      <p class="muted join-link">${esc(link)}</p>
-      <div class="btn-row"><button class="btn ghost" data-a="copy" data-link="${esc(link)}">${ui('copy')} Copy Invite Link</button>
-      ${navigator.share ? `<button class="btn ghost" data-a="share" data-link="${esc(link)}">Share</button>` : ''}</div>
-      <p class="muted"><a href="#/rules">How to Play</a> · <a href="#/faq">FAQ</a></p></section>
-    <section class="stage"><h2 class="block-title">At the Table (${n})</h2>
-      <p class="muted">Seat order is the order the Speaker role travels. ${host ? 'Match it to how you are sitting.' : ''}</p>
-      <ul class="seat-list">${seats}</ul>${status}
-      ${host ? `<div class="add-seat"><label class="field"><span>Add a seat without a phone</span><input data-i="seatName" maxlength="20" placeholder="Name" enterkeyhint="done" value="${esc(S.ui.draft.seatName || '')}"></label><button class="btn ghost" data-a="addSeat">Add</button></div>
-      <div class="btn-row"><button class="btn ghost" data-a="shuffleSeats">${ui('shuffle')} Shuffle Seats</button></div>` : ''}</section>
-    <section class="stage"><h2 class="block-title">The Setup</h2>${compositionHtml(comp)}${n >= 5 && n <= 10 ? balanceTips(n, v.house) : ''}
-      <div class="btn-row"><button type="button" class="btn ghost" data-a="roles">Roles in this game</button></div></section>
-    <section class="stage"><h2 class="block-title">How You’re Playing</h2><div class="settings">${modes}</div>${pieces}
-      ${m.play !== 'phone' ? `<p class="muted">Anything handled at the table is entered by the host, who never sees a secret.</p>` : ''}</section>
-    <section class="stage"><h2 class="block-title">House Rules</h2><p class="muted">All off unless the host turns them on. Otherwise the rules are exactly the classic game.</p>
-      <div class="settings">${house}
-      <label class="toggle"><span><b>Phase Timer</b><span class="muted">A countdown starts each phase. Nothing happens at zero; the host decides.</span></span>${sel('turnTimer', [[0, 'Off'], [60, '1 min'], [90, '1:30'], [120, '2 min'], [180, '3 min'], [300, '5 min']])}</label>
-      <label class="toggle"><span><b>Vote Reveal Delay</b><span class="muted">A short drumroll before the votes are shown.</span></span>${sel('revealDelay', [[0, 'Off'], [3, '3 sec'], [5, '5 sec']])}</label>
-      <label class="toggle"><span><b>First Speaker</b><span class="muted">Who holds the gavel first.</span></span>${sel('firstLeader', [['random', 'Random'], ['host', 'The host']])}</label></div></section>
-    ${host ? `<div class="sticky-act">${comp.error ? `<p class="note is-warn start-why">${esc(comp.error)}</p>` : ''}<button class="btn big ${comp.ok ? '' : 'disabled'}" data-a="start" ${comp.ok ? '' : `aria-disabled="true" data-why="${esc(comp.error)}"`}>${m.roles === 'app' ? 'Deal Roles' : 'Start Game'}</button></div>`
-    : '<div class="empty">Waiting for the host to start…</div>'}`;
-}
-
-// The composition, in the stepper look but read-only: Gilded's teams are fixed by table size.
-function compositionHtml(c) {
-  const row = (r) => `<div class="step-row is-fill a-${r.side}"><span class="rs-ico">${art(r.icon)}</span><span class="step-text"><b>${esc(r.label)}</b><small>${esc(r.blurb)}</small></span>
-      <span class="step-ctl"><button type="button" class="icon-btn" disabled aria-label="${esc(r.label)}: ${esc(c.reason)}">${ui('minus')}</button><b data-roll="comp-${r.id}">${r.count}</b><button type="button" class="icon-btn" disabled aria-label="${esc(r.label)}: ${esc(c.reason)}">${ui('plus')}</button></span></div>`;
-  return `<p class="muted">${esc(c.summary)}.</p><div class="steppers">${c.rows.map(row).join('')}</div>
-    <p class="step-why" role="note">Powers when a Decree passes: ${c.powers.map((p) => `<span class="pw-chip">${p.slot} ${esc(p.label)}</span>`).join(' ')}</p>`;
-}
-
-function balanceTips(n, house) {
-  const tips = [];
-  if ([6, 7, 9].includes(n) && !house.rebalance) tips.push(`At ${n} players the classic game leans towards the Syndicate. The Rebalanced Tables house rule evens it out.`);
-  if (n <= 6) tips.push('At 5 or 6 the Boss knows the Syndicate, and the third Decree lets the Speaker peek at the docket.');
-  if (n >= 9) tips.push('At 9 or 10 the very first Decree gives an Inquiry: the Loyalists get information early.');
-  if (house.exile) tips.push('Exile keeps everyone voting: good for groups where nobody likes to sit out.');
-  return tips.length ? `<ul class="tips">${tips.map((t) => `<li>${ui('info')} ${esc(t)}</li>`).join('')}</ul>` : '';
-}
+// ---------------------------------------------------------------- lobby (the host's four-step setup lives in setup_flow.js / setup_ui.js)
+const lobby = (v) => setup.html(v);
 
 // ---------------------------------------------------------------- the board
 function board(v) {
@@ -439,13 +379,20 @@ function dock(v) {
   return `<div class="sticky-act dock"><button type="button" class="btn big" data-a="dockSend" ${nav.disabled ? 'aria-disabled="true"' : ''}>${esc(nav.label)}</button>
     ${nav.skip ? `<button type="button" class="btn ghost dock-skip" data-a="dockSkip">${esc(nav.skip.label)}</button>` : ''}</div>`;
 }
+// "Roles in this game": the same list on every phone, before anyone sees their own role. Static setup only, never who holds what.
+function rolesPanel(v, withButton = true) {
+  const info = rolesInGame(rolesSeats(v), v.house);
+  return `<section class="stage roles-panel"><h1 class="phase-title" tabindex="-1">Roles in this game</h1><p class="say">${info.seats} players. Every phone shows this same list.</p>${rolesSheetBody(info, esc, art)}
+    <p class="muted">This is what’s in the game, not who has what.</p></section>${withButton ? '<div class="sticky-act roles-dock"><button type="button" class="gs-pri" data-a="rolesSeen">See my role</button></div>' : ''}`;
+}
 function stage(v) {
   const g = v.game; const me = v.me; const host = me.host;
   const say = (t) => `<p class="say">${t}</p>`;
   const S2 = esc(nameOf(v, g.speaker)); const C2 = esc(nameOf(v, g.nominee));
   const unrestWarn = g.tracker === TRACKER_MAX - 1 ? `<p class="note is-out">${ui('warning')} Two failed governments in a row. If this one fails too, the top policy is enacted.</p>` : '';
   if (v.phase === 'reveal') {
-    if (!g.appRoles || !me.role) return `<section class="stage"><h1 class="phase-title">Secret Roles</h1>${say(g.appRoles ? 'The players are reading their roles.' : 'Everyone checks their own role. The host reads the eyes-closed script from the Host tab.')}</section>
+    if (g.appRoles && me.role && !S.ui.rolesSeen[v.gameNo || 1]) return rolesPanel(v);
+    if (!g.appRoles || !me.role) return `<section class="stage"><h1 class="phase-title">Secret Roles</h1>${say(g.appRoles ? 'The players are reading their roles.' : 'Everyone checks their own role. The host reads the eyes-closed script from the Host tab.')}</section>${rolesPanel(v, false)}
       ${host ? '<div class="sticky-act"><button class="btn big" data-a="skipReveal">Begin Game</button></div>' : ''}`;
     const ready = g.ready.includes(me.id);
     return `<section class="stage reveal-stage"><h1 class="phase-title">Your Secret Role</h1>
@@ -685,7 +632,7 @@ function wsTransport(code, asScreen) {
 
 // A restarted game (same code, new gameNo): drop everything tied to the old one. The stored player token still works.
 function newGameReset() {
-  closeSheets(); fx.reset(); S.ui.overShown = null;
+  closeSheets(); S.ui.setup = null; fx.reset(); S.ui.overShown = null;
   Object.assign(S.ui, { open: {}, flip: false, fresh: {}, tab: 'game', side: 'chat', tally: {}, enactIdx: null, draft: { ...S.ui.draft, chat: '' } });
 }
 
@@ -714,6 +661,7 @@ function onView(v) {
   else if (JSON.stringify(p?.me?.hand) !== JSON.stringify(v.me?.hand) || JSON.stringify(p?.me?.docket) !== JSON.stringify(v.me?.docket)) { S.ui.open.hand = false; S.ui.open.docket = false; S.ui.enactIdx = null; }
   if (p?.phase !== v.phase && v.anim !== false && ['vote', 'legislate', 'power', 'over'].includes(v.phase)) haptic(30);
   T.onView(p, v);
+  setup.onView(v);
   fx.onView(p, v);
   S.view = v; render();
 }
@@ -743,6 +691,7 @@ const rawSend = (msg) => S.transport?.send(msg);
 
 // ---------------------------------------------------------------- events
 wireFaqSearch($app);
+setup.wire($app);
 $app.addEventListener('input', (e) => { const k = e.target.dataset.i; if (k) S.ui.draft[k] = e.target.value; });
 $app.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter') return;
@@ -780,6 +729,7 @@ $app.addEventListener('click', (e) => {
   if (S.ui.noClickUntil > Date.now() && el?.classList.contains('tile-btn')) return; // the finger that lifted off a hold is not a choice
   if (!el || ['set', 'houseSet', 'houseSel', 'modeSet', 'anim'].includes(el.dataset.a)) return;
   if (el.getAttribute('aria-disabled') === 'true') return;
+  if (S.view && setup.handle(el.dataset.a, el, S.view)) return;
   if (T.handle(el.dataset.a, el)) return;
   act(el.dataset.a, el);
 });
@@ -837,6 +787,7 @@ async function act(a, el) {
     case 'tallyToggle': S.ui.tally[d.id] = !S.ui.tally[d.id]; render(); return;
     case 'skip': send({ type: 'skip', id: d.id }); return;
     case 'roles': showRoles(); return;
+    case 'rolesSeen': S.ui.rolesSeen[S.view?.gameNo || 1] = true; render(); window.scrollTo(0, 0); return;
     case 'restart': send({ type: 'restart' }); return;
     case 'restartAsk': restartAsk(); return;
     case 'move': case 'ready': case 'skipReveal': case 'again': case 'shuffleSeats':

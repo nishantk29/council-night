@@ -2,6 +2,7 @@
 // Built from ROLES + roleList(). No names, no ids, nothing about who holds what or what has happened.
 import { ROLES, SIDES, POWERS, roleList, MIN_PLAYERS, MAX_PLAYERS } from './rules.js';
 import { ROLE_ART } from './art.js';
+import { ROLES_CHIP_LABEL } from './config-defaults.js';
 
 const TITLES = { reform: 'Loyalists', cabal: 'The Syndicate' };
 const ORDER = ['reformer', 'cabal', 'pretender'];
@@ -38,6 +39,12 @@ export function rolesInGame(players, house = {}) { // eslint-disable-line no-unu
 
 // The seat count the sheet describes: the dealt game, or the seated players in the lobby.
 export const rolesSeats = (v) => v.game?.n || v.players.filter((p) => !p.watch).length;
+
+// The header chip: "Roles · 8". Built from the seat count only, so every viewer (player, host, spectator, table screen) reads the same.
+export function rolesChip(v) {
+  const n = rolesSeats(v);
+  return { text: `${ROLES_CHIP_LABEL} · ${n}`, label: `Roles in this game, ${n} players` };
+}
 
 export function rolesSheetBody(info, esc, glyph) {
   if (info.error) return `<p class="note is-warn">${esc(info.error)}</p>`;

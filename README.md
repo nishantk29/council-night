@@ -24,6 +24,13 @@ Live: https://secrethitler.hatethespurs.com
 - **Wins:** Loyalists with 5 Reforms or by executing the Boss. Syndicate with 6 Decrees, or by electing the
   Boss as Chancellor once 3 Decrees are down (any other Chancellor elected then is confirmed “not the Boss”).
 
+## Setup (host)
+Four steps in a carousel (Members, Table rules, Seating, Deal), one per screen, remembered on refresh (`council.setup.v1`). Table rules is a
+preset (`public/js/presets.js`, six built in plus the host's own saved ones): the role mix is fixed by table size, so a preset only sets the play
+mode and the house rules rebalance, exile, anonymous votes and the turn clock. Seating maps Own phones / One phone / Mixed to Phones / Host-only /
+Hybrid. Every default is one named constant in `public/js/config-defaults.js`. Before anyone sees their role, every phone shows "Roles in this game"
+(the same list for every viewer) and a `Roles · N` chip stays in the header. Browser test: `node test/e2e/setup.e2e.mjs`.
+
 ## Extras (all off or optional by default)
 - Play modes: Phones mode; Hybrid (roles / votes / policy tiles each “at the table” or “in the app”); Host-only mode, with
   the host’s phone as board, tracker and moderator. The host only ever enters public facts.

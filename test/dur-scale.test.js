@@ -53,8 +53,8 @@ test('no unscaled duration in index.html <style> or JS animation strings', () =>
     }
   }
 });
-test(':root sets --dur-scale: 2', () => {
-  assert.match(strip(read('styles.css')), /:root\s*\{[^}]*--dur-scale:\s*2\s*;/);
+test(':root sets --dur-scale: 1 (the 2x slow-motion ask was replaced by the 400ms budget, 2026-10-29)', () => {
+  assert.match(strip(read('styles.css')), /:root\s*\{[^}]*--dur-scale:\s*1\s*;/);
 });
 test('pwa-install.js uses var(--dur-scale,1)', () => {
   const s = read('pwa-install.js');

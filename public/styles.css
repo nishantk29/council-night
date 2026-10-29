@@ -66,7 +66,9 @@
 
   /* motion */
   --ease-out:cubic-bezier(.22,1,.36,1);
-  --dur-scale:2; --t-press:calc(90ms * var(--dur-scale)); --t-open:calc(220ms * var(--dur-scale)); --t-enter:calc(90ms * var(--dur-scale)); --t-reveal:calc(360ms * var(--dur-scale));
+  --dur-scale:1; /* nothing runs over 400ms; presses are never scaled (Nishant, 2026-10-29) */
+  --f-press:120ms; --f-release:90ms; --f-press-scale:.97; --f-press-row:rgba(255,255,255,.08);
+  --t-press:var(--f-release); --t-open:calc(400ms * var(--dur-scale)); --t-enter:calc(180ms * var(--dur-scale)); --t-reveal:calc(400ms * var(--dur-scale));
 
   /* chrome */
   --appbar-h:56px; --tabbar-h:64px; --dock-h:80px; --table-chrome:140px;
@@ -159,7 +161,7 @@ html[data-phase="night"] .phase-badge .ui-ico{color:var(--town)}
   font:700 var(--fs-md)/1.2 var(--font-ui);text-align:center;text-decoration:none;cursor:pointer;
   transition:background-color var(--t-press),border-color var(--t-press),transform var(--t-press)}
 .btn .ui-ico{width:20px;height:20px;vertical-align:0}
-.btn:active{transform:translateY(1px)}
+.btn:active{transform:scale(var(--f-press-scale))}
 .btn.ghost{background:transparent;color:var(--candle);border-color:var(--rule-strong)}
 .btn.danger{background:var(--mafia);border-color:var(--mafia);color:var(--on-brass)}
 .btn.ghost.danger{background:transparent;color:var(--mafia);border-color:var(--mafia)}
@@ -271,7 +273,7 @@ html[data-phase="night"] .phase-badge .ui-ico{color:var(--town)}
 @media (hover:hover){.resume:hover{color:var(--brass)}}
 .side{display:flex;align-items:center;gap:var(--s4);width:100%;min-height:72px;margin-top:var(--s5);padding:var(--s3) var(--s4);border-radius:var(--r-row);border:1px solid var(--rule-strong);background:var(--panel);color:var(--candle);text-align:left;text-decoration:none;transition:transform var(--t-press) var(--ease-out)}
 @media (hover:hover){.side:hover{background:var(--panel-2)}}
-.side:active{transform:scale(.98)}
+.side:active{transform:scale(var(--f-press-scale))}
 .side>span{flex:1;min-width:0}
 .side b{display:block;font-family:var(--font-display);font-size:var(--fs-lg);font-weight:800;line-height:1.2}
 .side small{display:block;margin-top:2px;font-size:var(--fs-sm);line-height:1.35;color:var(--smoke)}
@@ -416,7 +418,7 @@ html[data-phase="night"] .phase-badge .ui-ico{color:var(--town)}
 .knight.is-off .knight-disc{opacity:.45}
 .knight.on-team .knight-disc{background:var(--card);color:var(--card-ink);border-color:var(--card);box-shadow:0 0 0 3px rgba(244,233,211,.25), 0 0 18px rgba(244,233,211,.35)}
 .knight.can-pick{cursor:pointer}
-.knight.can-pick:active .knight-disc{transform:scale(.94)}
+.knight.can-pick:active .knight-disc{transform:scale(var(--f-press-scale))}
 .knight.can-pick:focus-visible{outline:none}
 .knight.can-pick:focus-visible .knight-disc{outline:3px solid var(--focus);outline-offset:2px}
 .knight-crown{position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:26px;height:26px;color:var(--brass);filter:drop-shadow(0 2px 2px rgba(0,0,0,.6))}
@@ -441,7 +443,7 @@ html[data-phase="night"] .phase-badge .ui-ico{color:var(--town)}
 .choice.success{background:linear-gradient(160deg,#2C4466,#16233A);border-color:#D7E6FA;color:#D7E6FA}
 .choice.sabotage{background:linear-gradient(160deg,#7A1F26,#33090D);border:4px double #FFD0CE;color:#FFD0CE}
 .choice[aria-disabled="true"]{opacity:.35;cursor:not-allowed}
-.choice:active:not([aria-disabled="true"]){transform:translateY(1px)}
+.choice:active:not([aria-disabled="true"]){transform:scale(var(--f-press-scale))}
 @media (hover:hover){.choice:hover:not([aria-disabled="true"]){box-shadow:0 0 0 3px rgba(224,174,82,.35)}}
 
 /* reveals */
@@ -756,7 +758,7 @@ html[data-dim="1"]{
 .tile.flip{animation:card-flip var(--t-reveal) var(--ease-out) both}
 .tile-btn{all:unset;cursor:pointer;border-radius:12px}
 .tile-btn:focus-visible{outline:3px solid var(--focus);outline-offset:4px}
-.tile-btn:active .tile{transform:translateY(2px)}
+.tile-btn:active .tile{transform:scale(var(--f-press-scale))}
 @media (hover:hover){.tile-btn:hover .tile{transform:translateY(-3px)}}
 .choice.reform{background:var(--reform-fill);color:var(--on-fill)}
 .choice.decree{background:var(--cabal-fill);color:var(--on-fill)}
@@ -794,10 +796,10 @@ html.fx-off .confirm-sheet[open],html.fx-off .confirm-sheet[open]::backdrop,html
 /* ---- designed card art (card_art.js): app / Phones mode cards ---- */
 .dcard{display:block;width:100%;height:auto}
 .dc{display:block;width:clamp(92px,26vw,128px);aspect-ratio:63/88;border-radius:6% / 4.3%;box-shadow:0 3px 6px rgba(0,0,0,.35);transition:transform var(--t-press) var(--ease-out)}
-.dc.flip{animation:dc-flip calc(280ms * var(--dur-scale)) var(--ease-out) both}
-.tile-btn:nth-child(2) .dc.flip{animation-delay:calc(60ms * var(--dur-scale))}.tile-btn:nth-child(3) .dc.flip{animation-delay:calc(120ms * var(--dur-scale))}
+.dc.flip{animation:dc-flip calc(400ms * var(--dur-scale)) var(--ease-out) both}
+.tile-btn:nth-child(2) .dc.flip{animation-delay:calc(120ms * var(--dur-scale))}.tile-btn:nth-child(3) .dc.flip{animation-delay:calc(240ms * var(--dur-scale))}
 @keyframes dc-flip{from{transform:perspective(700px) rotateY(-90deg)}to{transform:perspective(700px) rotateY(0)}}
-.tile-btn:active .dc{transform:translateY(2px)}
+.tile-btn:active .dc{transform:scale(var(--f-press-scale))}
 @media (hover:hover){.tile-btn:hover .dc{transform:translateY(-3px)}}
 .rcard-face.dface{padding:0;background:none;box-shadow:none;aspect-ratio:auto}
 .rcard-face.dface .dcard{height:100%}

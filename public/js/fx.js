@@ -39,7 +39,7 @@ export function makeFx({ S, send, esc }) {
   // The page re-renders on every update, so an effect on a page element is kept in `live` and re-applied (continuing
   // where it left off) to whatever element now matches, until it ends.
   const live = [];
-  function addLive(find, cls, { delay = 0, dur: durMs = 700, stagger = 0 } = {}) {
+  function addLive(find, cls, { delay = 0, dur: durMs = 400, stagger = 0 } = {}) {
     live.push({ find, cls, dur: dur(durMs), stagger: dur(stagger), start: performance.now() + dur(delay) });
     applyLive();
   }
@@ -65,15 +65,15 @@ export function makeFx({ S, send, esc }) {
       const p = document.createElement('i'); const a = rand(0, Math.PI * 2); const d = rand(90, 210);
       p.className = `fx-p fx-${kind}`;
       p.style.cssText = kind === 'spark'
-        ? `left:${x}%;top:${y}%;--dx:${Math.round(Math.cos(a) * d)}px;--dy:${Math.round(Math.sin(a) * d)}px;--r:${Math.round(rand(-200, 200))}deg;--c:${colors[i % colors.length]};--w:${Math.round(rand(6, 12))}px;--t:${Math.round(rand(280, 380))}ms;--d:${delay + Math.round(rand(0, 80))}ms`
-        : `left:${rand(8, 92).toFixed(1)}%;top:-4%;--dx:${Math.round(rand(-70, 70))}px;--dy:${Math.round(rand(300, 520))}px;--r:${Math.round(rand(360, 800))}deg;--c:${colors[i % colors.length]};--w:${Math.round(rand(7, 12))}px;--t:${Math.round(rand(360, 400))}ms;--d:${delay + Math.round(rand(0, 140))}ms`;
+        ? `left:${x}%;top:${y}%;--dx:${Math.round(Math.cos(a) * d)}px;--dy:${Math.round(Math.sin(a) * d)}px;--r:${Math.round(rand(-200, 200))}deg;--c:${colors[i % colors.length]};--w:${Math.round(rand(6, 12))}px;--t:${Math.round(rand(190, 250))}ms;--d:${delay + Math.round(rand(0, 50))}ms`
+        : `left:${rand(8, 92).toFixed(1)}%;top:-4%;--dx:${Math.round(rand(-70, 70))}px;--dy:${Math.round(rand(300, 520))}px;--r:${Math.round(rand(360, 800))}deg;--c:${colors[i % colors.length]};--w:${Math.round(rand(7, 12))}px;--t:${Math.round(rand(240, 260))}ms;--d:${delay + Math.round(rand(0, 80))}ms`;
       p.style.willChange = 'transform, opacity'; made.push(p);
     }
     host.append(...made);
-    setTimeout(() => made.forEach((p) => { p.style.willChange = ''; p.remove(); }), dur(600 + delay));
+    setTimeout(() => made.forEach((p) => { p.style.willChange = ''; p.remove(); }), dur(400 + delay));
   }
 
-  // ------------------------------------------------------------ overlay queue (one at a time, each <= 0.6 s)
+  // ------------------------------------------------------------ overlay queue (one at a time, each <= 0.4 s)
   const queue = []; let busy = false;
   function play(kind, data) {
     if (!on() || document.hidden) return;
@@ -85,7 +85,7 @@ export function makeFx({ S, send, esc }) {
     busy = true; const [kind, data] = queue.shift();
     const el = Object.assign(document.createElement('div'), { className: `fx-ov fx-ov-${kind}` });
     el.innerHTML = OVERLAYS[kind](data); $fx.append(el);
-    const ms = RUN[kind]?.(el, data) || 600;
+    const ms = RUN[kind]?.(el, data) || 400;
     setTimeout(() => { el.remove(); busy = false; pump(); }, dur(ms));
   }
   function clearOverlays() { queue.length = 0; $fx.querySelectorAll('.fx-ov').forEach((e) => e.remove()); busy = false; }
@@ -104,13 +104,13 @@ export function makeFx({ S, send, esc }) {
   const RUN = {
     slam(el, { policy }) {
       const team = policy === 'R' ? 'reform' : 'cabal';
-      burst(el, 'spark', team, { delay: 80 });
-      addLive(() => $app.querySelectorAll(policy === 'R' ? `.board.a-reform .slot.is-reform:nth-child(${S.view.game.reform})` : `.board.a-cabal .slot.is-decree:nth-child(${S.view.game.decree})`), 'fx-slot-slam', { delay: 240, dur: 360 });
-      return 600;
+      burst(el, 'spark', team, { delay: 50 });
+      addLive(() => $app.querySelectorAll(policy === 'R' ? `.board.a-reform .slot.is-reform:nth-child(${S.view.game.reform})` : `.board.a-cabal .slot.is-decree:nth-child(${S.view.game.decree})`), 'fx-slot-slam', { delay: 160, dur: 240 });
+      return 400;
     },
-    deal() { return 600; },
-    unrest() { return 600; },
-    execute() { return 600; },
+    deal() { return 400; },
+    unrest() { return 400; },
+    execute() { return 400; },
   };
 
   // ------------------------------------------------------------ what changed in the public view
@@ -120,7 +120,7 @@ export function makeFx({ S, send, esc }) {
     if (!prev?.game || !v.game || !on(v)) return;
     const p = prev.game; const g = v.game;
     const enacted = g.reform + g.decree > p.reform + p.decree;
-    if (g.tracker > p.tracker && g.tracker < TRACKER_MAX) addLive(() => $app.querySelectorAll(`.rejects i:nth-of-type(${g.tracker})`), 'fx-click', { dur: 300 });
+    if (g.tracker > p.tracker && g.tracker < TRACKER_MAX) addLive(() => $app.querySelectorAll(`.rejects i:nth-of-type(${g.tracker})`), 'fx-click', { dur: 200 });
     const third = p.tracker === TRACKER_MAX - 1 && (g.tracker >= TRACKER_MAX || (enacted && g.tracker === 0 && g.lastPolicy && !g.lastPolicy.byGov));
     if (third) play('unrest');
     if (enacted && g.lastPolicy) play('slam', { policy: g.lastPolicy.policy });
@@ -186,7 +186,7 @@ export function makeFx({ S, send, esc }) {
     const el = over; over = null; document.removeEventListener('keydown', onKey);
     if (prevFocus?.isConnected) prevFocus.focus({ preventScroll: true }); prevFocus = null;
     if (now || el.classList.contains('is-static') || !on()) { el.remove(); return; }
-    el.classList.add('is-out'); setTimeout(() => el.remove(), dur(180));
+    el.classList.add('is-out'); setTimeout(() => el.remove(), dur(120));
   }
   // The roles appear once the game is over: if the view with them lands after the pop-up, fill them in.
   function refreshOver(v) { if (over && v.game?.roles) { const w = over.querySelector('.fx-roles-wrap'); if (w && !w.querySelector('.fx-roles')) w.innerHTML = rolesHtml(v); } }

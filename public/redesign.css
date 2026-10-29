@@ -174,3 +174,18 @@ html.handoff.boot .home-head,html.handoff.boot .home-hero,html.handoff.boot .hom
 @media (max-width:430px){.appbar-title .ab-word{display:none}}
 .seg.mini button{min-height:44px;min-width:44px}
 .slot-power small{font-size:.5rem;letter-spacing:0;overflow-wrap:normal;hyphens:none}
+/* Polish sweep (Oct 28). Long action-bar labels wrap onto two lines instead of running off both edges. */
+.dock .btn{white-space:normal;text-overflow:clip;line-height:1.15;text-wrap:balance;padding-block:var(--s2)}
+/* A one-word answer sits in the middle of its button, level with a two-line one beside it. */
+.choice{align-content:center}
+/* 44px targets: carousel dots (the dot itself stays small), log filters and side tabs, short text links. */
+.car-dot{width:44px;height:44px}
+.car-dot::before{inset:17px}
+.seg button{min-height:44px}
+a.link{min-width:44px;justify-content:center}
+/* Phones: the tab bar and the game screen's fixed action button step aside while a field has focus, so they can't cover it above the
+   keyboard. A form's own submit button (Take Seat) stays. */
+@media (pointer:coarse) and (max-width:1099px){
+  html:has(input:not([type=checkbox]):not([type=radio]):not([type=range]):focus,textarea:focus) :is(.tabbar,.layout .sticky-act){display:none!important}
+  html:has(input:not([type=checkbox]):not([type=radio]):not([type=range]):focus,textarea:focus) .chat-form{bottom:env(safe-area-inset-bottom)}
+}

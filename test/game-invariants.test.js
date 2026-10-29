@@ -6,11 +6,15 @@
 import { gameInvariantTests, pick } from './kit/game-invariants.mjs';
 import { newRoom, reduce, viewForPlayer } from '../public/js/room.js';
 import { knowledgeFor, shuffle, MIN_PLAYERS, MAX_PLAYERS } from '../public/js/rules.js';
+import { PRESETS, presetMessages } from '../public/js/presets.js';
 
 const HOST_KEY = 'kit-host';
 const GAMES = Number(process.env.KIT_GAMES) || 120;
 const CASES = [];
 for (let n = MIN_PLAYERS; n <= MAX_PLAYERS; n++) for (const rebalance of [false, true]) for (const exile of [false, true]) CASES.push({ n, house: { rebalance, exile } });
+
+// Every preset's house rules too (anonymous votes and the turn clock are only reached through presets), at every table size.
+for (let n = MIN_PLAYERS; n <= MAX_PLAYERS; n++) for (const p of PRESETS) if (p.settings.play === 'phone') CASES.push({ n, house: presetMessages(p).house });
 
 const seats = (room) => room.game.order;
 const hostOf = (room) => ({ playerId: room.players.find((p) => p.host).id });

@@ -19,8 +19,8 @@ const TEAM_COLORS = {
 const WIN_NAME = { reform: 'The Loyalists', cabal: 'The Syndicate' };
 const ROLE_LABEL = { reformer: 'Loyalist', cabal: 'Syndicate member', pretender: 'The Boss' };
 const rand = (a, b) => a + Math.random() * (b - a);
-// Animation timings follow the --dur-scale CSS variable (see styles.css), so JS waits match the CSS animations.
-const dur = (ms) => ms * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-scale')) || 1);
+// Every JS wait tied to a CSS animation goes through dur(), so the motion gate can check it stays within 400ms.
+const dur = (ms) => ms;
 
 export function makeFx({ S, send, esc }) {
   const $html = document.documentElement;

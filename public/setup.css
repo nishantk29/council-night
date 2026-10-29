@@ -188,7 +188,7 @@ dialog.gs-sheet .gs-tok{--rim:var(--gs-reform,#7FA6E0);background:var(--gs-tok,#
 /* short phones (375x667): the same step has to fit above the dock, so the small callout steps aside */
 @media (max-height:720px){.gs-slide > .gs-callout{display:none}.gs-top{min-height:48px}.gs-h{font-size:clamp(1.75rem,7.6vw,2.1rem)}}
 
-/* press feedback (Nishant, 2026-10-29): lands on press-in in --f-press (120ms, never scaled by --dur-scale);
+/* press feedback (Nishant, 2026-10-29): lands on press-in in --f-press (120ms);
    the release runs in --f-release (about 0.7x). Buttons, tabs and cards scale to .97; tabs never slide. */
 @media (prefers-reduced-motion:no-preference){
   :is(.btn,.choice,.gs-pri,.tabbar button,.icon-btn,.tool-btn,.side):active,.knight.can-pick:active .knight-disc,.tile-btn:active :is(.tile,.dc){transition-duration:var(--f-press)}

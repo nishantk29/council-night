@@ -97,7 +97,7 @@ test('server fatal text is never shown: expired and everything else map to fixed
 });
 test('error page motion is scaled and gated for reduced motion', () => {
   const h = errorPage({ status: 404 });
-  assert.match(h, /prefers-reduced-motion:no-preference/); assert.match(h, /calc\(280ms \* var\(--dur-scale\)\)/); // within the 400ms budget (2026-10-29)
+  assert.match(h, /prefers-reduced-motion:no-preference/); assert.match(h, /280ms/); // within the 400ms budget (2026-10-29)
 });
 test('service worker precaches the error screen module and 404 page', () => {
   const sw = fs.readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8');

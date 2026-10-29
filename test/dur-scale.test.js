@@ -45,7 +45,7 @@ test('no unscaled duration/delay in CSS files', () => {
 test('no unscaled duration in index.html <style> or JS animation strings', () => {
   const html = read('index.html');
   for (const m of html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)) assert.deepEqual(offenders(m[1]), []);
-  assert.match(html, /duration:450\*\(/);
+  assert.match(html, /\},1800\*s\)/); // the boot timer scales; the old 450 ms hub FLIP is gone (test/hub-arrival.test.js)
   for (const f of readdirSync(new URL('../public/js/', import.meta.url)).filter((x) => x.endsWith('.js'))) {
     const js = read(`js/${f}`);
     for (const m of js.matchAll(/(?:animation|transition)[\w-]*\s*:\s*[^;'"`}]*\d+m?s\b/g)) {

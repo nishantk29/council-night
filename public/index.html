@@ -37,24 +37,9 @@
   <svg class="bg-sun" viewBox="0 0 800 800" focusable="false"><g class="sun-spin"><g class="sun-rays" fill="none" stroke="#F07A22" stroke-width="9" stroke-linecap="round"><path d="M470.0 400.0L780.0 400.0" /><path d="M467.6 418.1L689.8 477.6" /><path d="M460.6 435.0L729.1 590.0" /><path d="M449.5 449.5L612.1 612.1" /><path d="M435.0 460.6L590.0 729.1" /><path d="M418.1 467.6L477.6 689.8" /><path d="M400.0 470.0L400.0 780.0" /><path d="M381.9 467.6L322.4 689.8" /><path d="M365.0 460.6L210.0 729.1" /><path d="M350.5 449.5L187.9 612.1" /><path d="M339.4 435.0L70.9 590.0" /><path d="M332.4 418.1L110.2 477.6" /><path d="M330.0 400.0L20.0 400.0" /><path d="M332.4 381.9L110.2 322.4" /><path d="M339.4 365.0L70.9 210.0" /><path d="M350.5 350.5L187.9 187.9" /><path d="M365.0 339.4L210.0 70.9" /><path d="M381.9 332.4L322.4 110.2" /><path d="M400.0 330.0L400.0 20.0" /><path d="M418.1 332.4L477.6 110.2" /><path d="M435.0 339.4L590.0 70.9" /><path d="M449.5 350.5L612.1 187.9" /><path d="M460.6 365.0L729.1 210.0" /><path d="M467.6 381.9L689.8 322.4" /></g></g><circle cx="400" cy="400" r="46" fill="#F07A22"/><circle cx="400" cy="400" r="62" fill="none" stroke="#E2B04A" stroke-width="3"/></svg>
   <svg class="bg-columns" viewBox="0 0 800 300" preserveAspectRatio="xMinYMax slice" focusable="false"><g fill="#E2B04A"><path d="M60 300V70h-22V50h110v20h-22v230zM250 300V110h-18V92h92v18h-18v190zM640 300V90h-20V70h100v20h-20v210z"/></g></svg>
 </div>
-<div id="hand" aria-hidden="true"><span class="logo-mark" aria-hidden="true"><svg class="ico art " viewBox="0 0 64 64" fill="currentColor" aria-hidden="true" focusable="false"><circle cx="32" cy="32" r="9"/><path d="M45.0 32.0L61.0 32.0" stroke="currentColor" stroke-width="3.5" stroke-linecap="square"/><path d="M44.0 37.0L52.3 40.4" stroke="currentColor" stroke-width="2" stroke-linecap="square"/><path d="M41.2 41.2L52.5 52.5" stroke="currentColor" stroke-width="3.5" stroke-linecap="square"/><path d="M37.0 44.0L40.4 52.3" stroke="currentColor" stroke-width="2" stroke-linecap="square"/><path d="M32.0 45.0L32.0 61.0" stroke="currentColor" stroke-width="3.5" stroke-linecap="square"/><path d="M27.0 44.0L23.6 52.3" stroke="currentColor" stroke-width="2" stroke-linecap="square"/><path d="M22.8 41.2L11.5 52.5" stroke="currentColor" stroke-width="3.5" stroke-linecap="square"/><path d="M20.0 37.0L11.7 40.4" stroke="currentColor" stroke-width="2" stroke-linecap="square"/><path d="M19.0 32.0L3.0 32.0" stroke="currentColor" stroke-width="3.5" stroke-linecap="square"/><path d="M20.0 27.0L11.7 23.6" stroke="currentColor" stroke-width="2" stroke-linecap="square"/><path d="M22.8 22.8L11.5 11.5" stroke="currentColor" stroke-width="3.5" stroke-linecap="square"/><path d="M27.0 20.0L23.6 11.7" stroke="currentColor" stroke-width="2" stroke-linecap="square"/><path d="M32.0 19.0L32.0 3.0" stroke="currentColor" stroke-width="3.5" stroke-linecap="square"/><path d="M37.0 20.0L40.4 11.7" stroke="currentColor" stroke-width="2" stroke-linecap="square"/><path d="M41.2 22.8L52.5 11.5" stroke="currentColor" stroke-width="3.5" stroke-linecap="square"/><path d="M44.0 27.0L52.3 23.6" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg></span></div>
 <div id="app"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <noscript>This game needs JavaScript.</noscript>
-<script>
-/* Hub handoff, game end: the logo is already at the handoff pose on the first paint, then FLIP-morphs into its place while the page fades in. */
-(function(){var d=document.documentElement;if(!d.classList.contains('handoff'))return;
-var hand=document.getElementById('hand'),c=hand.firstChild,t0=performance.now(),E='cubic-bezier(.2,.8,.2,1)';
-function done(){d.classList.remove('handoff','go');hand.remove()}
-function go(m){var r=m.getBoundingClientRect(),w=c.offsetWidth,p=112/w,vw=innerWidth,vh=innerHeight;
-var f='translate(-50%,-50%) ',a=f+'scale('+p+')',b='translate(calc(-50% + '+(r.left+r.width/2-vw/2)+'px),calc(-50% + '+(r.top+r.height/2-vh*.45)+'px)) scale('+r.width/w+')';
-d.classList.add('go');var an=c.animate([{transform:a},{transform:b}],{duration:450*(parseFloat(getComputedStyle(d).getPropertyValue('--dur-scale'))||1),easing:E,fill:'forwards'});
-an.onfinish=function(){requestAnimationFrame(done)};an.oncancel=done}
-function wait(){var m=document.querySelector('#app .logo-mark');
-if(!m){if(performance.now()-t0>2500)return done();return requestAnimationFrame(wait)}
-Promise.race([document.fonts.ready,new Promise(function(r){setTimeout(r,500)})]).then(function(){requestAnimationFrame(function(){go(m)})})}
-wait()})();
-</script>
 <script type="module" src="/js/app.js"></script>
 </body>
 </html>

@@ -19,6 +19,11 @@
  ],
  "fonts": [
   {
+   "src": "scripts/fonts/src/rubik-var.woff2",
+   "out": "rubik",
+   "split": false
+  },
+  {
    "src": "scripts/fonts/src/big-shoulders-display-var.woff2",
    "out": "big-shoulders-display",
    "split": true

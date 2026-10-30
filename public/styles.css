@@ -2,7 +2,7 @@
    Base tokens, type scale, buttons, fields and the table layer are shared; the Council theme block at the end sets the palette.
    Font (self-hosted, same file as the games home page): Rubik (SIL OFL 1.1). */
 /* ==================================================================== fonts */
-@font-face{font-family:"Rubik";src:url("/fonts/rubik-var.woff2") format("woff2");font-weight:300 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Rubik";src:url("/fonts/rubik.woff2") format("woff2");font-weight:300 900;font-style:normal;font-display:swap}
 /* Metric-matched stand-in so the page doesn't jump when Rubik arrives. */
 @font-face{font-family:"Rubik Fallback";src:local("Arial"),local("Helvetica"),local("Liberation Sans");size-adjust:106%;ascent-override:88%;descent-override:23%;line-gap-override:0%}
 

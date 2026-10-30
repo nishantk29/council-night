@@ -1,5 +1,6 @@
-// The Gilded Chamber client: routing, the live WebSocket, and every screen. The whole page re-renders on each
-// update (same approach as Mafia Night and Quest Night); focus and typed text survive because inputs pause re-renders.
+// The Gilded Chamber client: routing, the live WebSocket, and every screen. Each update renders the whole page as markup,
+// then morph() patches only what changed into the live page (no full rebuild, so no restyle of every node, no replayed
+// animations, no lost scroll inside lists); focus and typed text survive because inputs pause re-renders.
 // Table things (chat, log, tools, host dashboard frame) come from table_ui.js.
 import { ui } from './ui_icons.js';
 import { art, ROLE_ART, POWER_ART } from './art.js';
@@ -18,6 +19,7 @@ import { hostNav } from './host-nav.js';
 import { errorBody, errorButtons, crashHtml, FATAL, ENDED } from './error-screen.js';
 import { wakeReconnect } from './wake.js';
 import { backClosesSheets } from './back-sheet.js';
+import { morph } from './morph.js';
 // Back (Android Back, the iOS edge swipe) closes the top sheet or confirm first, the same as Escape. They are <dialog>s on
 // <body>, so watching body's children keeps Back in step with them.
 const backNav = backClosesSheets(() => {
@@ -100,11 +102,15 @@ function paint() {
   // html[data-gs] and hid the sun and columns (and swapped the page background) on every other screen.
   if (S.mode === 'play' && S.view?.phase === 'lobby' && S.view.kind !== 'screen') $html.dataset.gs = '1'; else delete $html.dataset.gs;
   $html.classList.toggle('fx-off', S.view?.anim === false); // the host's Animations switch: card flips are skipped too
-  try { $app.innerHTML = screen(); } catch (e) { console.error(e); crash(); return; }
+  // Lists that follow the newest line (the chat) stay pinned to the bottom only if the reader was already there.
+  const pinned = new Set([...$app.querySelectorAll('[data-scroll]')].filter((el) => el.scrollHeight - el.scrollTop - el.clientHeight < 40).map((el) => el.dataset.scroll));
+  const known = new Set([...$app.querySelectorAll('[data-scroll]')].map((el) => el.dataset.scroll));
+  try { morph($app, screen()); } catch (e) { console.error(e); crash(); return; }
   S.ui.fresh = {};
   // Same screen: keep the reader's place. New screen: start at the top (Nishant 2026-10-28: "open to the top", card still hidden).
-  window.scrollTo(0, toTop ? 0 : y); toTop = false;
-  for (const el of $app.querySelectorAll('[data-scroll]')) el.scrollTop = el.scrollHeight;
+  if (toTop) window.scrollTo(0, 0); else if (window.scrollY !== y) window.scrollTo(0, y);
+  toTop = false;
+  for (const el of $app.querySelectorAll('[data-scroll]')) if (pinned.has(el.dataset.scroll) || !known.has(el.dataset.scroll)) el.scrollTop = el.scrollHeight;
   fx.after();
   setup.afterPaint(reducedMq.matches);
   wake(S.mode !== 'home' && wantsWake(S.view));
@@ -234,7 +240,7 @@ const PHASE = { lobby: ['Gathering', 'table'], reveal: ['Secret Roles', 'cards']
 const rolesChipBtn = (v) => { const c = rolesChip(v); return `<button type="button" class="roles-chip" data-a="roles" aria-label="${esc(c.label)}">${esc(c.text)}</button>`; };
 function appbar(v) {
   const [label, icon] = PHASE[v.phase] || ['', 'game'];
-  return `<header class="appbar"><a class="appbar-mark" href="#/" aria-label="The Gilded Chamber home">${art('torch')}</a>
+  return `<header class="appbar"><a class="appbar-mark" href="#/" aria-label="The Gilded Chamber home">${art('sun')}</a>
     <div class="appbar-title"><span class="ab-word">Chamber </span><span class="code">${esc(v.code)}</span></div>
     ${T.timerChip(v)}${rolesChipBtn(v)}${dimBtn()}<span class="phase-badge">${ui(icon)}<span class="pb-t">${label}</span></span></header>`;
 }
@@ -589,7 +595,7 @@ function hostPane(v) {
 // ---------------------------------------------------------------- shared table screen (TV / laptop)
 function tableScreen(v) {
   const g = v.game;
-  const head = `<header class="appbar"><span class="appbar-mark">${art('torch')}</span><div class="appbar-title">The Gilded Chamber <span class="code">${esc(v.code)}</span></div>${T.timerChip(v)}${dimBtn()}<span class="phase-badge">${ui(PHASE[v.phase]?.[1] || 'game')}${PHASE[v.phase]?.[0] || ''}</span></header>`;
+  const head = `<header class="appbar"><span class="appbar-mark">${art('sun')}</span><div class="appbar-title">The Gilded Chamber <span class="code">${esc(v.code)}</span></div>${T.timerChip(v)}${dimBtn()}<span class="phase-badge">${ui(PHASE[v.phase]?.[1] || 'game')}${PHASE[v.phase]?.[0] || ''}</span></header>`;
   if (!g) return `${head}<main class="wrap screen-lobby"><h1 class="phase-title">Join at ${esc(location.host)}</h1><p class="room-code">${esc(v.code)}</p><div class="qr-tap is-static">${qrSvg(`${location.origin}/#/play/${v.code}`, `QR code to join room ${v.code}`)}</div><p class="say">${v.players.filter((p) => !p.watch).map((p) => esc(p.name)).join(' · ') || 'Nobody yet.'}</p></main>`;
   const lines = phaseScript(v).slice(0, 2);
   return `${head}<div class="layout is-screen"><main class="col col-main wrap game">${board(v)}${roundTable({ ...v, me: null })}${v.phase === 'over' ? over(v) : `<section class="stage"><p class="say">${esc(lines.join(' '))}</p><div class="btn-row"><button type="button" class="btn ghost" data-a="roles">Roles in this game</button></div></section>`}${lastReveals(v)}</main>

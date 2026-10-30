@@ -17,20 +17,20 @@
    "files": [
     {
      "file": "big-shoulders-display-core.woff2",
-     "bytes": 20712,
-     "sha256": "36c6f7db6b1ddf6f76eea29aa58fb8fb5edfc6ac11055566d2dccec076ed48a5",
-     "glyphs": 117,
-     "codepoints": 106,
-     "unicode_range": "U+20-7E,U+A0,U+B7,U+D7,U+2013-2014,U+2018-2019,U+201C-201D,U+2022,U+2026",
+     "bytes": 20700,
+     "sha256": "0c27c4edf15925eff968fd833c5fb4bfa6cffbf9a78e4e24106eee90886937d7",
+     "glyphs": 118,
+     "codepoints": 107,
+     "unicode_range": "U+20-7E,U+A0,U+B7,U+D7,U+200B,U+2013-2014,U+2018-2019,U+201C-201D,U+2022,U+2026",
      "name": "Big Shoulders Display Thin"
     },
     {
      "file": "big-shoulders-display-ext.woff2",
-     "bytes": 17232,
-     "sha256": "8bd3ece493bf665de108aa4fc287cf9aef8891dd29f625620699fb84f2649e0f",
-     "glyphs": 151,
-     "codepoints": 124,
-     "unicode_range": "U+A1-B6,U+B8-D6,U+D8-FF,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+300-301,U+303-304,U+308-309,U+323,U+2009,U+200B,U+201A,U+201E,U+2032-2033,U+2039-203A,U+2044,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215",
+     "bytes": 17296,
+     "sha256": "4b0bcf9a47f993204eb881b08de0f9d117ef4b31a34674ddccae688f51b60f95",
+     "glyphs": 150,
+     "codepoints": 123,
+     "unicode_range": "U+A1-B6,U+B8-D6,U+D8-FF,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+300-301,U+303-304,U+308-309,U+323,U+2009,U+201A,U+201E,U+2032-2033,U+2039-203A,U+2044,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215",
      "name": "Big Shoulders Display Thin"
     }
    ]

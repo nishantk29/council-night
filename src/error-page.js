@@ -26,7 +26,7 @@ export const errorPage = ({ status = 404, title, line } = {}) => {
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0B0B0D">
 <style>html{background:#0B0B0D;color-scheme:dark}</style>
-<link rel="preload" href="/fonts/big-shoulders-display-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/big-shoulders-display-core.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/redesign.css">
 <style>${CSS}</style>

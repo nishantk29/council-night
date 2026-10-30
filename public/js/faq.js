@@ -15,7 +15,7 @@ const roleSection = (side, title) => [title, Object.values(ROLES).filter((r) => 
 export const FAQ_GAME = {
   roles: Object.values(ROLES).map((r) => r.name),
   houseRules: ['Rebalanced Tables', 'Exile Instead of Execution', 'Anonymous Votes', 'No-Claims Mode', 'Host Sits Out', 'Phase Timer', 'Vote Reveal Delay', 'First Speaker'],
-  modes: ['Phones mode', 'Hybrid', 'Host-only mode'],
+  modes: ['Own phones', 'One phone', 'Mixed'], // the seating names in setup (presets.js SEATING_TEXT), shared with Mafia Night and The Odd Card
 };
 export const FAQ_COVERS = { roles: [], houseRules: [], modes: [] }; // filled below from the answers themselves
 
@@ -44,10 +44,10 @@ export const FAQ = [
     ['Does the phase timer do anything at zero?', 'No. It beeps, vibrates and turns red. The host decides what to do: nudge, skip, or let them finish.'],
     ['Anonymous votes?', 'Only the count of Ayes and Nays is shown, never who voted which way, during the game or after.'],
   ]],
-  ['Phones Mode', [
-    ['What are the three play modes?', '<b>Phones mode</b>: roles, votes and policies all in the app (online play works too). <b>Hybrid</b>: choose for each piece (roles, votes, policy tiles) whether the table handles it out loud or the app does. <b>Host-only mode</b>: the table handles everything and the host’s phone is the board and the tracker.'],
+  ['Seating', [
+    ['How is everyone playing?', 'The host picks the seating in setup, the same three as in Mafia Night and The Odd Card. <b>Own phones</b>: everyone plays on their own phone, with roles, votes and policies all in the app (online play works too). <b>One phone</b>: the table plays with the physical game, and this phone is the board and the tracker. <b>Mixed</b>: some play on their own phones and the rest on this phone; for each piece (roles, votes, policy tiles) the host picks whether the table handles it out loud or the app does.'],
     ['How do I look at my role without others seeing?', 'Press and hold your card to look, then let go to hide it again. A quick tap shows it for 5 seconds. Your role, your policies and any Inquiry result stay blurred until you reveal them, and every role looks the same while hidden.'],
-    ['Does the Host see secrets in Hybrid or Host-only mode?', 'No. The host only enters what the whole table sees: who was nominated, who voted Aye, which policy was turned face up, and the answer to “are you the Boss?”. Seats without phones are allowed only when every piece is handled at the table. The one exception is <b>Host Sits Out</b> with roles dealt in the app: then the host sees the whole deal, as that house rule says.'],
+    ['Does the Host see secrets with One phone or Mixed seating?', 'No. The host only enters what the whole table sees: who was nominated, who voted Aye, which policy was turned face up, and the answer to “are you the Boss?”. Seats without phones are allowed only when every piece is handled at the table. The one exception is <b>Host Sits Out</b> with roles dealt in the app: then the host sees the whole deal, as that house rule says.'],
   ]],
   ['Playing Offline', [
     ['Can I play without internet?', '<ol><li>Open The Gilded Chamber once while you’re online, or install it: on iPhone tap Share, then Add to Home Screen; on Android tap Install app.</li><li>After that it opens without internet.</li><li>Playing a game needs internet for now, because every mode connects through the room. Offline, you can still open the app and read the rules and FAQ.</li></ol><p>On iPhone, the Home Screen app and Safari keep separate copies, so open the one you’ll use while you’re online.</p><span hidden>offline wifi wi-fi install</span>'],

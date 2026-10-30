@@ -75,6 +75,9 @@ const adapter = {
       [p, { type: 'vetoReply', accept: true }], [p, { type: 'power', id: other }], [p, { type: 'peekDone' }], [H, { type: 'check', yes: true }],
       [H, { type: 'hostEnact', policy: 'R' }], [H, { type: 'skip', id: other }], [H, { type: 'skip' }], [H, { type: 'pause' }]];
   },
+  // The reducer has no Undo of its own any more (Undo and Redo are steps on the event log, see undo-redo.test.js),
+  // so the kit's "no Undo after game over" check sees the reducer refuse it. Going back from the end screen on purpose
+  // goes through the log, with a confirm sheet, and never past a secret look.
   undo: (room) => [hostOf(room), { type: 'undo' }],
   fingerprint: (room) => JSON.stringify({ phase: room.phase, game: room.game }),
   viewers: (room) => room.players.map((p) => p.id),

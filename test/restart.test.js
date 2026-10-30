@@ -56,7 +56,7 @@ test('restart clears chat, log, board, deck, tracker, votes, powers, investigati
   act(room, ids[0], { type: 'timer', secs: 60, label: 'Talk' });
   const g = room.game;
   Object.assign(g, { reform: 3, decree: 4, tracker: 2, vetoRefused: true, power: 'execute', investigated: [ids[1]], confirmedNot: [ids[2]], lastGov: { speaker: ids[0], chancellor: ids[1] }, leg: 'veto' });
-  g.seen[ids[0]] = [{ id: ids[1] }]; g.history.push({}); g.deck.shift(); g.discard.push('D'); room.undo.push('x'); room.paused = { at: 1 };
+  g.seen[ids[0]] = [{ id: ids[1] }]; g.history.push({}); g.deck.shift(); g.discard.push('D'); room.paused = { at: 1 };
   const no = room.gameNo;
   assert.ok(act(room, ids[0], { type: 'restart' }, rng).ok);
   const n = room.game;
@@ -67,7 +67,7 @@ test('restart clears chat, log, board, deck, tracker, votes, powers, investigati
   assert.deepEqual(n.votes, {}); assert.deepEqual(n.discard, []); assert.equal(n.deck.length, 17); assert.equal(n.winner, null);
   assert.ok(room.log.length === 1 && room.log[0].kind === 'game', 'only the new game line');
   assert.equal(room.log.some((m) => /secret plan/.test(m.text)), false);
-  assert.deepEqual(room.undo, []);
+  assert.deepEqual(room.undo, [], 'still an empty list for older builds (Undo history lives on the event log)');
   assert.equal(room.timer, null); assert.equal(room.talk, null); assert.equal(room.paused, null); assert.equal(room.poll, null);
 });
 

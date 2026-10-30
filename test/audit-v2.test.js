@@ -8,7 +8,8 @@ import { FAQ } from '../public/js/faq.js';
 
 const seeded = (seed) => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
 const must = (r) => { assert.ok(r.ok, r.error); return r; };
-const act = (room, id, msg, rng) => reduce(room, { playerId: id }, msg, rng);
+import { act, logged, undo, redo } from './kit/logged.mjs';
+import { undoTarget } from '../public/js/event-log.js';
 const HK = 'HOSTKEY-q9z';
 
 function started(n, { house = {}, mode, phoneless = 0, seed = 1, reveal = true } = {}) {
@@ -338,16 +339,24 @@ test('audit: reveal length is identical for every role (one shared constant, rol
 });
 
 // ------------------------------------------------------------ 6. Fennel's rulings and audit-plan bugs
-test('audit: no undo after game over', () => {
-  const t = started(5, { seed: 40 }); over(t);
-  assert.equal(t.room.undo.length, 0); assert.equal(viewForPlayer(t.room, t.host).canUndo, false);
-  const e = refused(t, t.host, { type: 'undo' }); assert.match(e, /undo/i);
-  assert.equal(t.room.phase, 'over'); assert.equal(t.g.winner, 'reform');
+test('audit: undo after game over goes through the log, and only over public steps', () => {
+  // The reducer has no Undo of its own any more.
+  const z = started(5, { seed: 40 }); assert.deepEqual(act(z.room, z.host, { type: 'undo' }), { error: 'Unknown action.' });
+  // Ended by an enacted policy: the Chancellor's hand was seen, so with UNDO_PAST_SECRET off the end stays.
+  const t = logged(started(5, { seed: 40 })); over(t);
+  const e = undo(t); assert.match(e.error, /secret policies/); assert.equal(t.room.phase, 'over'); assert.equal(t.g.winner, 'reform');
   must(act(t.room, t.host, { type: 'again' }, t.rng)); assert.equal(t.room.phase, 'lobby');
-  const u = started(5, { seed: 40 }); over(u); must(act(u.room, u.host, { type: 'restart' }, u.rng)); assert.equal(u.room.phase, 'reveal');
-  // every way to end the game clears the stack: Boss elected, Boss executed, chaos
-  const b = started(5, { seed: 41 }); b.g.decree = 3; const boss = roleOf(b, 'pretender')[0]; if (boss !== sp(b)) { elect(b, boss); assert.equal(b.room.phase, 'over'); refused(b, b.host, { type: 'undo' }); }
-  const c = started(5, { seed: 42 }); c.g.reform = 4; c.g.tracker = 2; c.g.deck.unshift('R', 'D', 'D'); fail(c); assert.equal(c.room.phase, 'over'); refused(c, c.host, { type: 'undo' });
+  // Ended by electing the Boss (a public vote): Undo goes back to the vote and the roles are hidden again; Redo ends it again.
+  const b = started(5, { seed: 41 }); b.g.decree = 3; const boss = roleOf(b, 'pretender')[0];
+  if (boss !== sp(b)) {
+    logged(b); elect(b, boss); assert.equal(b.room.phase, 'over'); assert.ok(viewForPlayer(b.room, b.ids[1]).game.roles);
+    must(undo(b)); assert.equal(b.room.phase, 'vote'); assert.equal(viewForPlayer(b.room, b.ids[1]).game.roles, undefined, 'roles hidden again');
+    must(redo(b)); assert.equal(b.room.phase, 'over'); assert.equal(b.g.reason, 'pretender');
+    assert.equal(undoTarget(b.L.events, b.L.cursor, b.room, { pastOver: false }).why, 'The game is over. Use Restart or Play again.');
+  }
+  // Chaos (three failed votes): the third failure enacts the top tile unseen, so it is public and undoable.
+  const c = started(5, { seed: 42 }); c.g.reform = 4; c.g.tracker = 2; c.g.deck.unshift('R', 'D', 'D'); logged(c); fail(c); assert.equal(c.room.phase, 'over');
+  must(undo(c)); assert.equal(c.room.phase, 'vote'); assert.equal(c.g.reform, 4);
 });
 
 test('audit: Play again is host only', () => {
@@ -362,30 +371,31 @@ test('audit: Play again is host only', () => {
 
 test('audit: no undo past a secret look', () => {
   // Inquiry
-  const t = started(9, { seed: 44 }); pass(t, 'D'); assert.equal(t.g.power, 'investigate');
+  const t = logged(started(9, { seed: 44 })); pass(t, 'D'); assert.equal(t.g.power, 'investigate');
   const s = sp(t); must(act(t.room, s, { type: 'power', id: t.ids.find((i) => i !== s) }, t.rng));
-  assert.equal(t.room.undo.length, 0); assert.match(refused(t, t.host, { type: 'undo' }), /undo past a secret look/);
+  assert.match(undo(t).error, /secret policies or an Inquiry/);
   assert.equal(t.g.investigated.length, 1);
   // public steps after the barrier are undoable again, down to the barrier
-  const ch = pickCh(t); must(act(t.room, sp(t), { type: 'nominate', id: ch }, t.rng)); must(act(t.room, t.host, { type: 'undo' }, t.rng)); assert.equal(t.room.phase, 'nominate');
-  assert.match(refused(t, t.host, { type: 'undo' }), /secret look/);
+  const ch = pickCh(t); must(act(t.room, sp(t), { type: 'nominate', id: ch }, t.rng)); must(undo(t)); assert.equal(t.room.phase, 'nominate');
+  assert.match(undo(t).error, /Undo stops here/);
+  assert.ok(t.L.history().canRedo, 'Redo still works, so nothing locks');
   // docket
-  const p = started(5, { seed: 45 }); p.g.decree = 2; pass(p, 'D'); assert.equal(p.g.power, 'peek');
-  must(act(p.room, sp(p), { type: 'peekDone' }, p.rng)); assert.match(refused(p, p.host, { type: 'undo' }), /secret look/);
+  const p = started(5, { seed: 45 }); p.g.decree = 2; logged(p); pass(p, 'D'); assert.equal(p.g.power, 'peek');
+  must(act(p.room, sp(p), { type: 'peekDone' }, p.rng)); assert.match(undo(p).error, /Undo stops here/);
   // discard and enact (the hand was seen)
-  const d = started(5, { seed: 46 }); const dc = pickCh(d); elect(d, dc);
-  must(act(d.room, d.host, { type: 'undo' }, d.rng)); assert.equal(d.room.phase, 'vote', 'a vote is public and undoable');
+  const d = logged(started(5, { seed: 46 })); const dc = pickCh(d); elect(d, dc);
+  must(undo(d)); assert.equal(d.room.phase, 'vote', 'a vote is public and undoable');
   for (const id of d.ids) if (!(id in d.g.votes)) must(act(d.room, id, { type: 'vote', aye: true }, d.rng));
-  must(act(d.room, sp(d), { type: 'discard', i: 0 }, d.rng)); assert.match(refused(d, d.host, { type: 'undo' }), /secret look/);
+  must(act(d.room, sp(d), { type: 'discard', i: 0 }, d.rng)); assert.match(undo(d).error, /Undo stops here/);
   assert.equal(d.g.hand.length, 2);
-  must(act(d.room, dc, { type: 'enact', i: 0 }, d.rng)); assert.match(refused(d, d.host, { type: 'undo' }), /secret look/);
+  must(act(d.room, dc, { type: 'enact', i: 0 }, d.rng)); assert.match(undo(d).error, /Undo stops here/);
   // physical public steps stay undoable
-  const q = started(5, { seed: 47, mode: { play: 'physical' }, phoneless: 2 });
+  const q = logged(started(5, { seed: 47, mode: { play: 'physical' }, phoneless: 2 }));
   must(act(q.room, q.host, { type: 'nominate', id: q.ids.find((id) => id !== sp(q)) }, q.rng)); must(act(q.room, q.host, { type: 'tally', ayes: q.ids }, q.rng));
-  must(act(q.room, q.host, { type: 'hostEnact', policy: 'R' }, q.rng)); must(act(q.room, q.host, { type: 'undo' }, q.rng)); assert.equal(q.room.phase, 'legislate');
-  must(act(q.room, q.host, { type: 'undo' }, q.rng)); assert.equal(q.room.phase, 'vote');
-  // a new deal forgets the barrier
-  must(act(d.room, d.host, { type: 'restart' }, d.rng)); assert.match(act(d.room, d.host, { type: 'undo' }, d.rng).error, /Nothing to undo/);
+  must(act(q.room, q.host, { type: 'hostEnact', policy: 'R' }, q.rng)); must(undo(q)); assert.equal(q.room.phase, 'legislate');
+  must(undo(q)); assert.equal(q.room.phase, 'vote');
+  // with UNDO_PAST_SECRET on, the same Undo goes through
+  assert.notEqual(undoTarget(d.L.events, d.L.cursor, d.room, { pastSecret: true }).i, null);
 });
 
 test('audit: an idle Speaker’s skipped power stays lost (and the FAQ says so)', () => {

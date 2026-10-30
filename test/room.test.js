@@ -5,7 +5,7 @@ import { POWERS } from '../public/js/rules.js';
 
 const seeded = (seed) => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
 const must = (r) => { assert.ok(r.ok, r.error); return r; };
-const act = (room, id, msg, rng) => reduce(room, { playerId: id }, msg, rng);
+import { act, logged, undo } from './kit/logged.mjs';
 
 function started(n, { house = {}, mode, phoneless = 0, seed = 1 } = {}) {
   const rng = seeded(seed); const room = newRoom('ABCDEF', 'hk'); const ids = [];
@@ -102,12 +102,13 @@ test('veto unlocks at five Decrees; refusal forces an enactment; acceptance disc
   assert.ok(act(t.room, ch, { type: 'veto' }).error, 'no veto at 4');
   must(act(t.room, ch, { type: 'enact', i: 0 })); assert.equal(t.g.decree, 5); skipPower(t);
   ch = pickChancellor(t, roleOf(t, 'pretender')); t.g.deck.unshift('D', 'D', 'D'); elect(t, ch);
+  logged(t); // Undo is on the event log, from here
   must(act(t.room, sp(t), { type: 'discard', i: 0 }));
   must(act(t.room, ch, { type: 'veto' }));
   must(act(t.room, sp(t), { type: 'vetoReply', accept: false }));
   assert.ok(act(t.room, ch, { type: 'veto' }).error, 'only once');
   // undo, then accept this time
-  must(act(t.room, t.host, { type: 'undo' })); must(act(t.room, t.host, { type: 'undo' }));
+  must(undo(t)); must(undo(t)); // the veto and the answer are public
   assert.equal(t.g.leg, 'chancellor');
   must(act(t.room, ch, { type: 'veto' }));
   const tr = t.g.tracker; const disc = t.g.discard.length;

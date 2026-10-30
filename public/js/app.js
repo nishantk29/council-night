@@ -590,7 +590,7 @@ function hostControls(v) {
     ${idle.length ? `<ul class="dash-list">${idle.map((p) => `<li><span class="who">${esc(p.name)} <small class="muted">waiting</small></span><span class="btn-row"><button class="btn ghost sm" data-a="nudge" data-id="${p.id}">Nudge</button><button class="btn ghost sm" data-a="skip" data-id="${p.id}">${skipText}</button></span></li>`).join('')}</ul>` : ''}
     <div class="btn-row wrap">${v.phase === 'reveal' ? '<button class="btn ghost" data-a="skipReveal">Skip to nomination</button>' : ''}
     ${['nominate', 'legislate', 'power'].includes(v.phase) && phaseSkip ? `<button class="btn ghost sm" data-a="nudge" data-id="${who}">Nudge ${esc(nameOf(v, who))}</button><button class="btn ghost" data-a="skip">${phaseSkip}</button>` : ''}</div>
-    <p class="muted">Skips and undos are written in the log for everyone. A random skip is drawn by the server; nobody, including you, sees the policies.</p>
+    <p class="muted">Skips are written in the log for everyone, and every phone is told when you undo. Undo stops at a secret look (a hand, the docket or an Inquiry). A random skip is drawn by the server; nobody, including you, sees the policies.</p>
     ${v.moderator ? `<h3 class="sub">The Deal (Host Only)</h3><ul class="roles-list">${seats.map((p) => { const r = v.moderator.roles[p.id]; return r ? `<li class="a-${r.side}">${art(ROLE_ART[r.id])}<span><b>${esc(p.name)}</b><small>${esc(r.name)}</small></span></li>` : ''; }).join('')}</ul>` : ''}`;
 }
 
@@ -644,6 +644,7 @@ function wsTransport(code, asScreen) {
       if (m.type === 'view') onView(m.view);
       else if (m.type === 'gameover') fx.gameOver(m);
       else if (m.type === 'error') toast(m.error);
+      else if (m.type === 'stepped') toast(m.host ? `${m.dir === 'undo' ? 'Undone' : 'Redone'}: ${m.label}` : m.dir === 'undo' ? 'The host went back a step.' : 'The host redid a step.');
       else if (m.type === 'joined') store.set(`${KEY}.player.${code}`, JSON.stringify({ playerId: m.playerId, token: m.token }));
       else if (m.type === 'closed') { closed = true; store.del(`${KEY}.player.${code}`); store.del(`${KEY}.host.${code}`); S.ended = true; S.view = null; render(); }
       else if (m.type === 'fatal') { if (m.clear) { store.del(`${KEY}.player.${code}`); S.view = null; toast(m.error); render(); } else { closed = true; S.fatal = /expired/i.test(m.error) ? FATAL.gone : FATAL.closed; render(); } }

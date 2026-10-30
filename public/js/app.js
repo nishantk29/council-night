@@ -64,6 +64,13 @@ addEventListener('pointerup', () => { if (!fieldDown) return; setTimeout(() => {
 addEventListener('pointercancel', () => { fieldDown = false; }, true);
 let toTop = false;
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; // hash routes must not restore an old offset
+const isFaqKey = (k) => typeof k === 'string' && k.startsWith('faq|');
+// A one-shot entrance class, dropped when its own animation ends (a child's animationend bubbles up, so check the target).
+function replayIn(el, cls) {
+  el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
+  const end = (e) => { if (e.target !== el) return; el.classList.remove(cls); el.removeEventListener('animationend', end); };
+  el.addEventListener('animationend', end);
+}
 function render() {
   if (vtBusy) { pending = true; setTimeout(() => { if (pending) render(); }, 60); return; }
   if (fieldDown) { pending = true; return; }
@@ -72,10 +79,14 @@ function render() {
   pending = false;
   // The room's first view replacing the connecting placeholder is the same screen: no second slide right after the first.
   const settling = lastKey !== null && lastKey === `${S.mode}|||`;
-  const key = screenKey(S.mode, S.view); const changed = lastKey !== null && key !== lastKey && !settling; lastKey = key;
+  const key = screenKey(S.mode, S.view); const changed = lastKey !== null && key !== lastKey && !settling;
+  // Opening or leaving the FAQ (Nishant, Oct 30 2026: "janky"): no view transition. Its snapshot groups animate width, height
+  // and backdrop-filter; the page fades and slides in on opacity + transform only (.faq-in, 220 ms). Motion only: content untouched.
+  const faqHop = isFaqKey(lastKey) || isFaqKey(key); lastKey = key;
   if (changed) toTop = true; // a new screen (the deal, a new phase) opens at the top, so a face-down card is in view
   const animate = changed && !document.hidden && motionOk(S.view, reducedMq.matches);
   // New screens slide in like Mafia Night's: the old one slips left, the new one glides in (transform and opacity only).
+  if (animate && faqHop) { paint(); replayIn($app.querySelector(':scope > main') || $app, 'faq-in'); return; }
   if (animate && document.startViewTransition && !vtBusy) {
     vtBusy = true;
     try {

@@ -133,6 +133,10 @@ html[data-screen="1"] .bg-art{display:none}
 }
 @keyframes gc-step-out{to{opacity:0;transform:translateX(-8px)}}
 @keyframes gc-step-in{from{opacity:0;transform:translateX(16px)}}
+/* the FAQ page opens on opacity + transform only, 220 ms, no view transition (app.js render) */
+.faq-in{animation:gc-step-in 220ms var(--gc-ease) both}
+.fx-off .faq-in{animation:none}
+@media (prefers-reduced-motion:reduce){.faq-in{animation:none}}
 
 /* ---- first-load entrance on the home screen only (html.boot is removed shortly after load) */
 .boot .home-head,.boot .home-hero,.boot .home-paths > *,.boot .more-games{animation:gc-rise var(--t-enter) var(--gc-ease) both}

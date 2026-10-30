@@ -141,9 +141,8 @@ export function makeSetup({ S, send, store, render, esc, ui, art, toast, openShe
       if (f === 'heading') window.scrollTo(0, 0); // a new step opens at the top, under the app bar
     }
     if (dir && slide?.animate) {
-      const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-scale')) || 1;
       if (reduced) { if (REDUCED_FADE_MS > 0) slide.animate([{ opacity: 0 }, { opacity: 1 }], { duration: REDUCED_FADE_MS, easing: 'ease-out' }); }
-      else slide.animate([{ opacity: 0, transform: `translateX(${dir * 36}px)` }, { opacity: 1, transform: 'none' }], { duration: SLIDE_MS * scale, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      else slide.animate([{ opacity: 0, transform: `translateX(${dir * 36}px)` }, { opacity: 1, transform: 'none' }], { duration: SLIDE_MS, easing: 'cubic-bezier(.2,.8,.2,1)' });
     }
   }
 

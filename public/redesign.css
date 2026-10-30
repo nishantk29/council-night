@@ -18,14 +18,14 @@
 .bg-sun{position:absolute;right:-18vmin;top:-14vmin;width:min(90vmin,820px);height:auto;opacity:.16;transform-origin:50% 50%}
 /* the sun behind the page turns one full revolution, easing to a stop where it started (no looping motion: Nishant, Oct 28 11:09 PM ET);
    the final frame is the resting pose, which is also what reduced motion and effects-off show */
-.sun-spin{transform-origin:400px 400px;animation:gc-turn 120s cubic-bezier(.3,0,.2,1) 1}
+.sun-spin{transform-origin:400px 400px;animation:none} /* holds its resting pose: a two-minute turn does not fit the 400ms budget (2026-10-29) */
 .sun-rays{transform-origin:400px 400px}
 .bg-columns{position:absolute;left:0;bottom:0;width:min(100vw,900px);height:min(34vh,300px);opacity:.07}
 @media (max-width:640px){.bg-sun{width:120vw;right:-40vw;top:-18vw;opacity:.14}.bg-columns{opacity:.05}}
 html[data-screen="1"] .bg-art{display:none}
 @keyframes gc-turn{to{transform:rotate(360deg)}}
 /* the rays spiral in once on first load (they start rotated and shrunk, then unwind into place) */
-.boot .sun-rays{animation:gc-spiral calc(1500ms * var(--dur-scale)) var(--gc-ease) both}
+.boot .sun-rays{animation:gc-spiral 400ms var(--gc-ease) both}
 @keyframes gc-spiral{from{opacity:0;transform:rotate(-200deg) scale(.35)}to{opacity:1;transform:none}}
 
 /* ---- home: Mafia structure. Back link on top, logo and title, then the actions, suggestions and footer */
@@ -33,7 +33,7 @@ html[data-screen="1"] .bg-art{display:none}
 .logo-mark{display:grid;place-items:center;width:72px;height:72px;border-radius:var(--f-r-card);background:var(--orange);color:var(--ink);box-shadow:0 10px 24px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.35);transform:rotate(-4deg)}
 .logo-mark .ico,.logo-mark svg{width:48px;height:48px}
 .logo-mark .ico{transform-origin:50% 50%}
-.boot .logo-mark .ico{animation:gc-spiral calc(1400ms * var(--dur-scale)) var(--gc-ease) 120ms both}
+.boot .logo-mark .ico{animation:gc-spiral 280ms var(--gc-ease) 120ms both}
 .home-nav{display:flex}
 .home-head{padding:0}
 .home-meta{margin:0 0 var(--s1)}
@@ -79,8 +79,8 @@ html[data-screen="1"] .bg-art{display:none}
 .wrap.home .site-foot{width:auto;padding-inline:0;margin-inline:0}
 
 /* ---- cards: tilt with the mouse (gentle on touch), crafted surface, no side stripes anywhere */
-[data-card],.path,.side,.more-card,.stat,.how li,.gal-card,.pile > span{--crx:0deg;--cry:0deg;transform:perspective(900px) rotateX(var(--crx)) rotateY(var(--cry));transition:transform calc(320ms * var(--dur-scale)) var(--gc-ease);transform-style:flat;backface-visibility:hidden}
-[data-tilting]{transition:transform calc(90ms * var(--dur-scale)) linear!important}
+[data-card],.path,.side,.more-card,.stat,.how li,.gal-card,.pile > span{--crx:0deg;--cry:0deg;transform:perspective(900px) rotateX(var(--crx)) rotateY(var(--cry));transition:transform 400ms var(--gc-ease);transform-style:flat;backface-visibility:hidden}
+[data-tilting]{transition:transform 180ms linear!important}
 @media (hover:hover) and (pointer:fine){.more-card:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 14px 30px rgba(0,0,0,.45)}}
 .path,.more-card{position:relative}
 .path::after,.more-card::after{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--paper);background-size:160px;opacity:.06;mix-blend-mode:overlay;pointer-events:none}
@@ -128,7 +128,7 @@ html[data-screen="1"] .bg-art{display:none}
 @supports (view-transition-name:none){
   #app > main.wrap{view-transition-name:step}
   ::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
-  ::view-transition-old(step){animation:gc-step-out calc(50ms * var(--dur-scale)) var(--gc-ease) both}
+  ::view-transition-old(step){animation:gc-step-out 100ms var(--gc-ease) both}
   ::view-transition-new(step){animation:gc-step-in var(--t-enter) var(--gc-ease) both}
 }
 @keyframes gc-step-out{to{opacity:0;transform:translateX(-8px)}}
@@ -136,7 +136,7 @@ html[data-screen="1"] .bg-art{display:none}
 
 /* ---- first-load entrance on the home screen only (html.boot is removed shortly after load) */
 .boot .home-head,.boot .home-hero,.boot .home-paths > *,.boot .more-games{animation:gc-rise var(--t-enter) var(--gc-ease) both}
-.boot .home-hero{animation-delay:calc(15ms * var(--dur-scale))}.boot .home-paths > :nth-child(1){animation-delay:calc(25ms * var(--dur-scale))}.boot .home-paths > :nth-child(2){animation-delay:calc(40ms * var(--dur-scale))}.boot .home-paths > :nth-child(n+3){animation-delay:calc(55ms * var(--dur-scale))}.boot .more-games{animation-delay:calc(75ms * var(--dur-scale))}
+.boot .home-hero{animation-delay:30ms}.boot .home-paths > :nth-child(1){animation-delay:50ms}.boot .home-paths > :nth-child(2){animation-delay:80ms}.boot .home-paths > :nth-child(n+3){animation-delay:110ms}.boot .more-games{animation-delay:150ms}
 @keyframes gc-rise{from{opacity:0;transform:translateY(8px)}}
 
 /* ---- reduced motion and the Animations switch */
@@ -149,11 +149,11 @@ html[data-screen="1"] .bg-art{display:none}
 .fx-off [data-card],.fx-off .path,.fx-off .side,.fx-off .more-card,.fx-off .stat,.fx-off .how li,.fx-off .gal-card,.fx-off .pile > span{transform:none!important}
 .fx-off ::view-transition-old(step),.fx-off ::view-transition-new(step){animation:none!important}
 
-/* ---- arriving from the hub (game end of the handoff): ONE opacity fade of the page, 150ms base (300ms at --dur-scale 2).
+/* ---- arriving from the hub (game end of the handoff): ONE opacity fade of the page, 300ms.
    Nothing moves: no logo overlay flying in from the handoff pose (Nishant, Oct 28: "That logo moving on game night is kinda
    janky") and the first-load entrance is skipped. html.handoff is set by the inline <head> script, never under reduced
    motion, and stays for the page's life, so nothing replays when html.boot goes. */
-html.handoff #app,html.handoff .bg-art{animation:gc-hub-fade calc(150ms * var(--dur-scale)) var(--gc-ease) both}
+html.handoff #app,html.handoff .bg-art{animation:gc-hub-fade 300ms var(--gc-ease) both}
 html.handoff.boot .sun-rays,html.handoff.boot .home-head,html.handoff.boot .home-hero,html.handoff.boot .home-paths > *,html.handoff.boot .more-games,html.handoff.boot .logo-mark .ico{animation:none}
 @keyframes gc-hub-fade{from{opacity:0}to{opacity:1}}
 

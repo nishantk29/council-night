@@ -16,9 +16,9 @@ test('no infinite or repeating animation anywhere (CSS, inline styles, JS)', () 
     assert.doesNotMatch(src, /iterations\s*:\s*(Infinity|[2-9]|\d{2,})/, f);
   }
 });
-test('the turning sun makes one revolution and comes to rest where it started', () => {
+test('the sun holds its resting pose (a two-minute turn does not fit the 400ms budget, 2026-10-29)', () => {
   const css = strip(rd('redesign.css'));
-  assert.match(css, /\.sun-spin\{transform-origin:400px 400px;animation:gc-turn 120s cubic-bezier\(\.3,0,\.2,1\) 1\}/);
+  assert.match(css, /\.sun-spin\{transform-origin:400px 400px;animation:none\}/);
   assert.match(css, /@keyframes gc-turn\{to\{transform:rotate\(360deg\)\}\}/); // 360deg = the resting pose, so no jump at the end
 });
 test('reduced motion and effects off show that final frame with no motion', () => {

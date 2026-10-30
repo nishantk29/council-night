@@ -86,7 +86,8 @@ try {
     hub: [...document.querySelectorAll('a[href="https://gamenight.hatethespurs.com/"]')].map((a) => { const r = a.getBoundingClientRect(); return { w: r.width, h: r.height }; }),
     workers: /workers\.dev/.test(document.body.innerHTML),
     runningNow: window.__rec.runningNow(), starts: window.__rec.starts.map((s) => s.name),
-    blur: [...document.querySelectorAll('*')].filter((e) => { const s = getComputedStyle(e); return (s.backdropFilter && s.backdropFilter !== 'none') || (s.filter && /blur/.test(s.filter)); }).length,
+    // glass is allowed only on the floating tab bar (kit-bars.css, Nishant 30 Oct); anything else blurred on home fails
+    blur: [...document.querySelectorAll('*')].filter((e) => { const s = getComputedStyle(e); return !e.matches('.tabbar') && ((s.backdropFilter && s.backdropFilter !== 'none') || (s.filter && /blur/.test(s.filter))); }).length,
   }));
   const bad = [];
   if (home.steps.length !== 4 || !home.steps.every(Boolean)) bad.push('How to Play must show 4 visible steps');
@@ -181,6 +182,12 @@ try {
     row(`host step changes x${an.length}`, w ? { ...w, frames: Math.round(an.reduce((s, x) => s + x.frames, 0) / an.length) } : null, { bad: an.length ? [] : ['no step change recorded'] }); }
   row('re-render, same state (tab toggle at every host step)', null, { starts: replay.length, bad: replay.map((r) => `replay ${r}`) });
   for (const p of pages) await overflow(p, 'game page');
+  // floating glass bars (kit-bars.css): at most 1 live blur layer per screen, only on the tab bar, never animated
+  for (const p of pages) { const g = await p.evaluate(() => { const vis = (e) => { const r = e.getBoundingClientRect(); const c = getComputedStyle(e); return r.width > 0 && r.height > 0 && c.display !== 'none' && c.visibility !== 'hidden'; };
+    const b = [...document.querySelectorAll('*')].filter((e) => { const s = getComputedStyle(e); return vis(e) && ((s.backdropFilter && s.backdropFilter !== 'none') || (s.webkitBackdropFilter && s.webkitBackdropFilter !== 'none')); });
+    const anim = document.getAnimations().filter((a) => a.effect?.target?.matches?.('.tabbar') && /backdrop|filter/i.test(JSON.stringify(a.effect.getKeyframes()))).length;
+    return { n: b.length, other: b.filter((e) => !e.matches('.tabbar')).map((e) => e.className).slice(0, 3), anim }; });
+    if (g.n > 1 || g.other.length || g.anim) fails.push(`game page: glass budget ${g.n} blur layer(s)${g.other.length ? ', not on the bar: ' + g.other.join(',') : ''}${g.anim ? ', blur animated' : ''}`); }
   if (!over) fails.push('game never reached the end screen');
 
   // ============================================================ 3. reduced motion: nothing animates, anywhere

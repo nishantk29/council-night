@@ -17,16 +17,16 @@ test('no art deco face (Limelight, Poiret One) anywhere in the site; it belongs 
 
 test('the display face is Big Shoulders Display, self-hosted, font-display swap, and preloaded', () => {
   const css = fs.readFileSync(path.join(pub, 'redesign.css'), 'utf8');
-  assert.match(css, /@font-face\{font-family:"Big Shoulders Display";font-weight:100 900;[^}]*font-display:swap;src:url\(\/fonts\/big-shoulders-display-var\.woff2\)/);
+  assert.match(css, /@font-face\{font-family:"Big Shoulders Display";font-weight:100 900;[^}]*font-display:swap;src:url\(\/fonts\/big-shoulders-display-core\.woff2\)/);
   assert.match(css, /\.wordmark,\.phase-title,\.block-title,\.path-title\{font-family:var\(--display-gilded\)/);
   const html = fs.readFileSync(path.join(pub, 'index.html'), 'utf8');
-  assert.match(html, /<link rel="preload" href="\/fonts\/big-shoulders-display-var\.woff2" as="font" type="font\/woff2" crossorigin>/);
+  assert.match(html, /<link rel="preload" href="\/fonts\/big-shoulders-display-core\.woff2" as="font" type="font\/woff2" crossorigin>/);
   // only the two fonts first paint needs are preloaded
   assert.equal((html.match(/rel="preload"[^>]+as="font"/g) || []).length, 2);
 });
 
-test('Big Shoulders Display has a glyph for every printable ASCII character and the punctuation the titles use', () => {
-  const cps = new Set(cmapCodepoints(path.join(pub, 'fonts/big-shoulders-display-var.woff2')));
+test('the preloaded Big Shoulders Display core file has a glyph for every printable ASCII character and the punctuation the titles use', () => {
+  const cps = new Set(cmapCodepoints(path.join(pub, 'fonts/big-shoulders-display-core.woff2')));
   const need = [...Array(95)].map((_, i) => String.fromCharCode(32 + i)).join('') + '’‘“”–—…·';
   assert.deepEqual([...need].filter((c) => !cps.has(c.codePointAt(0))), []);
 });

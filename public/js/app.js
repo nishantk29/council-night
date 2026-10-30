@@ -149,7 +149,7 @@ const carousel = (cls, label, slides) => `<div class="car" role="group" aria-rol
 const dimBtn = (label = '') => `<button type="button" class="icon-btn dim-btn${label ? ' has-label' : ''}" data-a="dim" aria-pressed="${$html.dataset.dim === '1'}" aria-label="Low-light mode" title="Low-light mode"><svg class="dim-glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path class="moon" d="M20 15.5A9 9 0 0 1 8.5 4a9 9 0 1 0 11.5 11.5z"/><g class="lamp"><circle cx="12" cy="12" r="5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" fill="none"/></g></svg>${label}</button>`;
 
 const HUB = 'https://gamenight.hatethespurs.com/';
-const hubLink = `<a class="hub-link" href="${HUB}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg>All Games</a>`;
+const hubLink = `<a class="hub-link" href="${HUB}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg>All games</a>`;
 const MORE_GAMES = [
   { cls: 'more-mafia', name: 'Mafia Night', href: 'https://mafia.hatethespurs.com', blurb: 'Secret roles for Mafia and Werewolf, dealt to every phone.',
     logo: '<svg viewBox="0 0 48 48"><path d="M8 20c4-8 11-10 16-6 5-4 12-2 16 6-3 12-9 19-16 19S11 32 8 20z" fill="currentColor"/><ellipse cx="17" cy="22" rx="4.4" ry="2.6" fill="#1B1410"/><ellipse cx="31" cy="22" rx="4.4" ry="2.6" fill="#1B1410"/></svg>' },
@@ -160,7 +160,7 @@ const HUB_LOGO = '<svg viewBox="0 0 48 48"><rect x="7" y="7" width="15" height="
 
 // One footer for every page: the game links, the low-light switch, then the licences tucked behind "Credits".
 function siteFooter() {
-  return `<footer class="site-foot"><nav aria-label="Game Night games"><a href="${HUB}">All Games</a><a href="https://mafia.hatethespurs.com">Mafia Night</a><a href="https://secrethitler.hatethespurs.com" aria-current="page">The Gilded Chamber</a><a href="https://avalon.hatethespurs.com">Quest Night</a></nav>
+  return `<footer class="site-foot"><nav aria-label="Game Night games"><a href="${HUB}">All games</a><a href="https://mafia.hatethespurs.com">Mafia Night</a><a href="https://secrethitler.hatethespurs.com" aria-current="page">The Gilded Chamber</a><a href="https://avalon.hatethespurs.com">Quest Night</a></nav>
     <div class="foot-row">${dimBtn('Low Light')}<details class="credits-box"><summary>Credits</summary><p>Torch, chain, mask, dagger and every board icon drawn for The Gilded Chamber. Interface icons from <a href="https://phosphoricons.com" target="_blank" rel="noopener">Phosphor</a> (MIT). Fonts Rubik and Big Shoulders Display (SIL OFL 1.1).</p></details></div></footer>`;
 }
 function home() {
@@ -177,11 +177,11 @@ function home() {
       <section class="path"><h2 class="path-title">Host</h2>
         <p class="muted">You can play too, or just run the table. Everyone else joins with a 6-letter code.</p>
         <label class="field"><span>Your name</span><input data-i="hostName" maxlength="20" autocomplete="nickname" enterkeyhint="go" value="${esc(S.ui.draft.hostName || store.get(`${KEY}.name`) || '')}"></label>
-        <button type="button" class="btn big" data-a="host">Open Chamber</button>
-        ${mine.map((c) => `<p class="resume-row" data-room="${esc(c)}"><a class="resume" href="#/play/${esc(c)}">Back to Chamber <b class="code">${esc(c)}</b></a><button type="button" class="resume-x" data-a="forgetRoom" data-v="${esc(c)}" aria-label="Forget chamber ${esc(c)} on this phone">${ui('x')}</button></p>`).join('')}</section>
+        <button type="button" class="btn big" data-a="host">Host a game</button>
+        ${mine.map((c) => `<p class="resume-row" data-room="${esc(c)}"><a class="resume" href="#/play/${esc(c)}">Rejoin <b class="code">${esc(c)}</b></a><button type="button" class="resume-x" data-a="forgetRoom" data-v="${esc(c)}" aria-label="Forget chamber ${esc(c)} on this phone">${ui('x')}</button></p>`).join('')}</section>
       <section class="path c-blue"><h2 class="path-title">Join</h2>
         <div class="join-row"><label class="field"><span>Room code</span><input class="code-input" data-i="joinCode" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="go" placeholder="ABCDEF" value="${esc(S.ui.draft.joinCode || '')}"></label>
-        <button type="button" class="btn ghost" data-a="goJoin">Join Room</button></div></section>
+        <button type="button" class="btn ghost" data-a="goJoin">Join a game</button></div></section>
       <a class="side" href="#/faq"><span><b>Rules &amp; FAQ</b><small>Roles, powers, house rules and edge cases.</small></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
       <h2 class="path-title how-title">How to play</h2>
       <ol class="how" aria-label="How to play, 4 steps">${[
@@ -225,7 +225,7 @@ function rulesPage() {
 function joinForm() {
   return `<main class="wrap join"><h1 class="phase-title">Join Chamber <span class="code">${esc(S.code)}</span></h1>
     <label class="field"><span>Your name</span><input data-i="joinName" maxlength="20" autocomplete="nickname" enterkeyhint="go" value="${esc(S.ui.draft.joinName || store.get(`${KEY}.name`) || '')}"></label>
-    <div class="sticky-act"><button type="button" class="btn big" data-a="join">Take Seat</button></div>
+    <div class="sticky-act"><button type="button" class="btn big" data-a="join">Join</button></div>
     <p class="muted" style="margin-top:var(--s4)">If the game has started you’ll watch, unless the host opened a seat for you. <a href="#/">Back</a></p></main>`;
 }
 
@@ -234,7 +234,7 @@ const PHASE = { lobby: ['Gathering', 'table'], reveal: ['Secret Roles', 'cards']
 const rolesChipBtn = (v) => { const c = rolesChip(v); return `<button type="button" class="roles-chip" data-a="roles" aria-label="${esc(c.label)}">${esc(c.text)}</button>`; };
 function appbar(v) {
   const [label, icon] = PHASE[v.phase] || ['', 'game'];
-  return `<header class="appbar"><a class="appbar-mark" href="#/" aria-label="Home">${art('torch')}</a>
+  return `<header class="appbar"><a class="appbar-mark" href="#/" aria-label="The Gilded Chamber home">${art('torch')}</a>
     <div class="appbar-title"><span class="ab-word">Chamber </span><span class="code">${esc(v.code)}</span></div>
     ${T.timerChip(v)}${rolesChipBtn(v)}${dimBtn()}<span class="phase-badge">${ui(icon)}<span class="pb-t">${label}</span></span></header>`;
 }
@@ -354,11 +354,11 @@ function roundTable(v) {
 // ---- Phones mode privacy: a secret (role, hand, docket) is drawn only while it is open. Closed, every player sees the
 // same blurred card back, so a glance at someone's phone shows nothing. Press and hold to look; a quick tap peeks for a few seconds.
 const isOpen = (k) => !!S.ui.open[k];
-const holdChip = '<span class="hold-chip">Hold to Reveal</span>';
+const holdChip = '<span class="hold-chip">Hold to reveal</span>';
 const hiddenCards = (n) => Array.from({ length: n }, () => `<span class="dc">${cardArt('back')}</span>`).join('');
 // Policy cards the player may choose from: real cards while open, blurred backs while closed.
 const secretTiles = (k, items, build) => isOpen(k)
-  ? `<div class="tiles">${items.map(build).join('')}</div><button type="button" class="btn ghost sm hold" data-a="reveal" data-k="${k}">Hide Cards</button>`
+  ? `<div class="tiles">${items.map(build).join('')}</div><button type="button" class="btn ghost sm hold" data-a="reveal" data-k="${k}">Hide</button>`
   : `<button type="button" class="tiles hold is-hidden" data-a="reveal" data-k="${k}" aria-label="Reveal your cards. Press and hold, or tap to peek.">${hiddenCards(items.length)}${holdChip}</button><p class="muted center">Hold to look. A quick tap shows them for ${TAP_REVEAL_MS / 1000} seconds.</p>`;
 const holdState = { key: null, t0: 0 }; const hideT = {};
 function setOpen(k, on) {
@@ -405,14 +405,14 @@ function stage(v) {
   if (v.phase === 'reveal') {
     if (g.appRoles && me.role && !S.ui.rolesSeen[v.gameNo || 1]) return rolesPanel(v);
     if (!g.appRoles || !me.role) return `<section class="stage"><h1 class="phase-title">Secret Roles</h1>${say(g.appRoles ? 'The players are reading their roles.' : 'Everyone checks their own role. The host reads the eyes-closed script from the Host tab.')}</section>${rolesPanel(v, false)}
-      ${host ? '<div class="sticky-act"><button class="btn big" data-a="skipReveal">Begin Game</button></div>' : ''}`;
+      ${host ? '<div class="sticky-act"><button class="btn big" data-a="skipReveal">Start game</button></div>' : ''}`;
     const ready = g.ready.includes(me.id);
     return `<section class="stage reveal-stage"><h1 class="phase-title">Your Secret Role</h1>
       ${say('Shield your screen. Hold the card to look, then let go to hide it again.')}
       ${cardView(v)}
       ${ready ? '<p class="muted center">Waiting for the others…</p>' : ''}
-      ${host && ready ? '<button class="btn ghost" data-a="skipReveal">Begin Now</button>' : ''}</section>
-      ${ready ? '' : '<div class="sticky-act"><button class="btn big" data-a="ready">I’m Ready</button></div>'}`;
+      ${host && ready ? '<button class="btn ghost" data-a="skipReveal">Start game</button>' : ''}</section>
+      ${ready ? '' : '<div class="sticky-act"><button class="btn big" data-a="ready">I’m ready</button></div>'}`;
   }
   if (v.phase === 'nominate') {
     const mine = g.speaker === me.id; const forS = !mine && host && isPhys(v, g.speaker);
@@ -438,7 +438,7 @@ function stage(v) {
     const c = g.check;
     const q = c.kind === 'chancellor' ? `Three Decrees are down. ${esc(nameOf(v, c.id))}, are you the Boss? Answer truthfully: say “Yes” only if you are; otherwise say “No”.` : `${esc(nameOf(v, c.id))} is ${v.house.exile ? 'exiled' : 'executed'}. Were they the Boss? Only say whether they were.`;
     return `<section class="stage"><h1 class="phase-title">The Question</h1>${say(q)}
-      ${host ? `<div class="choice-pair"><button class="choice no ${S.ui.answer === true ? 'is-picked' : ''}" data-a="pickAnswer" data-v="1" aria-pressed="${S.ui.answer === true}">Yes, the Boss</button><button class="choice yes ${S.ui.answer === false ? 'is-picked' : ''}" data-a="pickAnswer" data-v="0" aria-pressed="${S.ui.answer === false}">No</button></div>` : ''}</section>`;
+      ${host ? `<div class="choice-pair"><button class="choice no ${S.ui.answer === true ? 'is-picked' : ''}" data-a="pickAnswer" data-v="1" aria-pressed="${S.ui.answer === true}">It was the Boss</button><button class="choice yes ${S.ui.answer === false ? 'is-picked' : ''}" data-a="pickAnswer" data-v="0" aria-pressed="${S.ui.answer === false}">Not the Boss</button></div>` : ''}</section>`;
   }
   if (v.phase === 'legislate') {
     if (!g.cardsApp) {
@@ -446,14 +446,14 @@ function stage(v) {
       if (!host) return `<section class="stage">${head}</section>`;
       return `<section class="stage">${head}<p class="note">Which policy did ${C2} turn face up?</p>
         <div class="choice-pair"><button class="choice ballot reform ${S.ui.policy === 'R' ? 'is-picked' : ''}" data-a="pickPolicy" data-v="R" aria-pressed="${S.ui.policy === 'R'}" aria-label="Reform">${cardArt('reform')}</button><button class="choice ballot decree ${S.ui.policy === 'D' ? 'is-picked' : ''}" data-a="pickPolicy" data-v="D" aria-pressed="${S.ui.policy === 'D'}" aria-label="Decree">${cardArt('decree')}</button></div>
-        ${g.vetoOn ? '<button class="btn ghost" data-a="hostVeto">Confirm Veto</button>' : ''}</section>`;
+        ${g.vetoOn ? '<button class="btn ghost" data-a="hostVeto">Veto</button>' : ''}</section>`;
     }
     const hand = me.hand || [];
     if (g.leg === 'speaker' && g.speaker === me.id) return `<section class="stage"><h1 class="phase-title">Discard One</h1>${say(`Tap the policy to <b>discard</b>. The other two go to ${C2}. Nobody else sees these.`)}
       ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn ${S.ui.card === i ? 'is-picked' : ''}" data-a="pickCard" data-v="${i}" aria-pressed="${S.ui.card === i}" aria-label="Discard this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`)}</section>`;
     if (g.leg === 'chancellor' && g.nominee === me.id) return `<section class="stage"><h1 class="phase-title">Enact One</h1>${say('Tap the policy to <b>enact</b>. The other is discarded face down.')}
       ${secretTiles('hand', hand, (p, i) => `<button type="button" class="tile-btn ${S.ui.card === i ? 'is-picked' : ''}" data-a="pickCard" data-v="${i}" aria-pressed="${S.ui.card === i}" aria-label="Enact this ${p === 'R' ? 'Reform' : 'Decree'}">${tile(p)}</button>`)}
-      ${g.vetoOn && !g.vetoRefused ? '<button class="btn ghost" data-a="veto">Propose Veto</button>' : g.vetoRefused ? '<p class="muted">The Speaker refused the veto. You must enact one.</p>' : ''}</section>`;
+      ${g.vetoOn && !g.vetoRefused ? '<button class="btn ghost" data-a="veto">Propose veto</button>' : g.vetoRefused ? '<p class="muted">The Speaker refused the veto. You must enact one.</p>' : ''}</section>`;
     if (g.leg === 'veto' && g.speaker === me.id) return `<section class="stage"><h1 class="phase-title">Veto?</h1>${say(`${C2} wants to veto this agenda. If you agree, both policies are discarded and Unrest moves one step.`)}
       <div class="choice-pair"><button class="choice yes ${S.ui.veto === true ? 'is-picked' : ''}" data-a="pickVeto" data-v="1" aria-pressed="${S.ui.veto === true}">${art('aye')}Agree</button><button class="choice no ${S.ui.veto === false ? 'is-picked' : ''}" data-a="pickVeto" data-v="0" aria-pressed="${S.ui.veto === false}">${art('nay')}Refuse</button></div></section>`;
     return `<section class="stage"><h1 class="phase-title">In Session</h1>${say(g.leg === 'speaker' ? `${S2} is choosing a policy to discard.` : g.leg === 'veto' ? `${C2} proposed a veto. ${S2} decides.` : `${C2} is choosing a policy to enact.`)}</section>`;
@@ -484,7 +484,7 @@ function over(v) {
   return `<section class="winner a-${side}">${art(side === 'reform' ? 'torch' : g.reason === 'pretender' ? 'mask' : 'chain')}<h1>${side === 'reform' ? 'The Loyalists Win' : 'The Syndicate Wins'}</h1>
       <p class="say">${why}</p>${won}</section>
     ${roles ? `<section class="stage"><h2 class="block-title">Who Was Who</h2><ul class="roles-list">${roles}</ul></section>` : '<section class="stage"><p class="say">Everyone, reveal your roles.</p></section>'}
-    ${me?.host ? '<div class="sticky-act"><button class="btn big" data-a="restart">Restart</button><button class="btn ghost" data-a="again">Change setup first</button></div>' : v.kind === 'screen' ? '' : '<p class="muted center">Waiting for the host to start another game.</p>'}`;
+    ${me?.host ? '<div class="sticky-act"><button class="btn big" data-a="restart">Play again</button><button class="btn ghost" data-a="again">Change setup first</button></div>' : v.kind === 'screen' ? '' : '<p class="muted center">Waiting for the host to start another game.</p>'}`;
 }
 
 function lastReveals(v) {
@@ -571,7 +571,7 @@ function hostControls(v) {
   const phaseSkip = { nominate: 'Pass Gavel', legislate: g.cardsApp ? (g.leg === 'veto' ? 'Refuse Veto' : g.leg === 'speaker' ? 'Random Discard' : 'Random Enact') : '', power: 'Skip Power' }[v.phase];
   return `<h3 class="sub">This Phase</h3>
     ${idle.length ? `<ul class="dash-list">${idle.map((p) => `<li><span class="who">${esc(p.name)} <small class="muted">waiting</small></span><span class="btn-row"><button class="btn ghost sm" data-a="nudge" data-id="${p.id}">Nudge</button><button class="btn ghost sm" data-a="skip" data-id="${p.id}">${skipText}</button></span></li>`).join('')}</ul>` : ''}
-    <div class="btn-row wrap">${v.phase === 'reveal' ? '<button class="btn ghost" data-a="skipReveal">Skip to Nomination</button>' : ''}
+    <div class="btn-row wrap">${v.phase === 'reveal' ? '<button class="btn ghost" data-a="skipReveal">Skip to nomination</button>' : ''}
     ${['nominate', 'legislate', 'power'].includes(v.phase) && phaseSkip ? `<button class="btn ghost sm" data-a="nudge" data-id="${who}">Nudge ${esc(nameOf(v, who))}</button><button class="btn ghost" data-a="skip">${phaseSkip}</button>` : ''}</div>
     <p class="muted">Skips and undos are written in the log for everyone. A random skip is drawn by the server; nobody, including you, sees the policies.</p>
     ${v.moderator ? `<h3 class="sub">The Deal (Host Only)</h3><ul class="roles-list">${seats.map((p) => { const r = v.moderator.roles[p.id]; return r ? `<li class="a-${r.side}">${art(ROLE_ART[r.id])}<span><b>${esc(p.name)}</b><small>${esc(r.name)}</small></span></li>` : ''; }).join('')}</ul>` : ''}`;
@@ -658,7 +658,7 @@ function showRoles() {
 function restartAsk() {
   openSheet({ title: 'Restart the game?', cls: 'restart-sheet',
     bodyHtml: '<p>Everyone stays seated and gets a fresh deal with the same setup, straight to the secret cards. The chat, log, board and policies so far are cleared.</p>',
-    buttons: [{ label: 'Keep playing', cls: 'ghost' }, { label: 'Change setup first', cls: 'ghost', onClick: () => send({ type: 'again' }) }, { label: 'Restart now', onClick: () => send({ type: 'restart' }) }] });
+    buttons: [{ label: 'Keep playing', cls: 'ghost' }, { label: 'Change setup first', cls: 'ghost', onClick: () => send({ type: 'again' }) }, { label: 'Restart game', onClick: () => send({ type: 'restart' }) }] });
 }
 
 function onView(v) {
@@ -793,7 +793,7 @@ async function act(a, el) {
     case 'dockSkip': { const nav = hostNav(S.view, pickUi()); const sk = nav?.skip; if (!sk) return; clearPicks(); for (const m of sk.msgs) send(m); return; }
     case 'vote': haptic(20); send({ type: 'vote', aye: d.v === '1' }); return;
     case 'veto': send({ type: 'veto' }); return;
-    case 'hostVeto': if (await askConfirm('Both policies are discarded and Unrest moves one step. Confirm the veto?')) send({ type: 'hostVeto' }); return;
+    case 'hostVeto': if (await askConfirm('Both policies are discarded and Unrest moves one step. Veto these policies?', 'Veto')) send({ type: 'hostVeto' }); return;
     case 'power': S.ui.target = d.id; render(); return;
     case 'piece': send({ type: 'mode', mode: { play: 'hybrid', [d.k]: d.v } }); return;
     case 'tallyToggle': S.ui.tally[d.id] = !S.ui.tally[d.id]; render(); return;

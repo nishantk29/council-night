@@ -25,7 +25,7 @@ export function hostNav(view, uiIn = {}) {
   const ready = (label, send) => ({ label, disabled: false, missing: null, send, skip: null });
   const voters = [...g.alive, ...g.exiled];
 
-  if (view.phase === 'reveal') return host ? ready('Begin Game', { type: 'skipReveal' }) : null;
+  if (view.phase === 'reveal') return host ? ready('Start game', { type: 'skipReveal' }) : null;
 
   if (view.phase === 'nominate') {
     const mine = g.speaker === me.id; const forS = host && !mine && isPhys(g.speaker);
@@ -42,7 +42,7 @@ export function hostNav(view, uiIn = {}) {
       const yes = voters.filter((id) => ui.tally[id]);
       const none = chip('No one voted Aye', [{ type: 'tally', ayes: [] }]);
       if (!yes.length) return need('Tap who voted Aye', 'tally', none);
-      return ready(`Confirm: ${yes.length} Aye, ${voters.length - yes.length} Nay`, { type: 'tally', ayes: yes });
+      return ready(`Record: ${yes.length} Aye, ${voters.length - yes.length} Nay`, { type: 'tally', ayes: yes });
     }
     const idle = voters.filter((id) => !g.voted.includes(id));
     if (!host || !idle.length) return null;
@@ -54,7 +54,7 @@ export function hostNav(view, uiIn = {}) {
       if (!host) return null;
       const rand = null; // a fact at the table: entered, never skipped (ruling 5)
       if (!ui.policy) return need('Enter what was enacted', 'policy', rand);
-      return ready(`Confirm: a ${ui.policy === 'R' ? 'Reform' : 'Decree'} was enacted`, { type: 'hostEnact', policy: ui.policy });
+      return ready(`Record: a ${ui.policy === 'R' ? 'Reform' : 'Decree'} was enacted`, { type: 'hostEnact', policy: ui.policy });
     }
     const sp = g.speaker === me.id; const ch = g.nominee === me.id;
     if (g.leg === 'speaker') {
@@ -91,12 +91,12 @@ export function hostNav(view, uiIn = {}) {
     const c = g.check;
     const no = null; // the Yes/No answer is the choice; a default "No" could hide a Boss win
     if (ui.answer == null) return need(c.kind === 'chancellor' ? 'Answer: is the Chancellor the Boss?' : 'Answer: was the executed player the Boss?', 'answer', no);
-    return ready(ui.answer ? 'Confirm: yes, the Boss' : 'Confirm: no', { type: 'check', yes: !!ui.answer });
+    return ready(ui.answer ? 'Record: it was the Boss' : 'Record: not the Boss', { type: 'check', yes: !!ui.answer });
   }
 
   // chaos: the Unrest tile
   if (!host) return null;
   const rand = null; // a fact at the table: entered, never skipped (ruling 5)
   if (!ui.policy) return need('Enter what was enacted', 'policy', rand);
-  return ready(`Confirm: a ${ui.policy === 'R' ? 'Reform' : 'Decree'} was enacted`, { type: 'hostEnact', policy: ui.policy });
+  return ready(`Record: a ${ui.policy === 'R' ? 'Reform' : 'Decree'} was enacted`, { type: 'hostEnact', policy: ui.policy });
 }

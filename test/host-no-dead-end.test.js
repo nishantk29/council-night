@@ -103,7 +103,7 @@ function playGame(g) {
         assert.equal(nav.label, 'Tap who voted Aye'); assert.equal(nav.skip.label, 'No one voted Aye');
         const yes = shuffled(rng, voters).slice(0, 1 + Math.floor(rng() * voters.length));
         for (const id of yes) ui.tally[id] = true;
-        const n2 = withUi(); assert.equal(n2.disabled, false); assert.equal(n2.label, `Confirm: ${yes.length} Aye, ${voters.length - yes.length} Nay`);
+        const n2 = withUi(); assert.equal(n2.disabled, false); assert.equal(n2.label, `Record: ${yes.length} Aye, ${voters.length - yes.length} Nay`);
         continue;
       }
       assert.equal(nav.missing, 'votes'); assert.match(nav.label, /^Waiting for \d+ votes?$/);
@@ -117,7 +117,7 @@ function playGame(g) {
         stats.physLeg++;
         assert.equal(nav.label, 'Enter what was enacted');
         ui.policy = rng() < 0.5 ? 'R' : 'D';
-        const n2 = withUi(); assert.equal(n2.disabled, false); assert.match(n2.label, /^Confirm: a (Reform|Decree) was enacted$/);
+        const n2 = withUi(); assert.equal(n2.disabled, false); assert.match(n2.label, /^Record: a (Reform|Decree) was enacted$/);
         continue;
       }
       if (gm.leg === 'speaker') {
@@ -163,7 +163,7 @@ function playGame(g) {
       stats.check++;
       assert.match(nav.label, /^Answer: (is the Chancellor|was the executed player) the Boss\?$/);
       ui.answer = rng() < 0.15;
-      const n2 = withUi(); assert.equal(n2.disabled, false); assert.match(n2.label, /^Confirm: /);
+      const n2 = withUi(); assert.equal(n2.disabled, false); assert.match(n2.label, /^Record: /);
       continue;
     }
     assert.equal(phase, 'chaos'); stats.chaos++;
@@ -196,7 +196,7 @@ test('host flow never dead-ends: steps with nothing to choose are enabled right 
   const view = viewForPlayer(c.room, c.H.playerId);
   assert.equal(view.phase, 'reveal');
   const nav = hostNav(view, {});
-  assert.equal(nav.disabled, false); assert.equal(nav.label, 'Begin Game'); assert.deepEqual(nav.send, { type: 'skipReveal' });
+  assert.equal(nav.disabled, false); assert.equal(nav.label, 'Start game'); assert.deepEqual(nav.send, { type: 'skipReveal' });
   assert.equal(hostNav({ ...view, phase: 'lobby' }, {}), null);
   assert.equal(hostNav({ ...view, kind: 'screen' }, {}), null);
   // the docket look has nothing to pick: Done is on at once

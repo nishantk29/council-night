@@ -159,7 +159,7 @@ dialog.gs-sheet .gs-name{width:100%;min-height:52px;padding:0 var(--s3);border:0
 dialog.gs-sheet .gs-tok{--rim:var(--gs-reform,#7FA6E0);background:var(--gs-tok,#2D251C);color:var(--rim)} dialog.gs-sheet .a-cabal .gs-tok{--rim:var(--gs-rust,#E0694A)}
 
 /* Roles in this game: header chip and the panel shown before "See my role" (same list on every phone) */
-.roles-chip{flex:none;min-height:44px;min-width:44px;padding:0 var(--s3);border:0;border-radius:var(--r-pill);background:var(--panel-2);color:var(--candle);font:inherit;font-size:.9375rem;font-weight:700;white-space:nowrap;cursor:pointer}
+.roles-chip{flex:none;min-height:44px;min-width:44px;padding:0 var(--s3);border:0;border-radius:var(--f-r-pill);background:var(--panel-2);color:var(--candle);font:inherit;font-size:.9375rem;font-weight:700;white-space:nowrap;cursor:pointer}
 .layout .col-main > .stage.roles-panel{background:none;box-shadow:none;border-radius:0;padding:var(--s2) 0 0;color:var(--gs-ink);gap:var(--s2)}
 .layout .col-main > .stage.roles-panel::before,.layout .col-main > .stage.roles-panel::after{display:none}
 .roles-panel .phase-title{font-family:var(--display-gilded);font-weight:800;text-transform:uppercase;font-size:clamp(1.9rem,8.4vw,2.4rem);color:var(--gs-ink);outline:none}

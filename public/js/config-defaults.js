@@ -26,3 +26,9 @@ export const ROLES_CHIP_LABEL = 'Roles';
 // (roles at the table, votes and policy tiles in the app). The host can change each piece on the Seating step.
 export const MIXED_PIECES_PHONELESS = { roles: 'physical', votes: 'physical', cards: 'physical' };
 export const MIXED_PIECES_ALL_PHONES = { roles: 'physical', votes: 'app', cards: 'app' };
+// Undo and Redo (event-log.js), decided by Nishant and Fennel (Oct 30). UNDO_PAST_SECRET off: Undo stops at the last
+// secret look (a hand, the docket, an Inquiry) and says why. UNDO_PAST_GAME_OVER on: from the end screen a confirm
+// sheet asks first, and every phone hides the roles again.
+export const UNDO_PAST_SECRET = false;
+export const UNDO_PAST_GAME_OVER = true;
+export const NOTIFY_ON_UNDO = true;                   // players get "The host went back a step" when the game itself changed

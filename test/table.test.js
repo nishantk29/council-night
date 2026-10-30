@@ -4,7 +4,7 @@ import { newRoom, reduce, viewForPlayer, viewForScreen } from '../public/js/room
 
 const seeded = (seed) => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
 const must = (r) => { assert.ok(r.ok, r.error); return r; };
-const act = (room, id, msg, rng, now) => reduce(room, { playerId: id }, msg, rng, now);
+import { act, logged, undo } from './kit/logged.mjs';
 function lobby(n, { house = {}, mode, phoneless = 0, seed = 1 } = {}) {
   const rng = seeded(seed); const room = newRoom('ABCDEF', 'hk'); const ids = [];
   for (let i = 0; i < n - phoneless; i++) ids.push(must(reduce(room, {}, { type: 'join', name: `P${i}`, hostKey: i === 0 ? 'hk' : undefined }, rng)).data.playerId);
@@ -29,7 +29,7 @@ test('hybrid: phoneless seats are refused while any piece is in the app', () => 
 });
 
 test('host tools: skip, pause, undo, nudge, open a seat and take it over, hand off', () => {
-  const t = started(5);
+  const t = logged(started(5));
   const g = () => t.room.game;
   const sp = g().speaker; const ch = t.ids.find((id) => id !== sp);
   must(act(t.room, sp, { type: 'nominate', id: ch }));
@@ -41,8 +41,9 @@ test('host tools: skip, pause, undo, nudge, open a seat and take it over, hand o
   must(act(t.room, t.host, { type: 'skip', id: last }));
   assert.ok(g().lastVote.nays.includes(last), 'a skipped vote is a nay');
   assert.ok(['legislate', 'over'].includes(t.room.phase));
-  must(act(t.room, t.host, { type: 'undo' }));
+  must(undo(t)); // on the event log
   assert.equal(t.room.phase, 'vote', 'undo goes back one step');
+  assert.ok(!t.room.log.some((m) => /skipped/.test(m.text)), 'the room is as it was before the skip, its log line too');
   must(act(t.room, t.host, { type: 'nudge', id: last }));
   assert.equal(viewForPlayer(t.room, last).me.nudged, 1);
   const before = g().roles[t.ids[3]];
@@ -53,7 +54,6 @@ test('host tools: skip, pause, undo, nudge, open a seat and take it over, hand o
   must(act(t.room, t.host, { type: 'handoff', id: t.ids[1] }));
   assert.ok(t.room.players.find((p) => p.id === t.ids[1]).host);
   assert.ok(act(t.room, t.host, { type: 'pause' }).error);
-  assert.ok(t.room.log.some((m) => /skipped/.test(m.text)) && t.room.log.some((m) => /undid/.test(m.text)));
 });
 
 test('chat, claims, no-claims mode, mute and moderation', () => {

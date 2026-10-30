@@ -22,15 +22,14 @@ const alive = (room) => room.game.order.filter((id) => room.game.alive[id]);
 const office = (room) => alive(room).filter((id) => !room.game.exiled[id]);
 const voters = (room) => room.game.order.filter((id) => room.game.alive[id] || room.game.exiled[id]);
 const HOOKS = { minPlayers: MIN_PLAYERS, maxPlayers: MAX_PLAYERS, houseDefaults: HOUSE_DEFAULTS, alive: (room) => (room.game ? voters(room) : seatIds(room)) };
-const UNDOABLE = new Set(['nominate', 'vote', 'tally', 'discard', 'enact', 'veto', 'vetoReply', 'hostEnact', 'hostVeto', 'power', 'peekDone', 'check', 'skip']);
-const GAME = new Set([...UNDOABLE, 'ready', 'skipReveal']);
+const GAME = new Set(['nominate', 'vote', 'tally', 'discard', 'enact', 'veto', 'vetoReply', 'hostEnact', 'hostVeto', 'power', 'peekDone', 'check', 'skip', 'ready', 'skipReveal']);
 const nm = (room, id) => byId(room, id)?.name || '?';
 const PNAME = { R: 'Reform', D: 'Decree' };
 // Why the game ended, in the words the game-over pop-up shows on every screen (chosen here, once, by the server).
 export const WIN_TEXT = { reforms: '5 Reforms passed', decrees: '6 Decrees passed', pretender: 'The Boss was elected Chancellor', executed: 'The Boss was removed' };
 
 function finish(room, winner, reason, now) {
-  const g = room.game; g.winner = winner; g.reason = reason; room.phase = 'over'; room.overN = (room.overN || 0) + 1; room.undo = []; room.undoBarrier = false; // every role is public now: nothing can be un-ended
+  const g = room.game; g.winner = winner; g.reason = reason; room.phase = 'over'; room.overN = (room.overN || 0) + 1;
   log(room, 'game', winner === 'reform' ? 'The Loyalists win.' : 'The Syndicate wins.', null, now);
 }
 
@@ -60,7 +59,7 @@ function startGame(room, rng, now, restart = false) {
     hand: [], leg: null, vetoRefused: false, power: null, check: null, investigated: [], seen: {}, peek: {}, confirmedNot: [],
     history: [], lastVote: null, lastPolicy: null, ready: {}, winner: null, reason: null,
   };
-  room.phase = 'reveal'; room.undo = []; room.undoBarrier = false;
+  room.phase = 'reveal';
   if (restart) { // a clean slate: nothing from the old game survives
     room.log = []; room.logN = 0; room.timer = null; room.talk = null; room.paused = null; room.poll = null;
     room.counters = []; room.nudges = {};
@@ -310,7 +309,7 @@ function gameReduce(room, actor, msg, rng, now) {
       if (msg.type === 'again' && room.phase !== 'over') return err('Finish this game first.');
       room.players = room.players.filter((p) => !p.open); // seats nobody took over
       for (const p of room.players) p.watch = p.host ? !!room.house.sitOut : false; // late watchers sit in the next deal
-      room.game = null; room.phase = 'lobby'; room.undo = []; room.undoBarrier = false; room.timer = null; room.talk = null; room.paused = null;
+      room.game = null; room.phase = 'lobby'; room.timer = null; room.talk = null; room.paused = null;
       if (msg.type === 'abandon') log(room, 'host', 'The host ended the game.', null, now);
       return ok();
     }
@@ -326,8 +325,10 @@ function nextSpeakerFirst(room) { // the first Speaker is the one chosen at the 
   const g = room.game; g.speaker = g.order[g.rot]; room.phase = 'nominate';
 }
 
+// A step that shows someone a secret (a hand, the docket, an Inquiry). With UNDO_PAST_SECRET off (the default),
+// Undo stops at the last one (event-log.js), so a secret look is never taken back behind the table's back.
 const SECRET_STEPS = new Set(['discard', 'enact', 'peekDone']);
-function secretStep(room, msg) {
+export function secretStep(room, msg) {
   const g = room.game; if (!g) return false;
   if (SECRET_STEPS.has(msg.type)) return true;
   if (msg.type === 'power') return g.power === 'investigate';
@@ -337,23 +338,11 @@ function secretStep(room, msg) {
 export function reduce(room, actor, msg, rng = Math.random, now = Date.now()) {
   if (!msg || typeof msg.type !== 'string') return err('Bad message.');
   const before = room.phase;
-  if (msg.type === 'undo' && actor.playerId && byId(room, actor.playerId)?.host) {
-    if (room.phase === 'over') return err('Can’t undo once the game is over.');
-    if (!room.undo.length && room.undoBarrier) return err('Can\'t undo past a secret look');
-  }
   const t = reduceTable(room, actor, msg, rng, now, HOOKS);
-  if (t) { if (msg.type === 'undo' && t.ok) onPhaseChange(room, now); return t; }
+  if (t) return t;
   if (room.paused && GAME.has(msg.type)) return err('The game is paused.');
   if (GAME.has(msg.type) && !room.game) return err('No game is running.');
-  const snap = room.game && UNDOABLE.has(msg.type) ? JSON.stringify({ game: room.game, phase: room.phase }) : null;
-  const sawSecret = secretStep(room, msg); // a step that shows a secret (a hand, the docket, an Inquiry) can't be taken back
   const res = gameReduce(room, actor, msg, rng, now);
-  if (res.ok && snap) {
-    const g = room.game;
-    if (room.phase === 'over') { room.undo = []; room.undoBarrier = false; }
-    else if (sawSecret) { room.undo = []; room.undoBarrier = true; }
-    else { room.undo.push(snap); if (room.undo.length > 12) room.undo.shift(); }
-  }
   if (res.ok && room.phase !== before) onPhaseChange(room, now);
   return res;
 }
@@ -430,12 +419,15 @@ export const socketsToDrop = (sockets, playerId, exceptWs = null) => sockets.fil
 
 // What to send each open socket after a change: its own view, plus the game-over event when the game just ended.
 // sockets: [{ ws, who: 'player' | 'screen' | null, playerId }]. Sockets that have not joined get nothing.
-export function broadcastPlan(room, sockets, connected, { gameOver = false } = {}) {
+// stamp: { rev, hist } from the event log. Every view carries rev; the host's view also carries hist (Undo/Redo).
+export function broadcastPlan(room, sockets, connected, { gameOver = false, stamp = null } = {}) {
   const plan = [];
   for (const s of sockets) {
     if (!s.who) continue;
     const player = s.who === 'screen' ? null : s.playerId;
-    const msgs = [{ type: 'view', view: player ? viewForPlayer(room, player, connected) : viewForScreen(room, connected) }];
+    const view = player ? viewForPlayer(room, player, connected) : viewForScreen(room, connected);
+    if (stamp) { view.rev = stamp.rev; if (view.me?.host) view.hist = stamp.hist; }
+    const msgs = [{ type: 'view', view }];
     const ev = gameOver ? gameOverEvent(room, player) : null;
     if (ev) msgs.push(ev); // after the view, so the roles it reveals are already on screen
     plan.push({ ws: s.ws, msgs });

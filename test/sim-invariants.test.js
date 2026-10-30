@@ -5,10 +5,11 @@
 // game once and records what broke; the five tests below each read their own part of that record. The rules are written out
 // again here, so a slip in rules.js or room.js shows up as a disagreement. With physical roles the sim deals its own secret
 // roles and answers the table's questions from them. scripts/sim-games.mjs is the online version.
-// Coverage: SIM_GAMES=2000 by default (under 20 s). Table sizes rotate fastest, so every size meets every play mode.
+// Coverage: SIM_GAMES=2000 by default (about 40 s: every move goes through the event log). Table sizes rotate fastest, so every size meets every play mode.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { newRoom, reduce, viewForPlayer, viewForScreen, rulesVersion, LATEST_RULES_VERSION } from '../public/js/room.js';
+import { GameLog } from '../public/js/event-log.js';
+import { newRoom, viewForPlayer, viewForScreen, rulesVersion, LATEST_RULES_VERSION } from '../public/js/room.js';
 import { roleList, startingDeck, shuffle, TEAMS, MIN_PLAYERS, MAX_PLAYERS, VETO_AT, PRETENDER_DANGER, REFORM_TO_WIN, DECREE_TO_WIN, TRACKER_MAX } from '../public/js/rules.js';
 
 const GAMES = Number(process.env.SIM_GAMES) || 2000;
@@ -59,7 +60,8 @@ function send(st, actor, msg, expect) {
   const { room } = st;
   const before = expect === false ? snap(room) : null;
   let res;
-  try { res = reduce(room, actor, msg, st.rng, NOW + st.steps); } catch (e) { bad(st, `${msg.type} threw: ${e.stack.split('\n').slice(0, 2).join(' ')}`); return false; }
+  const seed = [0, 0, 0, 0].map(() => Math.floor(st.rng() * 4294967296));
+  try { res = st.L.apply(actor, msg, NOW + st.steps, seed); } catch (e) { bad(st, `${msg.type} threw: ${e.stack.split('\n').slice(0, 2).join(' ')}`); return false; }
   st.stats.moves++;
   if (expect === false) {
     st.stats.illegal++;
@@ -106,6 +108,7 @@ function dealt(st) {
   else st.truth = { ...g.roles };
   const sd = startingDeck(n, room.house.rebalance);
   st.total = sd.deck.length + sd.decree;
+  st.deals[room.gameNo] = { truth: st.truth, total: st.total }; // Undo can go back into an earlier deal
   const count = (role) => Object.values(st.truth).filter((r) => r === role).length;
   if (Object.keys(st.truth).length !== n || count('reformer') !== TEAMS[n][0] || count('cabal') !== TEAMS[n][1] || count('pretender') !== 1) bad(st, 'the deal does not match the roles for this table');
   if (!!g.roles !== (room.mode.roles === 'app')) bad(st, 'roles dealt by the app in a physical deal, or the reverse');
@@ -235,9 +238,15 @@ function step(st) {
   }
   if (rng() < 0.02) { send(st, H, { type: 'pause' }, true); stats.pauses++; return; }
   if (rng() < 0.02) tryIllegal(st);
-  if (rng() < 0.01) { // Undo: accepted only when there is a step to take back
-    const can = room.undo.length > 0;
-    if (send(st, H, { type: 'undo' }, can) && can) stats.undos++;
+  if (rng() < 0.01) { // Undo, on the event log: taken only when there is a step to take back, else refused with a reason
+    const h = st.L.history();
+    if (h.canUndo) {
+      if (st.L.undoStep() === null) bad(st, 'Undo was offered but did not move');
+      const fresh = st.L.room; for (const k of Object.keys(room)) delete room[k]; Object.assign(room, fresh); st.L.room = room; // same object for the sim
+      stats.undos++;
+      if (room.game) { ({ truth: st.truth, total: st.total } = st.deals[room.gameNo]); checkState(st); }
+      else deal(st); // Undo took back the deal itself: back in the lobby, so deal again
+    } else if (!h.undoWhy && room.phase !== 'lobby') bad(st, 'Undo refused with no reason');
     return;
   }
   if (rng() < 0.004) { restart(st, true); return; }
@@ -312,15 +321,16 @@ function checkWinner(st) {
 
 function playGame(index, rng, rec) {
   const c = caseFor(index);
-  const room = newRoom(`SIM${index}`, HOST_KEY);
-  const st = { rec, rng, stats: rec.stats, room, tag: `game ${index} (${c.n} players, ${c.mode.play})`, steps: 0, late: 1, lastPhase: null, truth: {}, total: 0 };
+  const L = new GameLog(newRoom(`SIM${index}`, HOST_KEY)); const room = L.room;
+  const st = { rec, rng, stats: rec.stats, room, L, tag: `game ${index} (${c.n} players, ${c.mode.play})`, steps: 0, late: 1, lastPhase: null, truth: {}, total: 0, deals: {} };
   rec.stats.games++;
   for (let i = 0; i < c.n; i++) send(st, {}, { type: 'join', name: `P${i}`, hostKey: i === 0 ? HOST_KEY : undefined }, true);
   send(st, as(hostId(room)), { type: 'mode', mode: c.mode }, true);
   send(st, as(hostId(room)), { type: 'house', house: c.house }, true);
   deal(st);
   // A room started before rulesVersion was pinned: it keeps version 1 until Restart or Play again.
-  if (rng() < 0.2) { delete room.rulesVersion; rec.stats.legacy++; }
+  // Such a room has no event log yet, so the Worker starts one from where it is (loadLog): the sim does the same.
+  if (rng() < 0.2) { delete room.rulesVersion; rec.stats.legacy++; st.L = new GameLog(room); st.L.room = room; }
   let deals = 1;
   for (let i = 0; ; i++) {
     if (room.phase === 'over') {

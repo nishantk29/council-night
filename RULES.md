@@ -34,9 +34,9 @@ All in `test/audit-v2.test.js`. No fix changed play, so none is gated on `rulesV
 
 | Fix | Since | Test |
 |---|---|---|
-| Undo is refused after the game ended (it used to un-end it with every role shown). | all | `audit: no undo after game over` |
+| Undo is a step on the event log (unlimited, with Redo, rev-checked). From the end screen it asks first and hides the roles again on every phone, but only when no secret was seen since (UNDO_PAST_SECRET off), so a game ended by an enacted policy stays ended. | all | `audit: undo after game over goes through the log, and only over public steps`; undo-redo.test.js |
 | Play again is host only; players see "Waiting for the host". | all | `audit: Play again is host only` |
-| No undo past a secret look (Inquiry, docket, discard, enact). | all | `audit: no undo past a secret look` |
+| No undo past a secret look (Inquiry, docket, discard, enact), with the reason shown; Redo still works. | all | `audit: no undo past a secret look` |
 | Knowledge badges show only while the role card is open. | all | `audit: knowledge badges show only while the role card is open` |
 | Moderator roles go only to a sit-out Host, never to a late watcher who claims host. | all | `audit: moderator roles only for a sit-out host` |
 | An idle Speaker's skipped power stays lost (FAQ says so). | all | `audit: an idle Speaker’s skipped power stays lost (and the FAQ says so)` |

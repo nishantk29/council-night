@@ -123,12 +123,13 @@ export function makeTable(ctx) {
 
   // ------------------------------------------------------------ host dashboard frame
   // Undo and Redo: steps on the room's event log. The labels say what the step was ("Undo: The vote count").
-  // Redo shows only when there is something to redo. Same button style as the rest of the row; kit i-undo / i-redo icons.
+  // Redo shows only when there is something to redo. Undo and Redo sit together in their own two-column row (hist-pair),
+  // always with their text labels; kit i-undo / i-redo icons (both fit with the labels at 375px).
   function undoButtons(v) {
     const h = v.hist || {};
     const undo = `<button class="btn ghost ${h.canUndo ? '' : 'disabled'}" data-a="undo" aria-label="${esc(h.canUndo ? `Undo: ${h.undoLabel}` : 'Undo')}" title="${esc(h.canUndo ? `Undo: ${h.undoLabel}` : h.undoWhy || 'Nothing to undo.')}">${ui('undo')} Undo</button>`;
     const redo = h.canRedo ? `<button class="btn ghost" data-a="redo" aria-label="${esc(`Redo: ${h.redoLabel}`)}" title="${esc(`Redo: ${h.redoLabel}`)}">${ui('redo')} Redo</button>` : '';
-    return undo + redo;
+    return `<div class="hist-pair">${undo}${redo}</div>`;
   }
 
   function hostPane(v, gameControls, script) {
@@ -140,8 +141,7 @@ export function makeTable(ctx) {
       ${p.phoneless || p.open ? '' : `<button class="btn ghost sm" data-a="handoff" data-id="${p.id}">Make host</button>`}
       ${p.watch || !playing ? `<button class="btn ghost sm" data-a="kick" data-id="${p.id}">Remove</button>` : p.open ? '' : `<button class="btn ghost sm" data-a="kick" data-id="${p.id}">Replace</button>`}</span></li>`).join('');
     return `<section class="pane-sec dash" aria-label="Host dashboard"><h2 class="block-title">Host dashboard</h2>
-      ${playing ? `<div class="btn-row wrap">${v.paused ? `<button class="btn" data-a="resume">${ui('play')} Resume</button>` : `<button class="btn ghost" data-a="pause">${ui('pause')} Pause</button>`}
-        ${undoButtons(v)}
+      ${playing ? `${undoButtons(v)}<div class="btn-row wrap">${v.paused ? `<button class="btn" data-a="resume">${ui('play')} Resume</button>` : `<button class="btn ghost" data-a="pause">${ui('pause')} Pause</button>`}
         <button class="btn ghost" data-a="restartAsk">Restart game</button>
         <button class="btn ghost" data-a="abandon">End game</button></div>` : ''}
       ${gameControls || ''}

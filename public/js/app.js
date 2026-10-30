@@ -240,7 +240,7 @@ const PHASE = { lobby: ['Gathering', 'table'], reveal: ['Secret Roles', 'cards']
 const rolesChipBtn = (v) => { const c = rolesChip(v); return `<button type="button" class="roles-chip" data-a="roles" aria-label="${esc(c.label)}">${esc(c.text)}</button>`; };
 function appbar(v) {
   const [label, icon] = PHASE[v.phase] || ['', 'game'];
-  return `<header class="appbar"><a class="appbar-mark" href="#/" aria-label="The Gilded Chamber home">${art('torch')}</a>
+  return `<header class="appbar"><a class="appbar-mark" href="#/" aria-label="The Gilded Chamber home">${art('sun')}</a>
     <div class="appbar-title"><span class="ab-word">Chamber </span><span class="code">${esc(v.code)}</span></div>
     ${T.timerChip(v)}${rolesChipBtn(v)}${dimBtn()}<span class="phase-badge">${ui(icon)}<span class="pb-t">${label}</span></span></header>`;
 }
@@ -595,7 +595,7 @@ function hostPane(v) {
 // ---------------------------------------------------------------- shared table screen (TV / laptop)
 function tableScreen(v) {
   const g = v.game;
-  const head = `<header class="appbar"><span class="appbar-mark">${art('torch')}</span><div class="appbar-title">The Gilded Chamber <span class="code">${esc(v.code)}</span></div>${T.timerChip(v)}${dimBtn()}<span class="phase-badge">${ui(PHASE[v.phase]?.[1] || 'game')}${PHASE[v.phase]?.[0] || ''}</span></header>`;
+  const head = `<header class="appbar"><span class="appbar-mark">${art('sun')}</span><div class="appbar-title">The Gilded Chamber <span class="code">${esc(v.code)}</span></div>${T.timerChip(v)}${dimBtn()}<span class="phase-badge">${ui(PHASE[v.phase]?.[1] || 'game')}${PHASE[v.phase]?.[0] || ''}</span></header>`;
   if (!g) return `${head}<main class="wrap screen-lobby"><h1 class="phase-title">Join at ${esc(location.host)}</h1><p class="room-code">${esc(v.code)}</p><div class="qr-tap is-static">${qrSvg(`${location.origin}/#/play/${v.code}`, `QR code to join room ${v.code}`)}</div><p class="say">${v.players.filter((p) => !p.watch).map((p) => esc(p.name)).join(' · ') || 'Nobody yet.'}</p></main>`;
   const lines = phaseScript(v).slice(0, 2);
   return `${head}<div class="layout is-screen"><main class="col col-main wrap game">${board(v)}${roundTable({ ...v, me: null })}${v.phase === 'over' ? over(v) : `<section class="stage"><p class="say">${esc(lines.join(' '))}</p><div class="btn-row"><button type="button" class="btn ghost" data-a="roles">Roles in this game</button></div></section>`}${lastReveals(v)}</main>

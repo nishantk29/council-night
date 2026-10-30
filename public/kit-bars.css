@@ -1,0 +1,24 @@
+/* Floating Liquid Glass bars (Nishant 2026-10-30: glass only on the floating bars; FULL strength there).
+   Loaded LAST. Phone layout only (the tab bar is hidden from 1100 wide). Keeps the current tabs, chat tab and tools.
+   Uses only family tokens, so data-noblur / no-support / reduced transparency / more contrast make the bar solid.
+   Budget: 1 live blur layer (the tab bar). The dock CTA floats opaque (its own fill, edge + shadow, no blur). An open
+   sheet or dialog makes the bar solid, so glass never sits on glass. tools/anim-check.mjs checks the budget. */
+@media (max-width:1099px){
+  :root{--kit-bar-gap:var(--f-s3);--kit-bar-b:var(--f-safe-b);--tabbar-h:calc(var(--f-tabbar-h) + var(--kit-bar-gap))}   /* reserve: bar + its float gap */
+  .tabbar{left:var(--f-pad-l);right:var(--f-pad-r);bottom:var(--kit-bar-b);min-height:0;height:var(--f-tabbar-h);padding:var(--f-s1);box-sizing:border-box;
+    border:0;border-radius:var(--f-r-pill);background:var(--f-glass-tint);
+    -webkit-backdrop-filter:var(--f-glass-blur);backdrop-filter:var(--f-glass-blur);
+    box-shadow:var(--f-glass-edge),var(--f-glass-shadow);isolation:isolate;transform:translateZ(0)}
+  .tabbar button{min-height:0}
+  .layout:not(.is-screen) .sticky-act{bottom:calc(var(--kit-bar-b) + var(--f-tabbar-h) + var(--f-s3))}
+  .layout:not(.is-screen) .sticky-act::before{display:none}        /* the full-width slab behind the dock: the fade replaces it */
+  .layout:not(.is-screen) .sticky-act .btn:not(.disabled){box-shadow:var(--f-glass-edge),var(--f-glass-shadow)}
+  /* soft scroll edge: content fades out under the bars instead of colliding with them (no blur, static) */
+  #app:has(.tabbar)::after{   /* inside #app's stacking context (z-index:1), so it sits under the bar (30), over content */
+    content:"";position:fixed;left:0;right:0;bottom:0;z-index:20;height:calc(var(--kit-bar-b) + var(--f-tabbar-h) + var(--f-s5));pointer-events:none;
+    background:linear-gradient(to top,color-mix(in srgb,var(--f-bg) 70%,transparent),transparent)}
+  html:has(dialog[open],[data-sheet][open],.glass:not([hidden])) .tabbar{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--f-glass-solid)}
+}
+/* short phones (iPhone SE class, no home indicator): float the bar 4px off the edge, so it takes no more height than the
+   old 64px bar and the setup dock (gs-dock rides on --tabbar-h) doesn't cover the Add member field. */
+@media (max-width:1099px) and (max-height:700px){:root{--kit-bar-gap:var(--f-s1);--kit-bar-b:max(var(--f-s1),env(safe-area-inset-bottom))}}

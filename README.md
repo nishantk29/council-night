@@ -50,7 +50,7 @@ Hybrid. Every default is one named constant in `public/js/config-defaults.js`. B
 ## Run and test (Node 22+)
 - `npm test` (rules, every table size, powers table, deck/reshuffle, veto, term limits, unrest, all four win paths,
   physical/hybrid modes, host tools, secrecy).
-- `npx wrangler dev --port 8862 --ip 127.0.0.1`, then `BASE=http://127.0.0.1:8862 GAMES=60 node scripts/sim-games.mjs`
+- `npm run dev -- --port 8862 --ip 127.0.0.1` (wrangler dev --local, no Cloudflare login), then `BASE=http://127.0.0.1:8862 GAMES=60 node scripts/sim-games.mjs`
   plays whole games with scripted players and checks every view for leaks and every win against the rules.
 - `node scripts/contrast.mjs` checks every colour pair in both themes (WCAG AA).
 

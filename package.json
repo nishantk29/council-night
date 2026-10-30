@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --local",
     "test": "node --test test/*.test.js",
     "deploy": "wrangler deploy",
     "e2e": "node test/e2e/multi-phone.e2e.mjs"

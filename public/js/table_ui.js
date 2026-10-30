@@ -123,11 +123,11 @@ export function makeTable(ctx) {
 
   // ------------------------------------------------------------ host dashboard frame
   // Undo and Redo: steps on the room's event log. The labels say what the step was ("Undo: The vote count").
-  // Redo shows only when there is something to redo. Same button style as the rest of the row.
+  // Redo shows only when there is something to redo. Same button style as the rest of the row; kit i-undo / i-redo icons.
   function undoButtons(v) {
     const h = v.hist || {};
-    const undo = `<button class="btn ghost ${h.canUndo ? '' : 'disabled'}" data-a="undo" aria-label="${esc(h.canUndo ? `Undo: ${h.undoLabel}` : 'Undo')}" title="${esc(h.canUndo ? `Undo: ${h.undoLabel}` : h.undoWhy || 'Nothing to undo.')}">${ui('reset')} Undo</button>`;
-    const redo = h.canRedo ? `<button class="btn ghost" data-a="redo" aria-label="${esc(`Redo: ${h.redoLabel}`)}" title="${esc(`Redo: ${h.redoLabel}`)}">Redo</button>` : '';
+    const undo = `<button class="btn ghost ${h.canUndo ? '' : 'disabled'}" data-a="undo" aria-label="${esc(h.canUndo ? `Undo: ${h.undoLabel}` : 'Undo')}" title="${esc(h.canUndo ? `Undo: ${h.undoLabel}` : h.undoWhy || 'Nothing to undo.')}">${ui('undo')} Undo</button>`;
+    const redo = h.canRedo ? `<button class="btn ghost" data-a="redo" aria-label="${esc(`Redo: ${h.redoLabel}`)}" title="${esc(`Redo: ${h.redoLabel}`)}">${ui('redo')} Redo</button>` : '';
     return undo + redo;
   }
 

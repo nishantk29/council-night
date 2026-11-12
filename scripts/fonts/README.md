@@ -28,4 +28,6 @@ the service worker precache list and restamp it.
 - Big Shoulders Display (The Big Shoulders Project Authors): SIL OFL 1.1, no Reserved Font Name. Name kept.
 - Alegreya, Alegreya Sans: SIL OFL 1.1, no Reserved Font Name. Names kept.
 - Special Elite (Astigmatic): Apache License 2.0. The subset is a modified file; the version string in the font says so, as Apache 2.0 section 4(b) asks.
-- Rubik is not touched here (separate change).
+- Rubik (The Rubik Project Authors): SIL OFL 1.1, no Reserved Font Name (`public/fonts/LICENSE-rubik.txt`). Name kept.
+
+Rubik is not split into core/ext (`"split": false`): it carries underlined links, and WebKit (Safari) stops skipping descenders under an underline when a family is served as more than one unicode-range file. One subset file keeps it pixel-identical.

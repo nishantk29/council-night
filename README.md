@@ -8,7 +8,7 @@ offline-capable PWA with no framework. A 369-test suite plus scripted full-game 
 for secrets leaking into any view. It is a sister app to [Mafia Night](https://mafia.hatethespurs.com) and
 [Quest Night](https://avalon.hatethespurs.com).
 
-**Live:** https://secrethitler.hatethespurs.com
+**Live:** https://gilded.hatethespurs.com
 
 <p>
   <img src="docs/screenshots/home-phone.png" width="260" alt="Home screen with the game summary and a Host a game form">

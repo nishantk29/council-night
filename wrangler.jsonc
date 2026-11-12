@@ -7,6 +7,12 @@
   // scripts/build-deploy.mjs posts exactly these two values; test/deploy-workersdev.test.js pins them to live.
   "workers_dev": true,
   "preview_urls": false,
+  // Custom domains (Nov 2026): the game lives at gilded.hatethespurs.com. secrethitler.hatethespurs.com stays attached only so its
+  // proxied DNS record exists: a zone-level Single Redirect rule sends it 301 to gilded (path and query kept) before this Worker runs.
+  "routes": [
+    { "pattern": "gilded.hatethespurs.com", "custom_domain": true },
+    { "pattern": "secrethitler.hatethespurs.com", "custom_domain": true }
+  ],
   "assets": { "directory": "./public", "binding": "ASSETS", "not_found_handling": "404-page" },
   "ai": { "binding": "AI" },
   // Rules helper is server-only ("dark") until a UI ships; free tier only.

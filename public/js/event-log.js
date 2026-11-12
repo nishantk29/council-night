@@ -116,7 +116,7 @@ export const chunkOf = (i, snapEvery = SNAP_EVERY) => Math.floor(i / snapEvery);
 // Undo goes back to just before the last step; whatever happened after it (votes, cards, chat, tools) goes with it.
 // Redo goes forward over the next step and everything up to the step after it.
 // Undo is off in the lobby (it would drop players who joined), on the end screen unless UNDO_PAST_GAME_OVER, over a
-// secret look unless UNDO_PAST_SECRET (off: Nishant, Oct 30), and over a seat change (see SEAT_TYPES). Each refusal
+// secret look unless UNDO_PAST_SECRET (off, decided Oct 30), and over a seat change (see SEAT_TYPES). Each refusal
 // has a reason, and there is always a way on (Redo, or a host fallback), so nothing locks.
 const isStep = (ev) => !!ev?.s;
 function firstStep(events, from) { for (let i = from; i < events.length; i++) if (isStep(events[i])) return i; return -1; }

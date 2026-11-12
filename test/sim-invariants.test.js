@@ -46,7 +46,7 @@ function expectedSees(id, roles, n) {
   if (roles[id] === 'pretender' && n <= 6) return others.filter((x) => roles[x] === 'cabal').map((x) => ({ id: x, tag: 'cabal' }));
   return [];
 }
-// The host's skip: accepted everywhere except the three facts at the table (Fennel ruling 5): the unrest tile, the Boss
+// The host's skip: accepted everywhere except the three facts at the table (ruling 5, docs/logic-audit.md): the unrest tile, the Boss
 // check and physical legislation refuse it in every rulesVersion.
 function skipOk(room) {
   const g = room.game; if (!g || room.phase === 'over') return false;

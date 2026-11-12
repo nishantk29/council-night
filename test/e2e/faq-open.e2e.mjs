@@ -1,13 +1,15 @@
 // E2E (Chromium + WebKit, motion on and reduced): opening the FAQ page from home, and opening one question, runs only
 // transform/opacity animations of at most 250 ms. No view transition snapshot groups (they animate width, height and
-// backdrop-filter) and no blur. With reduced motion nothing moves at all. Nishant, Oct 30 2026: "The animation when you open FAQS is also janky".
+// backdrop-filter) and no blur. With reduced motion nothing moves at all. Design review, Oct 30 2026: "The animation when you open FAQS is also janky".
 // Gilded: motion only; the FAQ content and layout are locked and untouched.
 // Run: node test/e2e/faq-open.e2e.mjs   (starts `wrangler dev --local`; BASE=... uses a running one)
 import { fileURLToPath } from 'node:url';
 import { ledger, server } from './phones.mjs';
 
-const PW = process.env.PW || '/workspace/forge/pw/node_modules/playwright-core';
-const { chromium, webkit } = await import(`${PW}/index.mjs`);
+// Playwright is an optional dev tool, not a dependency: `npm i --no-save playwright-core`, or point PW at an
+// installed playwright-core directory.
+const PW = process.env.PW || 'playwright-core';
+const { chromium, webkit } = await import(PW === 'playwright-core' ? PW : `${PW}/index.mjs`);
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const L = ledger('gilded FAQ open e2e');
 const srv = await server(ROOT);

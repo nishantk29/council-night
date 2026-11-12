@@ -1,4 +1,4 @@
-// Type rules (Nishant 2026-10-28: "We should keep it [the art deco font] in Mafia only").
+// Type rules (design review, 2026-10-28: "We should keep it [the art deco font] in Mafia only").
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

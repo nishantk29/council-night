@@ -7,7 +7,8 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { newRoom, reduce, broadcastPlan, endedNow } from '../public/js/room.js';
 
-const require = createRequire('/workspace/code-team/bugsweep/pp/node_modules/');
+// puppeteer-core and ws are optional dev tools, not dependencies: `npm i --no-save puppeteer-core ws`.
+const require = createRequire(import.meta.url);
 export const puppeteer = require('puppeteer-core');
 const { WebSocketServer } = require('ws');
 const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');

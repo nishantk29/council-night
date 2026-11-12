@@ -25,4 +25,4 @@ export function swVersion(pub = 'public') {
   return m && m[1];
 }
 
-export const FIX_HINT = 'run: node /workspace/code-team/shared/pwa/make-pwa.mjs public pwa/pwa.json';
+export const FIX_HINT = 'run: node scripts/stamp-sw.mjs public (or the shared make-pwa tool with pwa/pwa.json if the PRECACHE list changed)';

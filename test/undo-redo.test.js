@@ -21,7 +21,7 @@ const json = (x) => JSON.stringify(x);
 const games = (f) => { for (let g = 0; g < GAMES; g++) f(SEED * 1000 + g); };
 const PAST = { pastSecret: true };
 
-test('the defaults Nishant and Fennel chose: not back over a secret look, back from the end screen, players told', () => {
+test('the chosen defaults: not back over a secret look, back from the end screen, players told', () => {
   assert.equal(UNDO_PAST_SECRET, false); assert.equal(UNDO_PAST_GAME_OVER, true); assert.equal(NOTIFY_ON_UNDO, true);
 });
 

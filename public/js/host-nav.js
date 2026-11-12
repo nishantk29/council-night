@@ -7,7 +7,7 @@
 //   send:    the room message Next sends when enabled (null while disabled)
 //   skip:    { label, action, msgs } or null; msgs are the room messages the chip sends, in order
 // ui: { nominee: id|null, target: id|null, tally: {id: bool}, card: 0|1|2|null, policy: 'R'|'D'|null, answer: bool|null, veto: bool|null }
-// Three steps never have a skip (Fennel ruling 5): the physical policy entry (Unrest tile, or what the Chancellor
+// Three steps never have a skip (ruling 5, docs/logic-audit.md): the physical policy entry (Unrest tile, or what the Chancellor
 // turned up) and the Boss question. They are facts at the table; the Host can always enter them, so nothing is stuck.
 const nameOf = (v, id) => v.players.find((p) => p.id === id)?.name || 'someone';
 const plural = (n, one, many) => (n === 1 ? one : many);

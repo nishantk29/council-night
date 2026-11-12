@@ -26,9 +26,9 @@
 | R18 | The service worker VERSION matches the content hash of `public/`, so installed phones pick up changes. | v1 | rules-gate `house rule: the service worker version is fresh`; pwa-fresh; `build-deploy` also refuses a stale one |
 | R19 | The deploy gate blocks on a red test, never passes on a crash or no tests, and build-deploy has no bypass. Worker name, binding and compat date come from `wrangler.jsonc` (`council-night`, ROOM -> Room, migration v1 only). | v1 | deploy-gate (6 tests); deploy-config (5 tests) |
 
-Not yet covered (the tests do not exist in this tree): the seeded whole-game simulation (Task D, `sim-invariants`) and the host-nav "never dead-ends" UI test (Task G). Add rows for them (and cite them in `rules-gate`) when they land.
+Not yet covered (the tests do not exist in this tree): the seeded whole-game simulation (`sim-invariants`) and the host-nav "never dead-ends" UI test. Add rows for them (and cite them in `rules-gate`) when they land.
 
-## Logic audit fixes (AUDIT.md)
+## Logic audit fixes ([docs/logic-audit.md](docs/logic-audit.md))
 
 All in `test/audit-v2.test.js`. No fix changed play, so none is gated on `rulesVersion >= 2`; all are leak, display or crash fixes that apply to every room.
 
@@ -54,4 +54,4 @@ All in `test/audit-v2.test.js`. No fix changed play, so none is gated on `rulesV
 
 ## Shared game-rules kit (test/kit/game-invariants.mjs)
 
-`test/kit/game-invariants.mjs` is the shared invariant kit, copied unchanged from `/workspace/code-team/shared/invariants/`. The Gilded adapter is `test/game-invariants.test.js` (phone mode, table sizes 5 to 10, rebalance and exile on and off). It checks four properties: no step can block, game over stays final, no leaks (a view does not change when hidden roles are shuffled among the players who may not know them), and no Undo after game over. All four pass with no todo. The kit is not named `*.test.js`, so the gate does not run it on its own. Physical and hybrid modes are covered by `test/sim-invariants.test.js` (seeded whole games under invariant oracles).
+`test/kit/game-invariants.mjs` is the shared invariant kit, copied unchanged from the shared invariants kit. The Gilded adapter is `test/game-invariants.test.js` (phone mode, table sizes 5 to 10, rebalance and exile on and off). It checks four properties: no step can block, game over stays final, no leaks (a view does not change when hidden roles are shuffled among the players who may not know them), and no Undo after game over. All four pass with no todo. The kit is not named `*.test.js`, so the gate does not run it on its own. Physical and hybrid modes are covered by `test/sim-invariants.test.js` (seeded whole games under invariant oracles).

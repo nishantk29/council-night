@@ -25,7 +25,7 @@ test('every binding declared in wrangler.jsonc is in the generated deploy metada
   assert.deepEqual(missing, [], `declared in wrangler.jsonc but missing from the deploy file: ${missing.join(', ')}`);
 });
 
-test('the deploy metadata carries exactly ROOM, AI and AI_MODE as declared (same as run/tools/mk-existing-worker-deploy.mjs)', () => {
+test('the deploy metadata carries exactly ROOM, AI and AI_MODE as declared', () => {
   const want = [{ type: 'durable_object_namespace', name: 'ROOM', class_name: 'Room' }];
   if (w.ai) want.push({ type: 'ai', name: 'AI' });
   if (w.vars && w.vars.AI_MODE !== undefined) want.push({ type: 'plain_text', name: 'AI_MODE', text: w.vars.AI_MODE });

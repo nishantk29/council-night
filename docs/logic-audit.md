@@ -1,4 +1,4 @@
-# The Gilded Chamber v4: logic audit (Task C)
+# The Gilded Chamber v4: logic audit
 
 ## Scope
 `public/js/rules.js`, `room.js` (reducer and views), `table.js` (undo, kick, claimHost, pause), the Worker's socket handling, the
@@ -34,17 +34,17 @@ there: the six bugs below and the chaos-skip message), then fixed. Fixes that on
   changes. The cards are identical after the undo (the deck is restored), so this was accepted, not fixed.
 - Real sockets and the Durable Object (stale sockets are covered by token rotation in the reducer and by `socketsToDrop`).
 - Pixel and animation timing in a browser; the round-table marks are tested against the source, because `app.js` needs a DOM.
-- Task D (many-games simulation), Task E (deploy gate), Task G (host nav labels, including "Enter the policy turned up").
+- The many-games simulation, the deploy gate and the host-nav labels (including "Enter the policy turned up"); each has its own tests.
 
-## Rule choices for Nishant
-All five were DECIDED by Fennel on 2026-10-25 and are implemented; none is open.
-1. DECIDED (Fennel, 2026-10-25): "Play again" is host only. Players see "Waiting for the host".
-2. DECIDED (Fennel, 2026-10-25): no Undo past a secret look (Inquiry, docket, policy hand). Undo stops there.
-3. DECIDED (Fennel, 2026-10-25): an idle Speaker's skipped power stays lost.
-4. DECIDED (Fennel, 2026-10-25): exiled players do not count toward the "five or fewer players" term-limit exception.
-5. DECIDED (Fennel, 2026-10-25): at a physical table the third failure cannot be skipped; the host enters the tile turned up.
+## Rule choices (rulings)
+All five were decided on 2026-10-25 and are implemented; none is open. Code comments and tests cite them as "ruling N".
+1. "Play again" is host only. Players see "Waiting for the host".
+2. No Undo past a secret look (Inquiry, docket, policy hand). Undo stops there.
+3. An idle Speaker's skipped power stays lost.
+4. Exiled players do not count toward the "five or fewer players" term-limit exception.
+5. At a physical table the third failure cannot be skipped; the host enters the tile turned up.
 
-# Task G: the host flow never dead-ends
+# The host flow never dead-ends
 
 `public/js/host-nav.js` (`hostNav(view, ui)`, pure) says what the big dock button does in every phase. A step that needs a
 choice shows a greyed button whose label names it ("Choose a Chancellor", "Tap who voted Aye", "Pick a policy to discard",
@@ -56,7 +56,7 @@ driven only through hostNav).
 
 | Area | Finding | Fix | rulesVersion |
 |---|---|---|---|
-| Unrest tile, physical session, Boss question | An earlier v4 draft let the Host skip these with a random policy or an automatic "No". That contradicts Fennel ruling 5 (2026-10-25: a fact at the table is entered, never skipped), and an automatic "No" could hide a Boss win. | Reverted before release: `skip` refuses all three with a clear message; hostNav shows a greyed button naming the missing entry and no skip chip. The draft never shipped. | all (host-no-dead-end "ruling 5", red on the draft) |
+| Unrest tile, physical session, Boss question | An earlier v4 draft let the Host skip these with a random policy or an automatic "No". That contradicts ruling 5 (2026-10-25: a fact at the table is entered, never skipped), and an automatic "No" could hide a Boss win. | Reverted before release: `skip` refuses all three with a clear message; hostNav shows a greyed button naming the missing entry and no skip chip. The draft never shipped. | all (host-no-dead-end "ruling 5", red on the draft) |
 | Views | The view did not carry `rulesVersion`, so a client could not tell which skips exist. | `rulesVersion` added to player and screen views (display only). | all |
 | Existing skips | Vote (nay), nominate (pass gavel), app-hand discard/enact (random), veto (refuse), power (lost) already worked and are reused unchanged. | none | all |
 | Snap election | A Pass-the-Gavel skip can hand the gavel back to the same player who was just snap-chosen (rotation resumes at the left of the original Speaker). Legal, so the test judges progress by the log, not the Speaker. | none | n/a |

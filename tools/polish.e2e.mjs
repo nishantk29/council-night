@@ -3,8 +3,10 @@
 // filters and short links are 44px targets; a focused field is not covered by the tab bar or action bar with a phone keyboard up.
 // usage: node tools/polish.e2e.mjs [repoDir]   exit 0 = pass, 1 = fail
 import fs from 'node:fs'; import path from 'node:path'; import { createRequire } from 'node:module'; import { fileURLToPath } from 'node:url';
-const require = createRequire('/workspace/forge/pw/');
-const { chromium } = require('playwright-core');
+// Playwright is an optional dev tool, not a dependency: `npm i --no-save playwright-core`, or set PW to an installed
+// playwright-core directory.
+const require = createRequire(import.meta.url);
+const { chromium } = require(process.env.PW || 'playwright-core');
 const repo = process.argv[2] || path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const pub = path.join(repo, 'public');
 const R = await import(path.join(repo, 'public/js/room.js'));

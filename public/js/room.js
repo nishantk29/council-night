@@ -292,7 +292,7 @@ function gameReduce(room, actor, msg, rng, now) {
         log(room, 'host', `The host skipped ${nm(room, g.nominee)}: a random policy was enacted.`, null, now);
         enactPolicy(room, pol, true, rng, now); return ok();
       }
-      // Facts at the table are entered, never skipped (Fennel ruling 5, 2026-10-25): the Unrest tile, the tile a
+      // Facts at the table are entered, never skipped (ruling 5, 2026-10-25): the Unrest tile, the tile a
       // Chancellor turned up, and the answer to the Boss question. The Host can always enter them, so nothing is stuck.
       if (room.phase === 'chaos') return err('Enter the policy that was turned up. It can’t be skipped.');
       if (room.phase === 'legislate' && !g.cardsApp) return err('Enter the policy the Chancellor turned up. It can’t be skipped.');

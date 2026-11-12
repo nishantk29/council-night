@@ -1,4 +1,4 @@
-// Rules & FAQ readability (Nishant, Oct 28 11:14 PM ET: "super hard to read"). Static half; the measured half (contrast
+// Rules & FAQ readability (design review, Oct 28: "super hard to read"). Static half; the measured half (contrast
 // ratio and computed font sizes in a real browser at 390 and 1280) is test/e2e/faq-readable.e2e.mjs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

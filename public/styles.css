@@ -848,7 +848,7 @@ html.fx-off .dc.flip,html[data-fxlite] .dc.flip{animation:none}
 .sticky-act{display:grid;gap:var(--s2)}
 .sticky-act .start-why{margin:0;background:var(--panel)}
 
-/* Task G: the host-nav dock (big button naming the missing choice, plus a skip chip) and the picked state of a choice */
+/* The host-nav dock (big button naming the missing choice, plus a skip chip) and the picked state of a choice */
 .dock{display:flex;flex-direction:column;gap:var(--s2)}
 .dock .btn{width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:44px;font-size:min(1rem,3.6vw)}
 .dock .dock-skip{box-shadow:none}
@@ -857,10 +857,10 @@ html.fx-off .dc.flip,html[data-fxlite] .dc.flip{animation:none}
 @media (prefers-reduced-motion:reduce){.choice.is-picked,.tile-btn.is-picked{transform:none}}
 
 /* The deal opens to the face-down card: on short phones it fits between the app bar and the I'm Ready bar, so nobody
-   has to scroll to find it (Nishant 2026-10-28). The card stays hidden; only its size changes. */
+   has to scroll to find it (design review, 2026-10-28). The card stays hidden; only its size changes. */
 .reveal-stage .rcard{width:min(100%, 360px, calc((100svh - var(--reveal-reserve, 19rem)) * 63 / 88))}
 @media (max-height:700px){.reveal-stage{gap:var(--s2)}.reveal-stage .phase-title{font-size:var(--fs-xl)}.reveal-stage>.say{display:none}}
-/* Reconnect notice as a compact callout (Nishant 2026-10-28: "call out box ... smaller font"). */
+/* Reconnect notice as a compact callout (design review, 2026-10-28: "call out box ... smaller font"). */
 .banner{font-size:var(--fs-xs);font-weight:600;color:var(--smoke);background:color-mix(in srgb, var(--panel-2) 88%, var(--brass));border-bottom:1px solid color-mix(in srgb, var(--rule) 60%, var(--brass))}
 .banner > .ui-ico{color:var(--brass)}
 

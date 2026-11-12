@@ -1,8 +1,8 @@
 // The Gilded Chamber adapter for the shared game-rules kit (test/kit/game-invariants.mjs, copied unchanged from
-// /workspace/code-team/shared/invariants/). Four properties over seeded games, every table size 5..10 with the house options
+// the shared invariants kit). Four properties over seeded games, every table size 5..10 with the house options
 // rebalance and exile on and off, in phone mode: game over stays final, no step can block, no leaks (non-interference), and
 // no Undo after game over. Physical and hybrid modes are covered by test/sim-invariants.test.js. The Undo property had a
-// known bug before rulesVersion 2 was pinned (Task C); it passes now and is enforced without a todo.
+// known bug before rulesVersion 2 was pinned (see docs/logic-audit.md); it passes now and is enforced without a todo.
 import { gameInvariantTests, pick } from './kit/game-invariants.mjs';
 import { newRoom, reduce, viewForPlayer } from '../public/js/room.js';
 import { knowledgeFor, shuffle, MIN_PLAYERS, MAX_PLAYERS } from '../public/js/rules.js';

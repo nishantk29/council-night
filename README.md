@@ -81,7 +81,8 @@ npm test        # 369 unit and integration tests (node:test), about 35 s
 
 The suite covers the rules at every table size, the powers table, deck reshuffles, veto, term limits, Unrest, every win
 path, the play modes, host tools, undo/redo, and secrecy for every view. `RULES.md` lists each house rule with the test
-that guards it.
+that guards it. [`docs/logic-audit.md`](docs/logic-audit.md) records the logic audit: what was checked, what was
+fixed, and the five rule choices.
 
 Browser tests drive a host and four player phones in Chromium against a local `wrangler dev`:
 

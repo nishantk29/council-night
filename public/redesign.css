@@ -16,7 +16,7 @@
 #app{position:relative;z-index:1}
 .bg-art{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:radial-gradient(90% 60% at 85% 0%,rgba(240,122,34,.10),transparent 60%),radial-gradient(70% 50% at 0% 100%,rgba(226,176,74,.06),transparent 60%)}
 .bg-sun{position:absolute;right:-18vmin;top:-14vmin;width:min(90vmin,820px);height:auto;opacity:.16;transform-origin:50% 50%}
-/* the sun behind the page turns one full revolution, easing to a stop where it started (no looping motion: Nishant, Oct 28 11:09 PM ET);
+/* the sun behind the page turns one full revolution, easing to a stop where it started (no looping motion: design review, Oct 28);
    the final frame is the resting pose, which is also what reduced motion and effects-off show */
 .sun-spin{transform-origin:400px 400px;animation:none} /* holds its resting pose: a two-minute turn does not fit the 400ms budget (2026-10-29) */
 .sun-rays{transform-origin:400px 400px}
@@ -154,7 +154,7 @@ html[data-screen="1"] .bg-art{display:none}
 .fx-off ::view-transition-old(step),.fx-off ::view-transition-new(step){animation:none!important}
 
 /* ---- arriving from the hub (game end of the handoff): ONE opacity fade of the page, 300ms.
-   Nothing moves: no logo overlay flying in from the handoff pose (Nishant, Oct 28: "That logo moving on game night is kinda
+   Nothing moves: no logo overlay flying in from the handoff pose (design review, Oct 28: "That logo moving on game night is kinda
    janky") and the first-load entrance is skipped. html.handoff is set by the inline <head> script, never under reduced
    motion, and stays for the page's life, so nothing replays when html.boot goes. */
 html.handoff #app,html.handoff .bg-art{animation:gc-hub-fade 300ms var(--gc-ease) both}
@@ -174,7 +174,7 @@ html.handoff.boot .sun-rays,html.handoff.boot .home-head,html.handoff.boot .home
 .banner.banner-lost .err-actions .btn{min-height:48px;padding:0 12px;font-size:var(--fs-sm)}
 .banner.banner-lost .err-link{min-height:44px;padding:0 var(--s1);font-size:var(--fs-sm);justify-self:center}
 
-/* Task F (390px check): the room code in the app bar must never be cut off by the phase badge; dice sizes are 44px targets; the power labels sit inside their slots. */
+/* 390px check: the room code in the app bar must never be cut off by the phase badge; dice sizes are 44px targets; the power labels sit inside their slots. */
 @media (max-width:430px){.appbar-title .ab-word{display:none}}
 .seg.mini button{min-height:44px;min-width:44px}
 .slot-power small{font-size:.5rem;letter-spacing:0;overflow-wrap:normal;hyphens:none}
@@ -194,7 +194,7 @@ a.link{min-width:44px;justify-content:center}
   html:has(input:not([type=checkbox]):not([type=radio]):not([type=range]):focus,textarea:focus) .chat-form{bottom:env(safe-area-inset-bottom)}
 }
 
-/* ---- Rules & FAQ readability (Nishant, Oct 28 11:14 PM ET: the FAQ is "super hard to read").
+/* ---- Rules & FAQ readability (design review, Oct 28: the FAQ is "super hard to read").
    The answer box was display:grid, so every inline <b>, <i> or bare text run in an answer became its own grid row and
    sentences broke apart mid-line ("The last / elected / Chancellor..."). Answers are normal flowing text again, the
    questions are a size up from the answers, and the FAQ cards drop the decorative rays that ran behind the text.

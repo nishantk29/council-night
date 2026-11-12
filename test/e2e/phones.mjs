@@ -1,6 +1,6 @@
 // @ts-check
 // Shared multi-phone browser harness for the Game Night games (tech review, Oct 28 2026). Replaces the one-off
-// puppeteer/playwright scripts in code-team/redesign/run/tools/ with one tested set of helpers.
+// puppeteer/playwright scripts with one tested set of helpers.
 // Copy to test/e2e/phones.mjs in each game; the game's test/e2e/multi-phone.e2e.mjs drives it with a small adapter.
 //
 //   BASE=https://...  node test/e2e/multi-phone.e2e.mjs   # against a deployed site (read-only smoke; closes its rooms)
@@ -13,7 +13,9 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { join } from 'node:path';
 
-const PW = process.env.PW || '/workspace/forge/pw/node_modules/playwright-core';
+// Playwright is an optional dev tool, not a dependency: `npm i --no-save playwright-core`, or point PW at an
+// installed playwright-core directory.
+const PW = process.env.PW || 'playwright-core';
 const CHROME = process.env.CHROME || '/usr/bin/google-chrome';
 
 /** Phone and desktop profiles used across the family (390 is the review size). */
@@ -66,7 +68,7 @@ export async function server(dir) {
 
 /** @param {{ headless?: boolean }} [o] */
 export async function launch(o = {}) {
-  const { chromium } = await import(`${PW}/index.mjs`);
+  const { chromium } = await import(PW === 'playwright-core' ? PW : `${PW}/index.mjs`);
   return chromium.launch({ executablePath: CHROME, headless: o.headless ?? true, args: ['--no-sandbox'] });
 }
 

@@ -1,4 +1,4 @@
-// Task C audit: the classic rules, pairwise cases, phases, leaks, and Fennel's rulings (2026-10-25). See AUDIT.md.
+// Logic audit: the classic rules, pairwise cases, phases, leaks, and the rulings (2026-10-25). See docs/logic-audit.md.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -338,7 +338,7 @@ test('audit: reveal length is identical for every role (one shared constant, rol
   assert.ok(/class="rcard-tap hold \$\{open \? '' : 'is-hidden'\}"/.test(app.slice(i, i + 700)));
 });
 
-// ------------------------------------------------------------ 6. Fennel's rulings and audit-plan bugs
+// ------------------------------------------------------------ 6. The rulings and audit-plan bugs
 test('audit: undo after game over goes through the log, and only over public steps', () => {
   // The reducer has no Undo of its own any more.
   const z = started(5, { seed: 40 }); assert.deepEqual(act(z.room, z.host, { type: 'undo' }), { error: 'Unknown action.' });

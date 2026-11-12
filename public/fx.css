@@ -1,6 +1,6 @@
 /* The Gilded Chamber pop-outs and Liquid Glass (loaded after styles.css and transit.css; behaviour in js/fx.js).
    Only transform and opacity are ever animated: no layout, no blur, no box-shadow changes (shadows are static and layered).
-   Every overlay is one-shot, <= 400 ms in total (Nishant's motion budget, 2026-10-29), and eases with var(--ease-out). will-change is set by the script only while
+   Every overlay is one-shot, <= 400 ms in total (the motion budget, 2026-10-29), and eases with var(--ease-out). will-change is set by the script only while
    something animates. Reduced motion (html[data-fxlite]) and the Animations switch show no motion at all. No backdrop-filter anywhere. */
 
 /* ================================================================ glass panels */

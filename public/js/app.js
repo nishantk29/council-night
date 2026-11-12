@@ -80,7 +80,7 @@ function render() {
   // The room's first view replacing the connecting placeholder is the same screen: no second slide right after the first.
   const settling = lastKey !== null && lastKey === `${S.mode}|||`;
   const key = screenKey(S.mode, S.view); const changed = lastKey !== null && key !== lastKey && !settling;
-  // Opening or leaving the FAQ (Nishant, Oct 30 2026: "janky"): no view transition. Its snapshot groups animate width, height
+  // Opening or leaving the FAQ (design review, Oct 30 2026: "janky"): no view transition. Its snapshot groups animate width, height
   // and backdrop-filter; the page fades and slides in on opacity + transform only (.faq-in, 220 ms). Motion only: content untouched.
   const faqHop = isFaqKey(lastKey) || isFaqKey(key); lastKey = key;
   if (changed) toTop = true; // a new screen (the deal, a new phase) opens at the top, so a face-down card is in view
@@ -118,7 +118,7 @@ function paint() {
   const known = new Set([...$app.querySelectorAll('[data-scroll]')].map((el) => el.dataset.scroll));
   try { morph($app, screen()); } catch (e) { console.error(e); crash(); return; }
   S.ui.fresh = {};
-  // Same screen: keep the reader's place. New screen: start at the top (Nishant 2026-10-28: "open to the top", card still hidden).
+  // Same screen: keep the reader's place. New screen: start at the top (design review, 2026-10-28: "open to the top", card still hidden).
   if (toTop) window.scrollTo(0, 0); else if (window.scrollY !== y) window.scrollTo(0, y);
   toTop = false;
   for (const el of $app.querySelectorAll('[data-scroll]')) if (pinned.has(el.dataset.scroll) || !known.has(el.dataset.scroll)) el.scrollTop = el.scrollHeight;

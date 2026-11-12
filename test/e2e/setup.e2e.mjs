@@ -65,7 +65,7 @@ try {
   await host.page.waitForSelector('.gs[data-step="1"]');
   L.check('Use this returns to step 2 with Closed Ballot', /closed ballot/i.test(await text(host, '.gs-stock')));
   await host.page.waitForFunction(() => true); await host.page.waitForTimeout(400);
-  L.check('the room holds anonymous votes', await host.page.evaluate(async () => { const r = await fetch('/api/room/' + location.hash.split('/').pop()); return r.ok; }));
+  L.check('the room holds anonymous votes', await host.page.evaluate(async () => { const r = await fetch('/api/room/' + location.hash.split('/').pop()); return r.ok && (await r.json()).exists === true; }));
 
   // seating
   await host.page.click('.gs-pri'); await host.page.waitForSelector('.gs[data-step="2"]');

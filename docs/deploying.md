@@ -22,8 +22,10 @@ The workflows are kept in `docs/github-workflows/`. Copy them into `.github/work
 
 ## Domains
 
-- The live site is https://secrethitler.hatethespurs.com. `wrangler.jsonc` has no `routes`, so the custom domain is
-  configured on the Cloudflare side and a deploy does not change it.
+- The live site is https://gilded.hatethespurs.com (moved from secrethitler.hatethespurs.com in Nov 2026). Both hostnames are
+  Worker custom domains listed under `routes` in `wrangler.jsonc`. The old one is kept only for its DNS record: a zone-level
+  Single Redirect rule answers it with a 301 to the new host (path and query kept) before the Worker runs. The API deploy
+  file (`scripts/build-deploy.mjs`) uploads the script only and does not touch domains.
 - `workers_dev: true` and `preview_urls: false` in `wrangler.jsonc` match the live worker.
   `test/deploy-workersdev.test.js` pins both values.
 

@@ -1,4 +1,4 @@
-// BASE=http://127.0.0.1:8787 node test/e2e/faq-readable.e2e.mjs  (or BASE=https://secrethitler.hatethespurs.com)
+// BASE=http://127.0.0.1:8787 node test/e2e/faq-readable.e2e.mjs  (or BASE=https://gilded.hatethespurs.com)
 // Measures the Rules & FAQ page in Chromium at 390 and 1280: WCAG contrast of question and answer text against the real
 // composited background, computed font sizes, line-height and characters per line. Exit code 1 on any failure.
 // Playwright is an optional dev tool, not a dependency: `npm i --no-save playwright-core`, or point PW at an

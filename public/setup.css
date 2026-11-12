@@ -193,3 +193,30 @@ dialog.gs-sheet .gs-tok{--rim:var(--gs-reform,#7FA6E0);background:var(--gs-tok,#
 @media (prefers-reduced-motion:no-preference){
   :is(.btn,.choice,.gs-pri,.tabbar button,.icon-btn,.tool-btn,.side):active,.knight.can-pick:active .knight-disc,.tile-btn:active :is(.tile,.dc){transition-duration:var(--f-press)}
 }
+
+/* home, desktop: one centred container in two uneven columns. The masthead and the pitch lead on the left with
+   How to play under them; Host, Join and the rules stack beside them with More from Game Night below.
+   .home-paths dissolves so its children take grid areas; the DOM (and the phone layout) stays as it is. */
+@media (min-width:900px){
+  .wrap.home{max-width:1120px;grid-template-columns:minmax(0,7fr) minmax(0,5fr);column-gap:var(--s7);row-gap:var(--s4);
+    align-items:start;align-content:start;padding-top:var(--s4);
+    grid-template-areas:"back back" "head host" "hero host" "hero join" "hero rules" "howt more" "how more" "foot foot"}
+  .wrap.home > .home-nav{grid-area:back}
+  .wrap.home > .home-head{grid-area:head;align-self:end}
+  .wrap.home > .home-hero{grid-area:hero;margin:0}
+  .wrap.home > .home-paths{display:contents}
+  .wrap.home .home-paths > .path:first-child{grid-area:host}
+  .wrap.home .home-paths > .c-blue{grid-area:join}
+  .wrap.home .home-paths > .side{grid-area:rules;margin:0}
+  .wrap.home .how-title{grid-area:howt;margin:var(--s6) 0 0}
+  .wrap.home .how{grid-area:how;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--s6)}
+  .wrap.home .how li{align-content:start}
+  .wrap.home .how li:nth-child(2){border-top:0}
+  .wrap.home > .more-games{grid-area:more;margin-top:var(--s6)}
+  .wrap.home > .site-foot{grid-area:foot}
+  /* the backdrop: no columns or wash, and the sun dimmed and pinned behind the masthead, scrolling with it */
+  body:has(> #app > .wrap.home) .bg-art{position:absolute;bottom:auto;height:100vh;background:none}
+  body:has(> #app > .wrap.home) .bg-columns{display:none}
+  body:has(> #app > .wrap.home) .bg-sun{right:auto;top:-140px;left:calc(max(0px,(100% - 1120px) / 2) + var(--gutter) - 230px);width:560px;opacity:.07}
+}
+@media (min-width:1024px){.wrap.home{column-gap:var(--s8)}}

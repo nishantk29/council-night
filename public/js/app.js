@@ -20,11 +20,14 @@ import { errorBody, errorButtons, crashHtml, FATAL, ENDED } from './error-screen
 import { wakeReconnect } from './wake.js';
 import { backClosesSheets } from './back-sheet.js';
 import { morph } from './morph.js';
+import { morphFrom, morphBack } from './more-pill.js';
 // Back (Android Back, the iOS edge swipe) closes the top sheet or confirm first, the same as Escape. They are <dialog>s on
 // <body>, so watching body's children keeps Back in step with them.
 const backNav = backClosesSheets(() => {
   const d = [...document.querySelectorAll('dialog[open]')].at(-1);
-  return d ? { key: `${d.className}|${(d.querySelector('h2') || d).textContent.trim().slice(0, 40)}`, close: () => d.dispatchEvent(new Event('cancel', { cancelable: true })) } : null;
+  if (d) return { key: `${d.className}|${(d.querySelector('h2') || d).textContent.trim().slice(0, 40)}`, close: () => d.dispatchEvent(new Event('cancel', { cancelable: true })) };
+  // The Tools sheet lives inside #app (not a <dialog>), so paint() calls sync() too.
+  return $app.querySelector('.tools-sheet') ? { key: 'tools-sheet', close: closeTools } : null;
 });
 new MutationObserver(() => backNav.sync()).observe(document.body, { childList: true });
 
@@ -116,7 +119,9 @@ function paint() {
   // Lists that follow the newest line (the chat) stay pinned to the bottom only if the reader was already there.
   const pinned = new Set([...$app.querySelectorAll('[data-scroll]')].filter((el) => el.scrollHeight - el.scrollTop - el.clientHeight < 40).map((el) => el.dataset.scroll));
   const known = new Set([...$app.querySelectorAll('[data-scroll]')].map((el) => el.dataset.scroll));
+  const oldSheet = $app.querySelector('.tools-sheet'); const oldScrim = $app.querySelector('.tools-scrim');
   try { morph($app, screen()); } catch (e) { console.error(e); crash(); return; }
+  toolsMorph(oldSheet, oldScrim);
   S.ui.fresh = {};
   // Same screen: keep the reader's place. New screen: start at the top (design review, 2026-10-28: "open to the top", card still hidden).
   if (toTop) window.scrollTo(0, 0); else if (window.scrollY !== y) window.scrollTo(0, y);
@@ -126,7 +131,24 @@ function paint() {
   setup.afterPaint(reducedMq.matches);
   wake(S.mode !== 'home' && wantsWake(S.view));
   if (S.mode === 'home' && !S.pruned) { S.pruned = true; pruneClosedRooms($app, (c) => { store.del(`${KEY}.player.${c}`); store.del(`${KEY}.host.${c}`); }); }
+  backNav.sync();
 }
+// The Tools sheet grows out of the pill and shrinks back into it (more-pill.js). That is its only motion: the sheet has no
+// CSS entrance, so a live update never replays anything. Animations off (html.fx-off): no movement, focus moves by hand.
+function toolsMorph(oldSheet, oldScrim) {
+  const sheet = $app.querySelector('.tools-sheet'); const pill = $app.querySelector('.tabbar .more-pill');
+  const still = $html.classList.contains('fx-off');
+  if (sheet && !oldSheet) {
+    if (still) (sheet.querySelector('button:not([disabled])') || sheet).focus({ preventScroll: true }); else morphFrom(pill, sheet);
+  } else if (!sheet && oldSheet && pill) {
+    if (still || !pill.getClientRects().length) pill.focus({ preventScroll: true }); else morphBack(pill, oldSheet, oldScrim);
+  }
+}
+function closeTools() { S.ui.toolsOpen = false; render(); }
+// Escape closes the Tools sheet; a confirm or the roles sheet on top of it closes first (native dialogs handle their own Escape).
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.ui.toolsOpen && !document.querySelector('dialog[open]')) closeTools(); });
+// Wide screens show Tools as a side tab: a sheet open while the screen widens (a rotated tablet) becomes that tab.
+matchMedia('(min-width:1100px)').addEventListener?.('change', (e) => { if (e.matches && S.ui.toolsOpen) { S.ui.toolsOpen = false; S.ui.side = 'tools'; render(); } });
 document.addEventListener('focusout', () => { if (pending) setTimeout(render, 50); });
 const T = makeTable({ S, send, esc, ui, toast, render });
 const fx = makeFx({ S, send, esc });
@@ -264,14 +286,19 @@ function layout(v) {
   const tab = S.ui.tab;
   const main = v.phase === 'lobby' ? lobby(v) : gameMain(v);
   const sideTabs = [['chat', 'Chat'], ['tools', 'Tools'], ...(v.me?.host ? [['host', 'Host']] : [])];
-  const sideKey = ['chat', 'tools', 'host'].includes(tab) ? tab : S.ui.side;
+  const sideKey = ['chat', 'host'].includes(tab) ? tab : S.ui.side;
+  const open = !!S.ui.toolsOpen;
   const side = sideKey === 'tools' ? T.toolsPane(v) : sideKey === 'host' ? hostPane(v) : T.chatPane(v);
-  return `<div class="layout" data-tab="${tab}">
+  return `<div class="layout" data-tab="${tab}"${open ? ' inert' : ''}>
     <main class="col col-main wrap game" data-pane="game">${v.paused ? `<p class="note is-warn">${ui('pause')} The host paused the game.</p>` : ''}${main}</main>
     <aside class="col col-log" data-pane="log">${T.logPane(v, v.game ? chronicle(v) : '')}</aside>
     <aside class="col col-side" data-pane="side"><div class="seg side-seg" role="tablist">${sideTabs.map(([k, l]) => `<button type="button" role="tab" data-a="side" data-v="${k}" aria-selected="${sideKey === k}">${l}</button>`).join('')}</div>${side}</aside>
-  </div>${T.tabbar(v)}`;
+  </div>${T.tabbar(v)}${open ? toolsSheet(v) : ''}`;
 }
+// Phones: Table Tools in a sheet, after the tab bar and inside #app, so .layout and the tab bar stay the same nodes, every
+// button reaches the click handler and morph() keeps it live (data-mk matches the two nodes by key).
+const toolsSheet = (v) => `<div class="tools-scrim" data-mk="tools-scrim" data-a="toolsClose"></div><section class="tools-sheet" data-mk="tools-sheet" role="dialog" aria-modal="true" aria-label="Table Tools" tabindex="-1">
+    <div class="tools-sheet-top"><button type="button" class="btn ghost sm" data-a="toolsClose">Close</button></div>${T.toolsPane(v)}</section>`;
 
 function gameMain(v) {
   if (v.me?.watch && !v.me.host) return [board(v), roundTable(v), `<section class="stage"><p class="say">You are watching this game. You’ll see what the whole table sees.</p></section>`, lastReveals(v)].join('');
@@ -699,7 +726,7 @@ function onView(v) {
 // ---------------------------------------------------------------- routing
 async function route() {
   fx.reset();
-  S.transport?.close(); S.transport = null; S.view = null; S.fatal = null; S.ended = false; S.pruned = false; S.conn = true; S.connLong = false; S.ui.open = {};
+  S.transport?.close(); S.transport = null; S.view = null; S.ui.toolsOpen = false; S.fatal = null; S.ended = false; S.pruned = false; S.conn = true; S.connLong = false; S.ui.open = {};
   const [kind, arg] = location.hash.replace(/^#\/?/, '').split('/');
   if ((kind === 'play' || kind === 'join' || kind === 'screen') && /^[A-Za-z]{6}$/.test(arg || '')) {
     S.mode = kind === 'screen' ? 'screen' : 'play'; S.code = arg.toUpperCase();

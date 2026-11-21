@@ -99,7 +99,11 @@ try {
       const key = `${i === 0 ? 'host' : 'player'}:${await titleOf(p)}`;
       if (!seen.has(key)) {
         seen.add(key); await audit(p, key);
-        if (i === 0) for (const t of ['chat', 'log', 'tools', 'host', 'game']) { await click(p, `[data-a="tab"][data-v="${t}"]`); await sleep(350); if (t !== 'game') await audit(p, `${key} tab ${t}`); }
+        if (i === 0) for (const t of ['chat', 'log', 'tools', 'host', 'game']) {
+          // Tools is a pill that opens a sheet on phones (not a tab): audit the open sheet, then close it.
+          if (t === 'tools') { await click(p, '.tabbar .more-pill'); await p.waitForSelector('.tools-sheet'); await sleep(350); await audit(p, `${key} tools sheet`); await click(p, '.tools-sheet [data-a="toolsClose"]'); await sleep(350); continue; }
+          await click(p, `[data-a="tab"][data-v="${t}"]`); await sleep(350); if (t !== 'game') await audit(p, `${key} tab ${t}`);
+        }
         const hold = await p.$('[data-a="reveal"]');
         if (hold) { await hold.evaluate((e) => e.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))); await sleep(300); await audit(p, `${key} (secret revealed)`); }
       }

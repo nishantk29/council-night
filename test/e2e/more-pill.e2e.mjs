@@ -77,6 +77,8 @@ try {
   const fits = await P.evaluate((s) => { const b = document.querySelector(s); return b.scrollWidth <= b.clientWidth + 1; }, PILL);
   L.check('1 pill label fits inside the pill', fits);
   L.check('1 pill says Tools, aria-haspopup=dialog, aria-expanded=false', (await P.locator(PILL).innerText()).trim() === 'Tools' && (await P.locator(PILL).getAttribute('aria-haspopup')) === 'dialog' && (await expanded(P)) === 'false');
+  const cs = await P.$eval(PILL, (e) => { const s = getComputedStyle(e); return { w: s.fontWeight, h: s.minHeight }; });
+  L.check('1 pill matches the family: weight 700, min-height 48px', cs.w === '700' && cs.h === '48px', cs);
   const tabs = await P.$$eval('.tabbar [data-a="tab"]', (x) => x.map((e) => e.dataset.v));
   L.check('1 no Tools tab; Table, Chat, Log, Host tabs still there', (await P.locator('.tabbar [data-v="tools"]').count()) === 0 && tabs.join() === 'game,chat,log,host', tabs);
 

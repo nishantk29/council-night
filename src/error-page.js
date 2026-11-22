@@ -1,6 +1,7 @@
 // Styled error pages for the Worker (404, 500, 426) and the static public/404.html (scripts/build-404.mjs).
 // No error text ever reaches the page: only the fixed title and line passed in.
 import { errorBody, CRASH } from '../public/js/error-screen.js';
+import { SECURITY_HEADERS } from './embedded-assets.js';
 
 const CSS = `.err-page{min-height:100svh;display:grid;align-content:center}
 .err-mark{display:block;text-align:center;font-family:var(--display-gilded);font-weight:800;font-size:var(--fs-lg);letter-spacing:.01em;color:var(--gold-ink);padding-top:var(--s5);position:relative;z-index:1}
@@ -43,5 +44,5 @@ export const errorPage = ({ status = 404, title, line } = {}) => {
 };
 
 export const errorResponse = (status, headers = {}) => new Response(errorPage({ status }), {
-  status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...headers },
+  status, headers: { ...SECURITY_HEADERS, 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...headers },
 });

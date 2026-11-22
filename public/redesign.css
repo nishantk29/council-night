@@ -214,7 +214,7 @@ a.link{min-width:44px;justify-content:center}
    (transit.css) applies. While a field has focus the pill hides with the tab bar (the rule above). Wide screens keep
    Tools as a side tab. */
 .tabbar .more-pill{display:inline-flex;align-items:center;justify-content:center;gap:var(--s1);align-self:center;justify-self:center;min-width:44px;min-height:48px;max-width:100%;padding:0 var(--s2);
-  border-radius:var(--f-r-pill);background:var(--panel-2);color:var(--candle);box-shadow:inset 0 0 0 1px var(--rule-strong);white-space:nowrap}
+  border-radius:var(--f-r-pill);background:var(--panel-2);color:var(--candle);font-weight:700;box-shadow:inset 0 0 0 1px var(--rule-strong);white-space:nowrap}
 .tabbar .more-pill .ui-ico{width:18px;height:18px;flex:none}
 .tabbar .more-pill[aria-expanded="true"]{opacity:0}
 html.fx-off .tabbar .more-pill{transform:none!important}

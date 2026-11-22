@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { DESIGNED, designedFaces, sheetCount, PER_SHEET } from '../public/js/print_data.js';
 import { CARD_KINDS } from '../public/js/card_art.js';
@@ -74,13 +74,13 @@ test('the service worker precaches the print page but not the PDFs (fetched on d
   }
   assert.ok(!precache.some((f) => /\.pdf$/i.test(f)), 'no PDF in the precache');
   for (const f of precache.filter((p) => p !== '/')) assert.ok(existsSync(new URL(`../public${f}`, import.meta.url)), `${f} is precached but missing`);
-  // make-pwa.mjs: sha256 over every file's path and bytes (sorted; sw.js and big PDFs left out)
+  // make-pwa.mjs: sha256 over every file's path and bytes (sorted; sw.js and every print PDF left out, whatever its size)
   const files = [];
   const walk = (d, rel) => { for (const e of readdirSync(d, { withFileTypes: true })) {
     const r = `${rel}/${e.name}`; const p = `${d}/${e.name}`;
     if (e.isDirectory()) walk(p, r);
     else if (r === '/sw.js' || e.name.startsWith('.')) continue;
-    else if (/^\/print\/.*\.pdf$/i.test(r) && statSync(p).size > 2 * 1024 * 1024) continue;
+    else if (/^\/print\/[^/]+\.pdf$/i.test(r)) continue;
     else files.push(r);
   } };
   walk(new URL('../public', import.meta.url).pathname, '');

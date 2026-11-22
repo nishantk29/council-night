@@ -50,7 +50,13 @@ bindings, compatibility date and workers.dev settings from `wrangler.jsonc` only
 - It runs the full test suite first (`scripts/test-gate.mjs`). On any failure it prints
   `Deploy file NOT written: N test(s) failed`, exits 1, and leaves the out file untouched. There is no bypass.
 - It refuses to write the file if the `public/sw.js` version is stale.
-- It builds `dist-embedded/worker.js` (via `scripts/build-embedded.mjs`), with every file in `public/` inlined, so no
-  separate asset upload is needed.
+- It builds `dist-embedded/worker.js` (via `scripts/build-embedded.mjs`), with every file in `public/` inlined except
+  the print PDFs (`public/print/*.pdf`, about 2 MB of base64). The generated function uploads that script only.
+- The print PDFs must be attached to the same Worker version as Workers Static Assets: an assets-upload session with
+  the manifest from `printPdfManifest` (`scripts/embed-files.mjs`; first 32 hex of the file's SHA-256, size in bytes),
+  each file uploaded with `Content-Type: application/pdf`, and the returned JWT sent on the script upload as
+  `metadata.assets.jwt`. Keep `not_found_handling` at none and no `run_worker_first` on those paths, so a PDF is served
+  without running the Worker and every other path still reaches it. A script upload with neither the JWT nor kept
+  assets leaves the PDF links 404.
 
 Every house rule and the test that guards it is listed in [`RULES.md`](../RULES.md).

@@ -57,6 +57,7 @@ test('ETag from the content hash; a matching If-None-Match gets 304 with no body
 });
 test('build-embedded stores a sha-256 content hash per file and serves through makeAssets', () => {
   const src = fs.readFileSync(new URL('../scripts/build-embedded.mjs', import.meta.url), 'utf8');
-  assert.match(src, /e: crypto\.createHash\('sha256'\)\.update\(buf\)/);
+  assert.match(fs.readFileSync(new URL('../scripts/embed-files.mjs', import.meta.url), 'utf8'), /e: crypto\.createHash\('sha256'\)\.update\(buf\)/);
+  assert.match(src, /const map = embedMap\('public'\);/);
   assert.match(src, /import \{ makeAssets \} from '\.\.\/src\/embedded-assets\.js'/);
 });

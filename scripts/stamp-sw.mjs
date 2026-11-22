@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { isPrintPdf } from './embed-files.mjs';
 
 const pub = path.resolve(process.argv[2] || 'public');
 const files = [];
@@ -14,7 +15,7 @@ const files = [];
     const f = path.join(d, e.name), rel = '/' + path.relative(pub, f).split(path.sep).join('/');
     if (e.isDirectory()) walk(f);
     else if (rel === '/sw.js' || e.name.startsWith('.') || rel === '/_headers' || rel === '/_redirects') continue;
-    else if (/^\/print\/.*\.pdf$/i.test(rel) && fs.statSync(f).size > 2 * 1024 * 1024) continue;
+    else if (isPrintPdf(rel)) continue; // print PDFs: Workers Static Assets, fetched on demand, never precached
     else files.push(rel);
   }
 })(pub);

@@ -1,7 +1,10 @@
 // Pure helper: derives the Cloudflare upload (worker name + metadata) from wrangler.jsonc. No argv, no repo-folder name.
 // Migrations are deliberately NOT sent: class Room already exists at migration tag v1 on the live worker.
 // Every binding wrangler.jsonc declares is uploaded (Durable Objects, Workers AI, vars), except the assets binding:
-// the embedded build (scripts/build-embedded.mjs) serves public/ itself and passes ASSETS to the worker. A binding kind
+// the embedded build (scripts/build-embedded.mjs) serves public/ itself and passes ASSETS to the worker. The print PDFs
+// (public/print/*.pdf) are not in the embed: they go up as this Worker version's Workers Static Assets (manifest from
+// printPdfManifest in scripts/embed-files.mjs, attached as metadata.assets.jwt; served asset-first, no run_worker_first,
+// not_found_handling left at none so every other path still reaches the Worker). A binding kind
 // this file doesn't know makes deployConfig throw, so a new binding can never be dropped from a deploy without notice.
 // workers.dev: the deploy sets the worker's workers.dev route and preview URLs to exactly what wrangler.jsonc says
 // ("workers_dev" and "preview_urls", both required booleans). Nothing defaults to on.

@@ -51,8 +51,9 @@ test('found assets pass through untouched', async () => {
   assert.equal(res.status, 200); assert.equal(await res.text(), 'body{}');
 });
 test('embedded ASSETS serves the 404 page for a missing file', () => {
-  const src = fs.readFileSync(new URL('../scripts/build-embedded.mjs', import.meta.url), 'utf8');
+  const src = fs.readFileSync(new URL('../src/embedded-assets.js', import.meta.url), 'utf8');
   assert.match(src, /if \(!f\) return new Response\(bytes\(FILES\['\/404\.html'\]\.b\), \{ status: 404/);
+  assert.match(fs.readFileSync(new URL('../scripts/build-embedded.mjs', import.meta.url), 'utf8'), /const ASSETS = makeAssets\(/);
   assert.doesNotMatch(src, /new Response\('Not found'/);
 });
 test('wrangler serves the 404 page for unknown assets', () => assert.match(fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"not_found_handling": "404-page"/));

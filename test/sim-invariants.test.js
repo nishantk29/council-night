@@ -13,7 +13,7 @@ import { newRoom, viewForPlayer, viewForScreen, rulesVersion, LATEST_RULES_VERSI
 import { roleList, startingDeck, shuffle, TEAMS, MIN_PLAYERS, MAX_PLAYERS, VETO_AT, PRETENDER_DANGER, REFORM_TO_WIN, DECREE_TO_WIN, TRACKER_MAX } from '../public/js/rules.js';
 
 const GAMES = Number(process.env.SIM_GAMES) || 2000;
-const SEED = 20261027;
+const SEED = Number(process.env.SIM_SEED) || 20261027;
 const NOW = 1_800_000_000_000;
 const HOST_KEY = 'sim-host';
 const MAX_STEPS = 3000; // per room, a guard against a table that never finishes
